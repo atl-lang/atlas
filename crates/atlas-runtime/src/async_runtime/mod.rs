@@ -13,14 +13,18 @@
 pub mod channel;
 pub mod future;
 pub mod primitives;
+pub mod scheduler;
 pub mod task;
+pub mod worker;
 
 pub use channel::{
     channel_bounded, channel_select, channel_unbounded, ChannelReceiver, ChannelSender,
 };
 pub use future::{future_all, future_race, AtlasFuture, FutureState};
 pub use primitives::{interval, retry_with_timeout, sleep, timeout, timer, AsyncMutex};
+pub use task::spawn_blocking_task;
 pub use task::{join_all, spawn_and_await, spawn_task, TaskHandle, TaskStatus};
+pub use worker::{init_worker_pool, worker_pool, Worker, WorkerPool, WorkerTask};
 
 use std::sync::OnceLock;
 use tokio::runtime::Runtime;
@@ -38,6 +42,33 @@ const _: () = {
 
 /// Global tokio runtime for async operations
 static TOKIO_RUNTIME: OnceLock<Runtime> = OnceLock::new();
+
+/// Base VM snapshot for blocking tasks.
+///
+/// Wrapped in `Mutex` because `VM` is `Send` but not `Sync` (the JIT trait
+/// object is `!Sync`).  Access is guarded; callers only lock briefly to call
+/// `new_for_worker()` which produces an independent `VM` clone.
+static BLOCKING_BASE_VM: OnceLock<std::sync::Mutex<crate::vm::VM>> = OnceLock::new();
+
+/// Initialise the blocking task pool's base VM snapshot.
+///
+/// Must be called once (typically alongside [`worker::init_worker_pool`])
+/// so `spawn_blocking_task` has a VM to clone for each blocking invocation.
+pub fn init_blocking_pool(base_vm: &crate::vm::VM) {
+    // Ignore double-init (idempotent: first call wins).
+    let _ = BLOCKING_BASE_VM.set(std::sync::Mutex::new(base_vm.new_for_worker()));
+}
+
+/// Clone a fresh isolated VM for a blocking task.
+///
+/// Returns `None` if [`init_blocking_pool`] has not been called.
+pub(crate) fn blocking_vm() -> Option<crate::vm::VM> {
+    BLOCKING_BASE_VM.get().map(|mu| {
+        mu.lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .new_for_worker()
+    })
+}
 
 // Thread-local LocalSet for spawning !Send futures
 thread_local! {

@@ -22,9 +22,13 @@ pt done S-XXX success "what was done" "what next agent does first (specific enou
 ## Issues
 
 ```bash
-pt issues [P0|P1|P2|component|all]          # list open + in_progress
+pt issues [P0-P3] [component|limit]         # list open + in_progress (default 5, max 25)
+                                             # pt issues P3         → all P3s (up to 15)
+                                             # pt issues vm         → component filter
+                                             # pt issues P2 vm      → priority + component
+                                             # pt issues P1 10      → priority + custom limit
 pt issue H-XXX                              # full detail
-pt add "Title" P0|P1|P2 "problem"           # create → returns H-XXX
+pt add "Title" P0|P1|P2|P3 "problem"        # create → returns H-XXX
 pt claim H-XXX                              # lock before starting (prevents duplicates)
 pt fix H-XXX "root cause" "fix" "scope-audit"  # close — ALL 4 ARGS REQUIRED
 pt fix-batch H-001,H-002 "cause" "fix" "scope" # close multiple same cause
@@ -79,17 +83,71 @@ pt block-delete B<N>                        # delete block + all phases
 pt complete-block B<N> "summary"            # mark block complete
 
 pt phases B<N>                              # list all phases
-pt phase B<N>-P<XX>                         # phase detail
-pt phase-add B<N> "title" "desc"            # add phase
-pt phase-start B<N>-P<XX>                   # mark in_progress
+pt phase B<N>-P<XX>                         # full phase detail (all fields)
+pt phase-start B<N>-P<XX>                   # mark in_progress (= pt claim for phases)
 pt phase-done B<N>-P<XX> "outcome"          # MANDATORY after every phase commit
 pt phase-skip B<N>-P<XX> "reason"
 pt phase-delete B<N>-P<XX>
-pt phase-update B<N>-P<XX> title "New"      # update: title|description|status
+pt phase-update B<N>-P<XX> title "New"      # update single field: title|description|status|do|dont|verify|ac
 ```
 
-Scaffolding order: `pt block-add` first, then `pt phase-add` for each phase, then `pt phases B<N>` to verify.
+### ⚠️ Scaffolding — ALWAYS use scaffold-phases, never sequential phase-add
+
+`pt phase-add` only sets title + description. `scaffold-phases` sets ALL 9 fields in one transaction. Always use `scaffold-phases` when creating a block.
+
+**Scaffolding order:**
+1. `pt block-add B<N> "Title" "Acceptance Criteria"`
+2. Pipe full JSON to `pt scaffold-phases B<N>` (one call, all phases, all fields)
+3. `pt phases B<N>` to verify
+
+```bash
+# WRONG — loses 7 fields per phase, requires N sequential calls
+pt phase-add B46 "Parser changes" "Update grammar"
+pt phase-add B46 "Type checker" "Add inference"
+
+# RIGHT — all phases, all fields, single transaction
+echo '[
+  {
+    "title": "Parser changes",
+    "description": "What this phase delivers and why",
+    "deps": "B<N>-P<XX>",
+    "files": "crates/atlas-runtime/src/parser/mod.rs, crates/atlas-runtime/src/token.rs",
+    "do": "What agent MUST do — specific actions",
+    "dont": "What agent must NOT do — guardrails",
+    "verify": "cargo check -p atlas-runtime",
+    "ac": "Acceptance criteria — what done looks like",
+    "refs": "D-XXX, H-XXX"
+  },
+  {
+    "title": "Type checker integration",
+    "description": "...",
+    "deps": "B<N>-P01",
+    "files": "crates/atlas-runtime/src/typechecker/expr.rs",
+    "do": "...",
+    "dont": "...",
+    "verify": "cargo check -p atlas-runtime",
+    "ac": "...",
+    "refs": "D-XXX"
+  }
+]' | pt scaffold-phases B46
+```
+
+### Phase field reference
+
+| Field | Purpose | AI Continuity Value |
+|-------|---------|---------------------|
+| `title` | One-line phase name | Agent knows what the phase is |
+| `description` | What this phase delivers and why | Agent understands scope |
+| `deps` | Phase IDs this depends on (e.g. `B46-P01`) | Agent knows ordering |
+| `files` | Exact file paths to touch | Agent knows where to work |
+| `do` | Explicit required actions | Agent has a checklist |
+| `dont` | Guardrails / forbidden approaches | Agent avoids known pitfalls |
+| `verify` | Command to run to verify success | Agent knows definition of done |
+| `ac` | Acceptance criteria | Gate 6 / phase-done evidence |
+| `refs` | Related decisions + issues (D-XXX, H-XXX) | Agent has full context |
+
 Skipping `pt phase-done` = next agent re-derives state from scratch.
+Empty fields = next agent guesses = errors and re-work.
 
 ---
 

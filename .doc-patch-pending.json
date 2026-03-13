@@ -1,14 +1,1 @@
-{
-  "committed_at": "2026-03-13T19:53:36Z",
-  "commit": "d39e3e07",
-  "changed_files": [
-  "crates/atlas-runtime/src/compiler/stmt.rs"
-],
-  "domains": [
-  "compiler"
-],
-  "relevant_docs": [
-  "docs/known-issues.md"
-],
-  "status": "pending"
-}
+{"status": "clear", "reason": "superseded by full docs rewrite session S-264"}

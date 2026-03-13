@@ -7,10 +7,13 @@
 
 #![cfg_attr(not(test), deny(clippy::unwrap_used))]
 
+pub(crate) mod context;
 mod debugger;
 pub mod dispatch;
 mod frame;
 mod profiler;
+
+pub use context::VMContext;
 
 pub use debugger::{DebugAction, DebugHook, Debugger};
 pub use frame::CallFrame;
@@ -55,61 +58,30 @@ pub enum VmRunResult {
 
 /// Virtual machine state
 pub struct VM {
-    /// Value stack
-    stack: Vec<Value>,
-    /// Call frames (for function calls)
-    frames: Vec<CallFrame>,
-    /// Global variables
+    /// Per-thread execution context: stack, frames, ip, defer stacks, scratch
+    /// buffers, warnings.  Isolated per worker thread in the concurrency model
+    /// (B44-P02+).  Cloning `ctx` forks a fresh execution context.
+    pub ctx: VMContext,
+    /// Global variables — shared across all top-level code in one VM instance.
     globals: HashMap<String, Value>,
-    /// Bytecode to execute
+    /// Bytecode to execute (read-only after compilation).
     bytecode: Bytecode,
-    /// Instruction pointer
-    ip: usize,
-    /// Optional profiler for performance analysis
+    /// Optional profiler for performance analysis.
     profiler: Option<Profiler>,
-    /// Optional debugger for step-through execution
+    /// Optional debugger for step-through execution.
     debugger: Option<Debugger>,
-    /// Set to `true` by the execute_loop when the debugger requests a pause.
-    /// Cleared by `run_debuggable` after it reads the flag.
-    debug_pause_pending: bool,
-    /// Security context for current execution (set during run())
+    /// Security context for current execution (set during run()).
     current_security: Option<std::sync::Arc<crate::security::SecurityContext>>,
-    /// Execution limits for timeout enforcement
+    /// Execution limits for timeout enforcement.
     execution_limits: Option<std::sync::Arc<crate::api::config::ExecutionLimits>>,
-    /// Output writer for print() (defaults to stdout)
+    /// Output writer for print() (defaults to stdout).
     output_writer: crate::stdlib::OutputWriter,
-    /// FFI library loader (phase-10b)
+    /// FFI library loader (phase-10b).
     library_loader: LibraryLoader,
-    /// Loaded extern functions (phase-10b)
+    /// Loaded extern functions (phase-10b).
     extern_functions: HashMap<String, ExternFunction>,
-    /// Reusable string buffer for temporary string operations (reduces allocations)
-    string_buffer: String,
-    /// Nominal struct names for HashMap-backed struct values (keyed by map identity).
-    struct_type_names: HashMap<usize, String>,
-    /// Parallel to `stack`: tracks where each value originated (debug builds only).
-    /// `None` for computed/literal values; `Some(StackValueOrigin::Local(slot))` for values
-    /// loaded via `GetLocal`; `Some(StackValueOrigin::Global(name))` for `GetGlobal`.
-    /// Used to mark the caller's binding as consumed when a value is passed to an `own`
-    /// parameter.  Zero overhead in release builds.
-    #[cfg(debug_assertions)]
-    value_origins: Vec<Option<StackValueOrigin>>,
-    /// Per-frame consumed-slot tracking (debug builds only).  `consumed_slots[frame_idx][slot]`
-    /// is `true` when that local slot has been moved into an `own` parameter and may no longer
-    /// be read.
-    #[cfg(debug_assertions)]
-    consumed_slots: Vec<Vec<bool>>,
-    /// Consumed global names (debug builds only).  A global is inserted here when it is
-    /// passed to an `own` parameter.  Subsequent `GetGlobal` for the same name errors.
-    #[cfg(debug_assertions)]
-    consumed_globals: std::collections::HashSet<String>,
-    /// Optional JIT compiler for hot function execution
+    /// Optional JIT compiler for hot function execution.
     jit: Option<Box<dyn crate::JitCompiler>>,
-    /// Runtime warnings collected during execution (ownership mismatches, etc.).
-    /// Callers retrieve and emit these after execution via `take_runtime_warnings()`.
-    pub runtime_warnings: Vec<crate::diagnostic::Diagnostic>,
-    /// Per-frame defer stacks. Each entry is (body_start_ip, body_length).
-    /// Deferred blocks execute in LIFO order when the frame exits.
-    defer_stacks: Vec<Vec<(usize, usize)>>,
 }
 
 impl VM {
@@ -128,30 +100,21 @@ impl VM {
         };
 
         Self {
-            stack: Vec::with_capacity(1024),
-            frames: vec![main_frame],
+            ctx: VMContext::new(
+                main_frame,
+                #[cfg(debug_assertions)]
+                main_local_count,
+            ),
             globals: HashMap::new(),
             bytecode,
-            ip: 0,
             profiler: None,
             debugger: None,
-            debug_pause_pending: false,
             current_security: None,
             execution_limits: None,
             output_writer: crate::stdlib::stdout_writer(),
             library_loader: LibraryLoader::new(),
             extern_functions: HashMap::new(),
-            string_buffer: String::with_capacity(256),
-            struct_type_names: HashMap::new(),
-            #[cfg(debug_assertions)]
-            value_origins: Vec::with_capacity(1024),
-            #[cfg(debug_assertions)]
-            consumed_slots: vec![vec![false; main_local_count]],
-            #[cfg(debug_assertions)]
-            consumed_globals: std::collections::HashSet::new(),
             jit: None,
-            runtime_warnings: Vec::new(),
-            defer_stacks: vec![Vec::new()], // One empty stack for main frame
         }
     }
 
@@ -198,9 +161,9 @@ impl VM {
         self.bytecode.instructions.extend(adjusted_instrs);
 
         // 5. Reset execution state to start at the new module's entry point.
-        self.ip = instr_base;
-        self.stack.clear();
-        self.frames = vec![CallFrame {
+        self.ctx.ip = instr_base;
+        self.ctx.stack.clear();
+        self.ctx.frames = vec![CallFrame {
             function_name: "<main>".to_string(),
             return_ip: 0,
             stack_base: 0,
@@ -210,8 +173,8 @@ impl VM {
 
         #[cfg(debug_assertions)]
         {
-            self.value_origins.clear();
-            self.consumed_slots = vec![vec![false; local_count]];
+            self.ctx.value_origins.clear();
+            self.ctx.consumed_slots = vec![vec![false; local_count]];
             // Preserve consumed_globals across modules — they accumulate.
         }
     }
@@ -353,11 +316,84 @@ impl VM {
         self.output_writer = writer;
     }
 
+    /// Create an isolated VM for a worker thread (D-057).
+    ///
+    /// Clones the bytecode and globals from the source VM so each worker
+    /// starts with the same program text and global bindings but executes
+    /// on a completely independent stack and frame list.  The output writer
+    /// is cloned by reference (it is `Arc<Mutex<Box<dyn Write+Send>>>`) so
+    /// all workers share the same output sink.
+    ///
+    /// # Design
+    ///
+    /// Workers do NOT share globals at runtime — mutations in a spawned task
+    /// are local to that worker's VM instance.  Cross-worker communication
+    /// uses channels (B44-P07).
+    pub fn new_for_worker(&self) -> Self {
+        let bytecode = self.bytecode.clone();
+
+        #[cfg(debug_assertions)]
+        let main_local_count = bytecode.top_level_local_count;
+
+        let main_frame = crate::vm::frame::CallFrame {
+            function_name: "<worker-main>".to_string(),
+            return_ip: 0,
+            stack_base: 0,
+            local_count: bytecode.top_level_local_count,
+            upvalues: std::sync::Arc::new(Vec::new()),
+        };
+
+        Self {
+            ctx: VMContext::new(
+                main_frame,
+                #[cfg(debug_assertions)]
+                main_local_count,
+            ),
+            globals: self.globals.clone(),
+            bytecode,
+            profiler: None,
+            debugger: None,
+            current_security: self.current_security.clone(),
+            execution_limits: self.execution_limits.clone(),
+            output_writer: self.output_writer.clone(),
+            library_loader: LibraryLoader::new(),
+            extern_functions: self.extern_functions.clone(),
+            jit: None, // JIT not supported on worker threads yet
+        }
+    }
+
+    /// Execute an Atlas function or closure as a task on this VM.
+    ///
+    /// Pushes `args` onto the stack, sets the IP to the callable's bytecode
+    /// offset, drives `execute_loop` until the function returns, and gives
+    /// back the return value.  The VM's call stack is restored to its prior
+    /// state after execution.
+    ///
+    /// This is the entry point called by workers when they receive a
+    /// [`crate::async_runtime::task::FunctionTask`].
+    pub fn execute_task_function(
+        &mut self,
+        callable: &crate::async_runtime::task::FunctionCallable,
+        args: Vec<Value>,
+        security: &crate::security::SecurityContext,
+    ) -> Result<Value, String> {
+        self.current_security = Some(std::sync::Arc::new(security.clone()));
+
+        let func_value = match callable {
+            crate::async_runtime::task::FunctionCallable::Function(f) => Value::Function(f.clone()),
+            crate::async_runtime::task::FunctionCallable::Closure(c) => Value::Closure(c.clone()),
+        };
+
+        let span = crate::span::Span::dummy();
+        self.vm_call_function_value(&func_value, args, span)
+            .map_err(|e| format!("{e}"))
+    }
+
     /// Drain and return all runtime warnings collected during execution.
     /// Called by the runtime layer after execute() to surface warnings through
     /// the proper diagnostic system instead of inline eprintln!().
     pub fn take_runtime_warnings(&mut self) -> Vec<crate::diagnostic::Diagnostic> {
-        std::mem::take(&mut self.runtime_warnings)
+        std::mem::take(&mut self.ctx.runtime_warnings)
     }
 
     /// Set execution limits for timeout enforcement
@@ -383,14 +419,17 @@ impl VM {
 
     fn register_struct_type(&mut self, map: &ValueHashMap, name: &str) {
         let key = Arc::as_ptr(map.arc()) as usize;
-        self.struct_type_names.insert(key, name.to_string());
+        self.ctx.struct_type_names.insert(key, name.to_string());
     }
 
     fn struct_name_for_value(&self, value: &Value) -> Option<&str> {
         match value {
             Value::Map(map) => {
                 let key = Arc::as_ptr(map.arc()) as usize;
-                self.struct_type_names.get(&key).map(|name| name.as_str())
+                self.ctx
+                    .struct_type_names
+                    .get(&key)
+                    .map(|name| name.as_str())
             }
             _ => None,
         }
@@ -555,7 +594,7 @@ impl VM {
     /// Used by Runtime to start execution from a specific offset when
     /// accumulating bytecode across multiple eval() calls.
     pub fn set_ip(&mut self, offset: usize) {
-        self.ip = offset;
+        self.ctx.ip = offset;
     }
 
     /// Enable profiling
@@ -615,10 +654,10 @@ impl VM {
     /// Returns the span from debug info if available.
     /// Useful for error reporting with source location context.
     pub fn current_span(&self) -> Option<crate::span::Span> {
-        if self.ip == 0 {
+        if self.ctx.ip == 0 {
             return None;
         }
-        self.bytecode.get_span_for_offset(self.ip - 1)
+        self.bytecode.get_span_for_offset(self.ctx.ip - 1)
     }
 
     /// Get the source span for a specific instruction offset
@@ -630,26 +669,26 @@ impl VM {
 
     /// Get the current instruction pointer.
     pub fn current_ip(&self) -> usize {
-        self.ip
+        self.ctx.ip
     }
 
     /// Get the current call-frame depth (number of active frames).
     pub fn frame_depth(&self) -> usize {
-        self.frames.len()
+        self.ctx.frames.len()
     }
 
     /// Get the current value-stack depth.
     pub fn stack_size(&self) -> usize {
-        self.stack.len()
+        self.ctx.stack.len()
     }
 
     /// Get a call frame by index (0 = innermost / most recent).
     ///
     /// Returns `None` if `index` is out of range.
     pub fn get_frame_at(&self, index: usize) -> Option<&CallFrame> {
-        let len = self.frames.len();
+        let len = self.ctx.frames.len();
         if index < len {
-            self.frames.get(len - 1 - index)
+            self.ctx.frames.get(len - 1 - index)
         } else {
             None
         }
@@ -667,7 +706,7 @@ impl VM {
         let base = frame.stack_base;
         let count = frame.local_count;
         (0..count)
-            .filter_map(|i| self.stack.get(base + i).map(|v| (i, v)))
+            .filter_map(|i| self.ctx.stack.get(base + i).map(|v| (i, v)))
             .collect()
     }
 
@@ -734,7 +773,7 @@ impl VM {
         dbg.set_step_condition(step_condition);
 
         // Clear any leftover pause flag from a previous run.
-        self.debug_pause_pending = false;
+        self.ctx.debug_pause_pending = false;
 
         // Run the execute loop (profiling hooks still active).
         self.current_security = Some(std::sync::Arc::new(security.clone()));
@@ -750,9 +789,9 @@ impl VM {
             }
         }
 
-        if self.debug_pause_pending {
+        if self.ctx.debug_pause_pending {
             // The execute_loop broke early due to a debug pause.
-            let ip = self.ip;
+            let ip = self.ctx.ip;
             let location = None; // Caller resolves via SourceMap
             let reason = if let Some(bp) = debug_state.breakpoint_at_offset(ip) {
                 crate::debugger::protocol::PauseReason::Breakpoint { id: bp.id }
@@ -761,7 +800,7 @@ impl VM {
             };
             debug_state.pause(reason, location, ip);
             debug_state.clear_step_mode();
-            self.debug_pause_pending = false;
+            self.ctx.debug_pause_pending = false;
             Ok(VmRunResult::Paused { ip })
         } else {
             debug_state.stop();
@@ -806,7 +845,7 @@ impl VM {
     ) -> Result<Option<Value>, RuntimeError> {
         loop {
             // Check termination conditions
-            if self.ip >= self.bytecode.instructions.len() {
+            if self.ctx.ip >= self.bytecode.instructions.len() {
                 break;
             }
 
@@ -817,7 +856,7 @@ impl VM {
 
             // Check if we've returned from the target frame
             if let Some(depth) = target_frame_depth {
-                if self.frames.len() <= depth {
+                if self.ctx.frames.len() <= depth {
                     // Frame has returned, result should be on stack
                     return Ok(Some(self.peek(0).clone()));
                 }
@@ -828,15 +867,15 @@ impl VM {
             // Debugger hook: before instruction (zero overhead when disabled)
             if let Some(ref mut debugger) = self.debugger {
                 if debugger.is_enabled() {
-                    let current_ip = self.ip - 1;
-                    let frame_depth = self.frames.len();
+                    let current_ip = self.ctx.ip - 1;
+                    let frame_depth = self.ctx.frames.len();
                     let action =
                         debugger.before_instruction_with_depth(current_ip, opcode, frame_depth);
                     match action {
                         DebugAction::Pause | DebugAction::Step => {
                             // Back up IP so the paused instruction is re-executed on resume
-                            self.ip = current_ip;
-                            self.debug_pause_pending = true;
+                            self.ctx.ip = current_ip;
+                            self.ctx.debug_pause_pending = true;
                             break; // break the execute_loop loop
                         }
                         DebugAction::Continue => {
@@ -849,10 +888,10 @@ impl VM {
             // Record instruction for profiling (zero overhead when disabled)
             if let Some(ref mut profiler) = self.profiler {
                 if profiler.is_enabled() {
-                    let instruction_ip = self.ip - 1; // ip already advanced by read_opcode
+                    let instruction_ip = self.ctx.ip - 1; // ip already advanced by read_opcode
                     profiler.record_instruction_at(opcode, instruction_ip);
-                    profiler.update_value_stack_depth(self.stack.len());
-                    profiler.update_frame_depth(self.frames.len());
+                    profiler.update_value_stack_depth(self.ctx.stack.len());
+                    profiler.update_frame_depth(self.ctx.frames.len());
                 }
             }
 
@@ -877,7 +916,7 @@ impl VM {
                     let index = self.read_u16()? as usize;
                     let base = self.current_frame().stack_base;
                     let absolute_index = base + index;
-                    if absolute_index >= self.stack.len() {
+                    if absolute_index >= self.ctx.stack.len() {
                         return Err(RuntimeError::StackUnderflow {
                             span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
                         });
@@ -885,8 +924,8 @@ impl VM {
                     // Debug mode: reject reads of consumed (moved) local slots.
                     #[cfg(debug_assertions)]
                     {
-                        let frame_idx = self.frames.len() - 1;
-                        if self.consumed_slots[frame_idx]
+                        let frame_idx = self.ctx.frames.len() - 1;
+                        if self.ctx.consumed_slots[frame_idx]
                             .get(index)
                             .copied()
                             .unwrap_or(false)
@@ -900,12 +939,12 @@ impl VM {
                             });
                         }
                     }
-                    let value = self.stack[absolute_index].clone();
+                    let value = self.ctx.stack[absolute_index].clone();
                     self.push(value);
                     // Record that the top-of-stack value originated from this local slot.
                     #[cfg(debug_assertions)]
                     {
-                        if let Some(origin) = self.value_origins.last_mut() {
+                        if let Some(origin) = self.ctx.value_origins.last_mut() {
                             *origin = Some(StackValueOrigin::Local(index));
                         } else {
                             return Err(RuntimeError::InternalError {
@@ -934,13 +973,13 @@ impl VM {
                     // The outer `index >= local_count` guard above already ensures
                     // absolute_index < base + local_count, so extension is always
                     // within the declared local area.
-                    if absolute_index >= self.stack.len() {
-                        let needed = absolute_index - self.stack.len() + 1;
+                    if absolute_index >= self.ctx.stack.len() {
+                        let needed = absolute_index - self.ctx.stack.len() + 1;
                         for _ in 0..needed {
                             self.push(Value::Null);
                         }
                     }
-                    self.stack[absolute_index] = value;
+                    self.ctx.stack[absolute_index] = value;
                 }
                 Opcode::GetGlobal => {
                     let name_index = self.read_u16()? as usize;
@@ -960,7 +999,7 @@ impl VM {
                     };
                     // Debug mode: reject reads of consumed globals.
                     #[cfg(debug_assertions)]
-                    if self.consumed_globals.contains(&name) {
+                    if self.ctx.consumed_globals.contains(&name) {
                         return Err(RuntimeError::TypeError {
                             msg: format!(
                                 "use of moved value: '{}' was passed to 'own' parameter and is no longer valid",
@@ -994,7 +1033,7 @@ impl VM {
                     // Only track user-defined globals (not builtins, constructors, math constants).
                     #[cfg(debug_assertions)]
                     if self.globals.contains_key(&name) {
-                        if let Some(origin) = self.value_origins.last_mut() {
+                        if let Some(origin) = self.ctx.value_origins.last_mut() {
                             *origin = Some(StackValueOrigin::Global(name));
                         } else {
                             return Err(RuntimeError::InternalError {
@@ -1076,7 +1115,8 @@ impl VM {
                     let value = self.peek(0).clone();
                     let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
                     let frame =
-                        self.frames
+                        self.ctx
+                            .frames
                             .last_mut()
                             .ok_or_else(|| RuntimeError::InternalError {
                                 msg: "Missing call frame for SetUpvalue".to_string(),
@@ -1119,10 +1159,10 @@ impl VM {
                             self.track_memory(Self::estimate_string_size(new_len))?;
 
                             // Reuse string buffer to reduce allocations
-                            self.string_buffer.clear();
-                            self.string_buffer.push_str(x);
-                            self.string_buffer.push_str(y);
-                            self.push(Value::String(Arc::new(self.string_buffer.clone())));
+                            self.ctx.string_buffer.clear();
+                            self.ctx.string_buffer.push_str(x);
+                            self.ctx.string_buffer.push_str(y);
+                            self.push(Value::String(Arc::new(self.ctx.string_buffer.clone())));
                         }
                         (Value::Array(x), Value::Array(y)) => {
                             let new_len = x.len() + y.len();
@@ -1279,18 +1319,18 @@ impl VM {
                 // ===== Control Flow =====
                 Opcode::Jump => {
                     let offset = self.read_i16()?;
-                    self.ip = (self.ip as isize + offset as isize) as usize;
+                    self.ctx.ip = (self.ctx.ip as isize + offset as isize) as usize;
                 }
                 Opcode::JumpIfFalse => {
                     let offset = self.read_i16()?;
                     let condition = self.pop();
                     if !condition.is_truthy() {
-                        self.ip = (self.ip as isize + offset as isize) as usize;
+                        self.ctx.ip = (self.ctx.ip as isize + offset as isize) as usize;
                     }
                 }
                 Opcode::Loop => {
                     let offset = self.read_i16()?;
-                    self.ip = (self.ip as isize + offset as isize) as usize;
+                    self.ctx.ip = (self.ctx.ip as isize + offset as isize) as usize;
                 }
 
                 // ===== Functions =====
@@ -1359,25 +1399,26 @@ impl VM {
 
                 Opcode::Return => {
                     // Pop the return value from stack (if any)
-                    let return_value = if self.stack.is_empty() {
+                    let return_value = if self.ctx.stack.is_empty() {
                         Value::Null
                     } else {
                         self.pop()
                     };
 
                     // Execute deferred blocks in LIFO order before returning
-                    let frame_idx = self.frames.len() - 1;
-                    while let Some((body_start, body_len)) = self.defer_stacks[frame_idx].pop() {
+                    let frame_idx = self.ctx.frames.len() - 1;
+                    while let Some((body_start, body_len)) = self.ctx.defer_stacks[frame_idx].pop()
+                    {
                         // Save current IP
-                        let saved_ip = self.ip;
+                        let saved_ip = self.ctx.ip;
 
                         // Execute defer body by setting IP and running until body_end
                         // We use a bounded loop that processes opcodes directly
-                        self.ip = body_start;
+                        self.ctx.ip = body_start;
                         let body_end = body_start + body_len;
 
                         // Execute opcodes until we reach body_end
-                        while self.ip < body_end {
+                        while self.ctx.ip < body_end {
                             let opcode = match self.read_opcode() {
                                 Ok(op) => op,
                                 Err(_) => break,
@@ -1405,14 +1446,14 @@ impl VM {
                                 }
                                 Opcode::Call => {
                                     let arg_count = self.read_u8()? as usize;
-                                    let frames_before_call = self.frames.len();
+                                    let frames_before_call = self.ctx.frames.len();
                                     self.execute_call(arg_count)?;
                                     // H-364: If execute_call pushed a new frame (user-defined
                                     // function), drive it to completion via the full dispatch
                                     // loop so that Return, arithmetic, GetLocal etc. all work.
                                     // The loop stops when frames.len() drops back to
                                     // frames_before_call, leaving the return value on the stack.
-                                    if self.frames.len() > frames_before_call {
+                                    if self.ctx.frames.len() > frames_before_call {
                                         self.execute_loop(Some(frames_before_call))?;
                                     }
                                 }
@@ -1422,41 +1463,41 @@ impl VM {
                                 Opcode::GetLocal => {
                                     let index = self.read_u16()? as usize;
                                     let base = self.current_frame().stack_base;
-                                    let value = self.stack[base + index].clone();
+                                    let value = self.ctx.stack[base + index].clone();
                                     self.push(value);
                                 }
                                 _ => {
                                     // For other opcodes, skip their operands
                                     let size = dispatch::operand_size(opcode);
-                                    self.ip += size;
+                                    self.ctx.ip += size;
                                 }
                             }
                         }
 
                         // Restore IP
-                        self.ip = saved_ip;
+                        self.ctx.ip = saved_ip;
                     }
 
                     // Pop the call frame and defer stack
-                    let frame = self.frames.pop();
-                    self.defer_stacks.pop();
+                    let frame = self.ctx.frames.pop();
+                    self.ctx.defer_stacks.pop();
                     #[cfg(debug_assertions)]
-                    self.consumed_slots.pop();
+                    self.ctx.consumed_slots.pop();
 
                     if let Some(f) = frame {
                         // Clean up the stack (remove locals, arguments, and function value)
-                        self.stack.truncate(f.stack_base);
+                        self.ctx.stack.truncate(f.stack_base);
                         #[cfg(debug_assertions)]
-                        self.value_origins.truncate(f.stack_base);
+                        self.ctx.value_origins.truncate(f.stack_base);
                         // Also remove the function value (one slot below stack_base)
-                        if f.stack_base > 0 && !self.stack.is_empty() {
-                            self.stack.pop();
+                        if f.stack_base > 0 && !self.ctx.stack.is_empty() {
+                            self.ctx.stack.pop();
                             #[cfg(debug_assertions)]
-                            self.value_origins.pop();
+                            self.ctx.value_origins.pop();
                         }
 
                         // Restore IP to return address
-                        self.ip = f.return_ip;
+                        self.ctx.ip = f.return_ip;
 
                         // Push return value
                         self.push(return_value);
@@ -1953,8 +1994,8 @@ impl VM {
                 Opcode::Pop => {
                     // Don't pop if this is the last instruction before Halt
                     // Check if next instruction is Halt
-                    if self.ip < self.bytecode.instructions.len()
-                        && self.bytecode.instructions[self.ip] != Opcode::Halt as u8
+                    if self.ctx.ip < self.bytecode.instructions.len()
+                        && self.bytecode.instructions[self.ctx.ip] != Opcode::Halt as u8
                     {
                         self.pop();
                     }
@@ -2181,7 +2222,7 @@ impl VM {
                     let val = self.pop();
                     let is_struct = if let Value::Map(ref m) = val {
                         let key = std::sync::Arc::as_ptr(m.arc()) as usize;
-                        self.struct_type_names.contains_key(&key)
+                        self.ctx.struct_type_names.contains_key(&key)
                     } else {
                         false
                     };
@@ -2205,7 +2246,8 @@ impl VM {
                     let val = self.pop();
                     let matches_type = if let Value::Map(ref m) = val {
                         let key = std::sync::Arc::as_ptr(m.arc()) as usize;
-                        self.struct_type_names
+                        self.ctx
+                            .struct_type_names
                             .get(&key)
                             .map(|name| name == &expected_name)
                             .unwrap_or(false)
@@ -2280,34 +2322,35 @@ impl VM {
                     let body_len = self.read_u16()? as usize;
                     // Body starts after the Jump opcode (1 byte) + operand (2 bytes) = 3 bytes
                     // The compiler emits: DeferPush body_len Jump offset body...
-                    let body_start = self.ip + 3;
+                    let body_start = self.ctx.ip + 3;
 
                     // Record defer: (body_start, body_len) on the current frame's defer stack
-                    let frame_idx = self.frames.len() - 1;
-                    self.defer_stacks[frame_idx].push((body_start, body_len));
+                    let frame_idx = self.ctx.frames.len() - 1;
+                    self.ctx.defer_stacks[frame_idx].push((body_start, body_len));
 
                     // Normal execution continues (Jump instruction follows to skip body)
                 }
                 Opcode::DeferExec => {
                     // Execute all deferred blocks for current frame in LIFO order
-                    let frame_idx = self.frames.len() - 1;
-                    while let Some((body_start, body_len)) = self.defer_stacks[frame_idx].pop() {
+                    let frame_idx = self.ctx.frames.len() - 1;
+                    while let Some((body_start, body_len)) = self.ctx.defer_stacks[frame_idx].pop()
+                    {
                         // Save current IP
-                        let saved_ip = self.ip;
+                        let saved_ip = self.ctx.ip;
 
                         // Execute defer body
-                        self.ip = body_start;
+                        self.ctx.ip = body_start;
                         let body_end = body_start + body_len;
-                        while self.ip < body_end {
+                        while self.ctx.ip < body_end {
                             let defer_opcode =
-                                Opcode::try_from(self.bytecode.instructions[self.ip]).map_err(
+                                Opcode::try_from(self.bytecode.instructions[self.ctx.ip]).map_err(
                                     |_| RuntimeError::UnknownOpcode {
                                         span: self
                                             .current_span()
                                             .unwrap_or_else(crate::span::Span::dummy),
                                     },
                                 )?;
-                            self.ip += 1;
+                            self.ctx.ip += 1;
 
                             // Execute single instruction (simplified - only handles basic ops)
                             // Return in defer body returns to defer executor, not function
@@ -2319,7 +2362,7 @@ impl VM {
                         }
 
                         // Restore IP
-                        self.ip = saved_ip;
+                        self.ctx.ip = saved_ip;
                     }
                 }
 
@@ -2329,7 +2372,7 @@ impl VM {
         }
 
         // Return top of stack if present
-        Ok(if self.stack.is_empty() {
+        Ok(if self.ctx.stack.is_empty() {
             None
         } else {
             Some(self.pop())
@@ -2340,19 +2383,19 @@ impl VM {
 
     #[inline(always)]
     fn push(&mut self, value: Value) {
-        self.stack.push(value);
+        self.ctx.stack.push(value);
         #[cfg(debug_assertions)]
-        self.value_origins.push(None);
+        self.ctx.value_origins.push(None);
     }
 
     #[inline(always)]
     fn pop(&mut self) -> Value {
         #[cfg(debug_assertions)]
-        self.value_origins.pop();
+        self.ctx.value_origins.pop();
         // SAFETY: VM invariants guarantee the stack is non-empty when pop() is called.
         // Preconditions: every opcode that calls pop() has already pushed its operands,
         // and debug builds mirror this via value_origins.
-        unsafe { self.stack.pop().unwrap_unchecked() }
+        unsafe { self.ctx.stack.pop().unwrap_unchecked() }
     }
 
     #[inline(always)]
@@ -2360,7 +2403,11 @@ impl VM {
         // SAFETY: The compiler guarantees stack depth matches operand requirements.
         // Preconditions: each opcode that calls peek() is emitted only when sufficient
         // values exist, and `distance` is within the current stack depth.
-        unsafe { self.stack.get_unchecked(self.stack.len() - 1 - distance) }
+        unsafe {
+            self.ctx
+                .stack
+                .get_unchecked(self.ctx.stack.len() - 1 - distance)
+        }
     }
 
     #[inline(always)]
@@ -2440,14 +2487,14 @@ impl VM {
 
     #[inline(always)]
     fn read_opcode(&mut self) -> Result<Opcode, RuntimeError> {
-        if self.ip >= self.bytecode.instructions.len() {
+        if self.ctx.ip >= self.bytecode.instructions.len() {
             return Err(RuntimeError::UnknownOpcode {
                 span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
             });
         }
-        // SAFETY: Bounds check above guarantees self.ip < len
-        let byte = self.bytecode.instructions[self.ip];
-        self.ip += 1;
+        // SAFETY: Bounds check above guarantees self.ctx.ip < len
+        let byte = self.bytecode.instructions[self.ctx.ip];
+        self.ctx.ip += 1;
         // Use static dispatch table for O(1) opcode lookup
         dispatch::decode_opcode(byte).ok_or_else(|| RuntimeError::UnknownOpcode {
             span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
@@ -2456,26 +2503,26 @@ impl VM {
 
     #[inline(always)]
     fn read_u8(&mut self) -> Result<u8, RuntimeError> {
-        if self.ip >= self.bytecode.instructions.len() {
+        if self.ctx.ip >= self.bytecode.instructions.len() {
             return Err(RuntimeError::UnknownOpcode {
                 span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
             });
         }
-        let byte = self.bytecode.instructions[self.ip];
-        self.ip += 1;
+        let byte = self.bytecode.instructions[self.ctx.ip];
+        self.ctx.ip += 1;
         Ok(byte)
     }
 
     #[inline(always)]
     fn read_u16(&mut self) -> Result<u16, RuntimeError> {
-        if self.ip + 1 >= self.bytecode.instructions.len() {
+        if self.ctx.ip + 1 >= self.bytecode.instructions.len() {
             return Err(RuntimeError::UnknownOpcode {
                 span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
             });
         }
-        let hi = self.bytecode.instructions[self.ip] as u16;
-        let lo = self.bytecode.instructions[self.ip + 1] as u16;
-        self.ip += 2;
+        let hi = self.bytecode.instructions[self.ctx.ip] as u16;
+        let lo = self.bytecode.instructions[self.ctx.ip + 1] as u16;
+        self.ctx.ip += 2;
         Ok((hi << 8) | lo)
     }
 
@@ -2488,15 +2535,15 @@ impl VM {
     fn current_frame(&self) -> &CallFrame {
         // SAFETY: VM execution always pushes a frame before running, and frames are
         // only popped when returning. The frames vec is never empty while executing.
-        unsafe { self.frames.last().unwrap_unchecked() }
+        unsafe { self.ctx.frames.last().unwrap_unchecked() }
     }
 
     /// Generate a stack trace from the current call frames.
     /// Returns frames from innermost to outermost.
     pub fn stack_trace(&self, error_span: crate::span::Span) -> Vec<StackTraceFrame> {
-        let include_main = self.frames.len() == 1;
+        let include_main = self.ctx.frames.len() == 1;
         let mut frames = Vec::new();
-        for frame in self.frames.iter().rev() {
+        for frame in self.ctx.frames.iter().rev() {
             if !include_main && frame.function_name == "<main>" {
                 continue;
             }
@@ -2606,12 +2653,12 @@ impl VM {
                     // Try JIT execution for hot numeric functions
                     if self.jit.is_some() {
                         // Gather info before borrowing jit mutably
-                        let args_base = self.stack.len() - arg_count;
+                        let args_base = self.ctx.stack.len() - arg_count;
                         let mut numeric_args: Vec<f64> = Vec::with_capacity(arg_count);
                         let mut all_numeric = true;
 
                         for i in 0..arg_count {
-                            match &self.stack[args_base + i] {
+                            match &self.ctx.stack[args_base + i] {
                                 Value::Number(n) => numeric_args.push(*n),
                                 _ => {
                                     all_numeric = false;
@@ -2651,11 +2698,11 @@ impl VM {
                         let fixed_count = func.arity.saturating_sub(1); // params before rest
                         let rest_count = arg_count.saturating_sub(fixed_count);
                         // Collect rest args from top of stack (they're in order, rest_count items)
-                        let stack_top = self.stack.len();
+                        let stack_top = self.ctx.stack.len();
                         let rest_start = stack_top - rest_count;
-                        let rest_args: Vec<Value> = self.stack.drain(rest_start..).collect();
+                        let rest_args: Vec<Value> = self.ctx.stack.drain(rest_start..).collect();
                         let rest_array = Value::Array(crate::value::ValueArray::from(rest_args));
-                        self.stack.push(rest_array);
+                        self.ctx.stack.push(rest_array);
                         // arg_count is now fixed_count + 1 (the array)
                         fixed_count + 1
                     } else {
@@ -2665,8 +2712,8 @@ impl VM {
                     // Create a new call frame
                     let frame = CallFrame {
                         function_name: func.name.clone(),
-                        return_ip: self.ip,
-                        stack_base: self.stack.len() - arg_count, // Points to first argument
+                        return_ip: self.ctx.ip,
+                        stack_base: self.ctx.stack.len() - arg_count, // Points to first argument
                         local_count: func.local_count, // Use total locals, not just arity
                         upvalues: std::sync::Arc::new(Vec::new()),
                     };
@@ -2695,10 +2742,10 @@ impl VM {
                     // Fill in default values for missing arguments (B39-P05)
                     for i in arg_count..func.arity {
                         if let Some(Some(default_val)) = func.defaults.get(i) {
-                            self.stack.push(default_val.clone());
+                            self.ctx.stack.push(default_val.clone());
                         } else {
                             // Should not happen if binder validation is correct
-                            self.stack.push(Value::Null);
+                            self.ctx.stack.push(Value::Null);
                         }
                     }
 
@@ -2707,17 +2754,18 @@ impl VM {
                     // produce a runtime error.
                     #[cfg(debug_assertions)]
                     {
-                        let caller_frame_idx = self.frames.len() - 1;
+                        let caller_frame_idx = self.ctx.frames.len() - 1;
                         // Use func.arity (not arg_count) because defaults have been pushed
-                        let args_base = self.stack.len() - func.arity;
+                        let args_base = self.ctx.stack.len() - func.arity;
                         for (i, ownership) in func.param_ownership.iter().enumerate() {
                             if *ownership == Some(crate::ast::OwnershipAnnotation::Own) {
                                 if let Some(Some(origin)) =
-                                    self.value_origins.get(args_base + i).cloned()
+                                    self.ctx.value_origins.get(args_base + i).cloned()
                                 {
                                     match origin {
                                         StackValueOrigin::Local(slot) => {
                                             if let Some(consumed) = self
+                                                .ctx
                                                 .consumed_slots
                                                 .get_mut(caller_frame_idx)
                                                 .and_then(|v| v.get_mut(slot))
@@ -2726,7 +2774,7 @@ impl VM {
                                             }
                                         }
                                         StackValueOrigin::Global(name) => {
-                                            self.consumed_globals.insert(name);
+                                            self.ctx.consumed_globals.insert(name);
                                         }
                                     }
                                 }
@@ -2738,9 +2786,9 @@ impl VM {
                     #[cfg(debug_assertions)]
                     {
                         // Use func.arity (not arg_count) because defaults have been pushed
-                        let args_base = self.stack.len() - func.arity;
+                        let args_base = self.ctx.stack.len() - func.arity;
                         for (i, ownership) in func.param_ownership.iter().enumerate() {
-                            let arg = &self.stack[args_base + i];
+                            let arg = &self.ctx.stack[args_base + i];
                             match ownership {
                                 Some(crate::ast::OwnershipAnnotation::Share) => {
                                     if !matches!(arg, Value::SharedValue(_)) {
@@ -2769,7 +2817,7 @@ impl VM {
                                             }
                                             _ => unreachable!(),
                                         };
-                                        self.runtime_warnings.push(
+                                        self.ctx.runtime_warnings.push(
                                             crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE
                                                 .emit(crate::span::Span::new(0, 0))
                                                 .arg("inner", "T")
@@ -2785,10 +2833,10 @@ impl VM {
                     }
 
                     // Push the frame (and its consumed-slot tracking vector)
-                    self.frames.push(frame);
-                    self.defer_stacks.push(Vec::new());
+                    self.ctx.frames.push(frame);
+                    self.ctx.defer_stacks.push(Vec::new());
                     #[cfg(debug_assertions)]
-                    self.consumed_slots.push(vec![false; func.local_count]);
+                    self.ctx.consumed_slots.push(vec![false; func.local_count]);
                     // Record function call in profiler
                     if let Some(ref mut profiler) = self.profiler {
                         if profiler.is_enabled() {
@@ -2797,7 +2845,7 @@ impl VM {
                     }
 
                     // Jump to function bytecode
-                    self.ip = func.bytecode_offset;
+                    self.ctx.ip = func.bytecode_offset;
                 }
             }
             Value::Closure(closure) => {
@@ -2819,11 +2867,11 @@ impl VM {
                 let arg_count = if func.has_rest_param && arg_count >= func.required_arity {
                     let fixed_count = func.arity.saturating_sub(1);
                     let rest_count = arg_count.saturating_sub(fixed_count);
-                    let stack_top = self.stack.len();
+                    let stack_top = self.ctx.stack.len();
                     let rest_start = stack_top - rest_count;
-                    let rest_args: Vec<Value> = self.stack.drain(rest_start..).collect();
+                    let rest_args: Vec<Value> = self.ctx.stack.drain(rest_start..).collect();
                     let rest_array = Value::Array(crate::value::ValueArray::from(rest_args));
-                    self.stack.push(rest_array);
+                    self.ctx.stack.push(rest_array);
                     fixed_count + 1
                 } else {
                     arg_count
@@ -2853,25 +2901,26 @@ impl VM {
                 // Fill in default values for missing arguments (B39-P05)
                 for i in arg_count..func.arity {
                     if let Some(Some(default_val)) = func.defaults.get(i) {
-                        self.stack.push(default_val.clone());
+                        self.ctx.stack.push(default_val.clone());
                     } else {
-                        self.stack.push(Value::Null);
+                        self.ctx.stack.push(Value::Null);
                     }
                 }
 
                 // Debug mode: mark own-parameter locals/globals consumed in caller.
                 #[cfg(debug_assertions)]
                 {
-                    let caller_frame_idx = self.frames.len() - 1;
-                    let args_base = self.stack.len() - arg_count;
+                    let caller_frame_idx = self.ctx.frames.len() - 1;
+                    let args_base = self.ctx.stack.len() - arg_count;
                     for (i, ownership) in func.param_ownership.iter().enumerate() {
                         if *ownership == Some(crate::ast::OwnershipAnnotation::Own) {
                             if let Some(Some(origin)) =
-                                self.value_origins.get(args_base + i).cloned()
+                                self.ctx.value_origins.get(args_base + i).cloned()
                             {
                                 match origin {
                                     StackValueOrigin::Local(slot) => {
                                         if let Some(consumed) = self
+                                            .ctx
                                             .consumed_slots
                                             .get_mut(caller_frame_idx)
                                             .and_then(|v| v.get_mut(slot))
@@ -2880,7 +2929,7 @@ impl VM {
                                         }
                                     }
                                     StackValueOrigin::Global(name) => {
-                                        self.consumed_globals.insert(name);
+                                        self.ctx.consumed_globals.insert(name);
                                     }
                                 }
                             }
@@ -2891,9 +2940,9 @@ impl VM {
                 // Debug mode: enforce `share` parameter ownership contracts.
                 #[cfg(debug_assertions)]
                 {
-                    let args_base = self.stack.len() - arg_count;
+                    let args_base = self.ctx.stack.len() - arg_count;
                     for (i, ownership) in func.param_ownership.iter().enumerate() {
-                        let arg = &self.stack[args_base + i];
+                        let arg = &self.ctx.stack[args_base + i];
                         match ownership {
                             Some(crate::ast::OwnershipAnnotation::Share) => {
                                 if !matches!(arg, Value::SharedValue(_)) {
@@ -2920,7 +2969,7 @@ impl VM {
                                         Some(crate::ast::OwnershipAnnotation::Borrow) => "borrow",
                                         _ => unreachable!(),
                                     };
-                                    self.runtime_warnings.push(
+                                    self.ctx.runtime_warnings.push(
                                         crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE
                                             .emit(crate::span::Span::new(0, 0))
                                             .arg("inner", "T")
@@ -2944,17 +2993,17 @@ impl VM {
                 // Create a new call frame with upvalues
                 let frame = CallFrame {
                     function_name: func.name.clone(),
-                    return_ip: self.ip,
-                    stack_base: self.stack.len() - arg_count,
+                    return_ip: self.ctx.ip,
+                    stack_base: self.ctx.stack.len() - arg_count,
                     local_count: func.local_count,
                     upvalues,
                 };
 
                 // Push the frame (and its consumed-slot tracking vector)
-                self.frames.push(frame);
-                self.defer_stacks.push(Vec::new());
+                self.ctx.frames.push(frame);
+                self.ctx.defer_stacks.push(Vec::new());
                 #[cfg(debug_assertions)]
-                self.consumed_slots.push(vec![false; func.local_count]);
+                self.ctx.consumed_slots.push(vec![false; func.local_count]);
                 if let Some(ref mut profiler) = self.profiler {
                     if profiler.is_enabled() {
                         profiler.record_function_call(&func.name);
@@ -2962,7 +3011,7 @@ impl VM {
                 }
 
                 // Jump to function bytecode
-                self.ip = func.bytecode_offset;
+                self.ctx.ip = func.bytecode_offset;
             }
             Value::NativeFunction(native_fn) => {
                 let mut args = Vec::with_capacity(arg_count);
@@ -3015,7 +3064,7 @@ impl VM {
             Value::Map(map) => {
                 // Check if this Map was created via Opcode::Struct (record {} or named struct)
                 let key = Arc::as_ptr(map.arc()) as usize;
-                if self.struct_type_names.contains_key(&key) {
+                if self.ctx.struct_type_names.contains_key(&key) {
                     "record"
                 } else {
                     "map"
@@ -3063,17 +3112,13 @@ impl VM {
             "result_and_then" => self.vm_intrinsic_result_and_then(args, span),
             "result_or_else" => self.vm_intrinsic_result_or_else(args, span),
             // HashMap intrinsics (callback-based)
-            "hashMapForEach" | "hash_map_for_each" => {
-                self.vm_intrinsic_hashmap_for_each(args, span)
-            }
-            "hashMapMap" | "hash_map_map" => self.vm_intrinsic_hashmap_map(args, span),
-            "hashMapFilter" | "hash_map_filter" => self.vm_intrinsic_hashmap_filter(args, span),
+            "mapForEach" | "map_for_each" => self.vm_intrinsic_hashmap_for_each(args, span),
+            "mapMap" | "map_map" => self.vm_intrinsic_hashmap_map(args, span),
+            "mapFilter" | "map_filter" => self.vm_intrinsic_hashmap_filter(args, span),
             // HashSet intrinsics (callback-based)
-            "hashSetForEach" | "hash_set_for_each" => {
-                self.vm_intrinsic_hashset_for_each(args, span)
-            }
-            "hashSetMap" | "hash_set_map" => self.vm_intrinsic_hashset_map(args, span),
-            "hashSetFilter" | "hash_set_filter" => self.vm_intrinsic_hashset_filter(args, span),
+            "setForEach" | "set_for_each" => self.vm_intrinsic_hashset_for_each(args, span),
+            "setMap" | "set_map" => self.vm_intrinsic_hashset_map(args, span),
+            "setFilter" | "set_filter" => self.vm_intrinsic_hashset_filter(args, span),
             // Regex intrinsics (callback-based)
             "regexReplaceWith" | "regex_replace_with" => {
                 self.vm_intrinsic_regex_replace_with(args, span)
@@ -3994,7 +4039,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashMapForEach() expects 2 arguments (map, callback)".to_string(),
+                msg: "mapForEach() expects 2 arguments (map, callback)".to_string(),
                 span,
             });
         }
@@ -4003,7 +4048,7 @@ impl VM {
             Value::Map(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapForEach() first argument must be HashMap".to_string(),
+                    msg: "mapForEach() first argument must be Map".to_string(),
                     span,
                 })
             }
@@ -4016,7 +4061,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapForEach() second argument must be function".to_string(),
+                    msg: "mapForEach() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4036,7 +4081,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashMapMap() expects 2 arguments (map, callback)".to_string(),
+                msg: "mapMap() expects 2 arguments (map, callback)".to_string(),
                 span,
             });
         }
@@ -4045,7 +4090,7 @@ impl VM {
             Value::Map(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapMap() first argument must be HashMap".to_string(),
+                    msg: "mapMap() first argument must be Map".to_string(),
                     span,
                 })
             }
@@ -4058,7 +4103,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapMap() second argument must be function".to_string(),
+                    msg: "mapMap() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4081,7 +4126,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashMapFilter() expects 2 arguments (map, predicate)".to_string(),
+                msg: "mapFilter() expects 2 arguments (map, predicate)".to_string(),
                 span,
             });
         }
@@ -4090,7 +4135,7 @@ impl VM {
             Value::Map(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapFilter() first argument must be HashMap".to_string(),
+                    msg: "mapFilter() first argument must be Map".to_string(),
                     span,
                 })
             }
@@ -4103,7 +4148,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapFilter() second argument must be function".to_string(),
+                    msg: "mapFilter() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4123,7 +4168,7 @@ impl VM {
                 Value::Bool(false) => {}
                 _ => {
                     return Err(RuntimeError::TypeError {
-                        msg: "hashMapFilter() predicate must return bool".to_string(),
+                        msg: "mapFilter() predicate must return bool".to_string(),
                         span,
                     })
                 }
@@ -4140,7 +4185,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashSetForEach() expects 2 arguments (set, callback)".to_string(),
+                msg: "setForEach() expects 2 arguments (set, callback)".to_string(),
                 span,
             });
         }
@@ -4149,7 +4194,7 @@ impl VM {
             Value::Set(s) => s.inner().to_vec(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetForEach() first argument must be HashSet".to_string(),
+                    msg: "setForEach() first argument must be Set".to_string(),
                     span,
                 })
             }
@@ -4162,7 +4207,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetForEach() second argument must be function".to_string(),
+                    msg: "setForEach() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4182,7 +4227,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashSetMap() expects 2 arguments (set, callback)".to_string(),
+                msg: "setMap() expects 2 arguments (set, callback)".to_string(),
                 span,
             });
         }
@@ -4191,7 +4236,7 @@ impl VM {
             Value::Set(s) => s.inner().to_vec(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetMap() first argument must be HashSet".to_string(),
+                    msg: "setMap() first argument must be Set".to_string(),
                     span,
                 })
             }
@@ -4204,7 +4249,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetMap() second argument must be function".to_string(),
+                    msg: "setMap() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4227,7 +4272,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashSetFilter() expects 2 arguments (set, predicate)".to_string(),
+                msg: "setFilter() expects 2 arguments (set, predicate)".to_string(),
                 span,
             });
         }
@@ -4236,7 +4281,7 @@ impl VM {
             Value::Set(s) => s.inner().to_vec(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetFilter() first argument must be HashSet".to_string(),
+                    msg: "setFilter() first argument must be Set".to_string(),
                     span,
                 })
             }
@@ -4249,7 +4294,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetFilter() second argument must be function".to_string(),
+                    msg: "setFilter() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4266,7 +4311,7 @@ impl VM {
                 Value::Bool(false) => {}
                 _ => {
                     return Err(RuntimeError::TypeError {
-                        msg: "hashSetFilter() predicate must return bool".to_string(),
+                        msg: "setFilter() predicate must return bool".to_string(),
                         span,
                     })
                 }
@@ -4582,10 +4627,10 @@ impl VM {
             }
             Value::Function(func_ref) => {
                 // User-defined function - execute via VM
-                let saved_ip = self.ip;
-                let saved_frame_depth = self.frames.len();
+                let saved_ip = self.ctx.ip;
+                let saved_frame_depth = self.ctx.frames.len();
                 // Record the clean stack top BEFORE pushing anything. We truncate here at the end.
-                let original_stack_len = self.stack.len();
+                let original_stack_len = self.ctx.stack.len();
                 let arg_count = args.len();
 
                 // Verify arity before pushing (B39-P05: support default params)
@@ -4609,7 +4654,7 @@ impl VM {
                 // one extra slot (the function value) which is present in the normal
                 // execute_call path but absent here.
                 self.push(Value::Null); // sentinel — consumed by Return's extra pop
-                let stack_base = self.stack.len(); // args start here
+                let stack_base = self.ctx.stack.len(); // args start here
 
                 // Push arguments onto stack (they become the function's locals)
                 for arg in args {
@@ -4633,13 +4678,15 @@ impl VM {
                     local_count: func_ref.local_count,
                     upvalues: std::sync::Arc::new(Vec::new()),
                 };
-                self.frames.push(frame);
-                self.defer_stacks.push(Vec::new());
+                self.ctx.frames.push(frame);
+                self.ctx.defer_stacks.push(Vec::new());
                 #[cfg(debug_assertions)]
-                self.consumed_slots.push(vec![false; func_ref.local_count]);
+                self.ctx
+                    .consumed_slots
+                    .push(vec![false; func_ref.local_count]);
 
                 // Jump to function bytecode
-                self.ip = func_ref.bytecode_offset;
+                self.ctx.ip = func_ref.bytecode_offset;
 
                 // Execute until this frame returns (depth goes back to saved_frame_depth)
                 let result = self.execute_loop(Some(saved_frame_depth))?;
@@ -4648,12 +4695,12 @@ impl VM {
                 let return_value = result.unwrap_or(Value::Null);
                 // Restore the stack to exactly where it was before we started — this removes
                 // the sentinel, args, and the return_value that Return pushed.
-                self.stack.truncate(original_stack_len);
+                self.ctx.stack.truncate(original_stack_len);
                 #[cfg(debug_assertions)]
-                self.value_origins.truncate(original_stack_len);
+                self.ctx.value_origins.truncate(original_stack_len);
 
                 // Restore IP
-                self.ip = saved_ip;
+                self.ctx.ip = saved_ip;
 
                 Ok(return_value)
             }
@@ -4661,10 +4708,10 @@ impl VM {
                 // Closure call: same as Function but passes captured upvalues to the frame
                 let func = closure.func.clone();
                 let upvalues = closure.upvalues.clone();
-                let saved_ip = self.ip;
-                let saved_frame_depth = self.frames.len();
+                let saved_ip = self.ctx.ip;
+                let saved_frame_depth = self.ctx.frames.len();
                 // Record the clean stack top BEFORE pushing anything. We truncate here at the end.
-                let original_stack_len = self.stack.len();
+                let original_stack_len = self.ctx.stack.len();
                 let arg_count = args.len();
 
                 // Verify arity (B39-P05: support default params)
@@ -4685,7 +4732,7 @@ impl VM {
 
                 // Push a sentinel so that Return's extra "pop function value" step consumes it.
                 self.push(Value::Null); // sentinel
-                let stack_base = self.stack.len(); // args start here
+                let stack_base = self.ctx.stack.len(); // args start here
 
                 for arg in args {
                     self.push(arg);
@@ -4707,21 +4754,21 @@ impl VM {
                     local_count: func.local_count,
                     upvalues,
                 };
-                self.frames.push(frame);
-                self.defer_stacks.push(Vec::new());
+                self.ctx.frames.push(frame);
+                self.ctx.defer_stacks.push(Vec::new());
                 #[cfg(debug_assertions)]
-                self.consumed_slots.push(vec![false; func.local_count]);
+                self.ctx.consumed_slots.push(vec![false; func.local_count]);
 
-                self.ip = func.bytecode_offset;
+                self.ctx.ip = func.bytecode_offset;
 
                 let result = self.execute_loop(Some(saved_frame_depth))?;
                 let return_value = result.unwrap_or(Value::Null);
                 // Restore the stack to exactly where it was before we started.
-                self.stack.truncate(original_stack_len);
+                self.ctx.stack.truncate(original_stack_len);
                 #[cfg(debug_assertions)]
-                self.value_origins.truncate(original_stack_len);
+                self.ctx.value_origins.truncate(original_stack_len);
 
-                self.ip = saved_ip;
+                self.ctx.ip = saved_ip;
                 Ok(return_value)
             }
             Value::NativeFunction(native_fn) => {

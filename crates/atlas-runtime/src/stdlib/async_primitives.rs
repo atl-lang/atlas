@@ -46,58 +46,136 @@ use std::time::Duration;
 // Task Spawning and Management
 // ============================================================================
 
-/// Spawn an async task
+/// Spawn an async task.
 ///
-/// Atlas signature: `spawn(future: Future<T>, name: string | null) -> TaskHandle`
+/// Atlas signature: `spawn(callable: Future<T> | fn | closure, name: string | null) -> TaskHandle`
+///
+/// Accepts three kinds of first argument:
+/// - `Future`  — drives the AtlasFuture to completion on a worker LocalSet.
+/// - `Function` / `Closure` — creates a `FunctionTask` dispatched to a worker
+///   (execution wired in B44-P05; currently settles the handle with an error).
 pub fn spawn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
-    if args.len() != 2 {
+    if args.is_empty() || args.len() > 2 {
         return Err(stdlib_arity_error("spawn", 2, args.len(), span));
     }
 
-    // Extract future
-    let future = match &args[0] {
-        Value::Future(f) => Arc::clone(f),
-        _ => {
-            return Err(RuntimeError::TypeError {
-                msg: format!("Expected Future, got {}", args[0].type_name()),
-                span,
-            })
+    // Extract name (optional, defaults to null/None).
+    let name = if args.len() == 2 {
+        match &args[1] {
+            Value::Null => None,
+            Value::String(s) => Some(s.as_ref().clone()),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: format!(
+                        "Expected string or null for name, got {}",
+                        args[1].type_name()
+                    ),
+                    span,
+                })
+            }
         }
+    } else {
+        None
     };
 
-    // Extract name (optional)
-    let name = match &args[1] {
-        Value::Null => None,
-        Value::String(s) => Some(s.as_ref().clone()),
-        _ => {
+    let handle = match &args[0] {
+        // ── Future path ──────────────────────────────────────────────────────
+        Value::Future(f) => {
+            let future = Arc::clone(f);
+            async_runtime::spawn_task(
+                async move {
+                    // Drive the AtlasFuture state machine to a terminal state.
+                    // AtlasFuture is polled cooperatively; the 10 ms sleep yields
+                    // back to the LocalSet between polls so other tasks can run.
+                    loop {
+                        match future.get_state() {
+                            async_runtime::FutureState::Resolved(value) => return value,
+                            async_runtime::FutureState::Rejected(error) => return error,
+                            async_runtime::FutureState::Pending => {
+                                tokio::time::sleep(Duration::from_millis(10)).await;
+                            }
+                        }
+                    }
+                },
+                name,
+            )
+        }
+
+        // ── Function path ────────────────────────────────────────────────────
+        Value::Function(f) => {
+            use crate::async_runtime::task::{spawn_function_task, FunctionCallable};
+            spawn_function_task(FunctionCallable::Function(f.clone()), vec![], name)
+        }
+
+        // ── Closure path ─────────────────────────────────────────────────────
+        Value::Closure(c) => {
+            use crate::async_runtime::task::{spawn_function_task, FunctionCallable};
+            spawn_function_task(FunctionCallable::Closure(c.clone()), vec![], name)
+        }
+
+        other => {
             return Err(RuntimeError::TypeError {
                 msg: format!(
-                    "Expected string or null for name, got {}",
-                    args[1].type_name()
+                    "spawn() expects a Future, function, or closure; got {}",
+                    other.type_name()
                 ),
                 span,
             })
         }
     };
 
-    // Spawn task using async_runtime
-    // Poll the AtlasFuture until it completes
-    let handle = async_runtime::spawn_task(
-        async move {
-            // Poll the future state until resolved or rejected
-            loop {
-                match future.get_state() {
-                    async_runtime::FutureState::Resolved(value) => return value,
-                    async_runtime::FutureState::Rejected(error) => return error,
-                    async_runtime::FutureState::Pending => {
-                        // Wait a bit before polling again
-                        tokio::time::sleep(Duration::from_millis(10)).await;
-                    }
-                }
+    Ok(Value::TaskHandle(Arc::new(Mutex::new(handle))))
+}
+
+/// Spawn a CPU-bound or blocking-I/O function on Tokio's blocking thread pool.
+///
+/// Atlas signature: `spawnBlocking(callable: fn | closure, name: string | null) -> TaskHandle`
+///
+/// Unlike `spawn()` which runs on cooperative `LocalSet` workers, `spawnBlocking`
+/// submits the callable to Tokio's dedicated blocking thread pool so CPU-heavy
+/// or blocking-I/O work never starves cooperative async tasks.
+pub fn spawn_blocking(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.is_empty() || args.len() > 2 {
+        return Err(stdlib_arity_error("spawnBlocking", 2, args.len(), span));
+    }
+
+    let name = if args.len() == 2 {
+        match &args[1] {
+            Value::Null => None,
+            Value::String(s) => Some(s.as_ref().clone()),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: format!(
+                        "Expected string or null for name, got {}",
+                        args[1].type_name()
+                    ),
+                    span,
+                })
             }
-        },
-        name,
-    );
+        }
+    } else {
+        None
+    };
+
+    let handle = match &args[0] {
+        Value::Function(f) => {
+            use crate::async_runtime::task::{spawn_blocking_task, FunctionCallable};
+            spawn_blocking_task(FunctionCallable::Function(f.clone()), vec![], name)
+        }
+        Value::Closure(c) => {
+            use crate::async_runtime::task::{spawn_blocking_task, FunctionCallable};
+            spawn_blocking_task(FunctionCallable::Closure(c.clone()), vec![], name)
+        }
+        other => {
+            return Err(RuntimeError::TypeError {
+                msg: format!(
+                    "spawnBlocking() expects a function or closure; got {}",
+                    other.type_name()
+                ),
+                span,
+            })
+        }
+    };
 
     Ok(Value::TaskHandle(Arc::new(Mutex::new(handle))))
 }
@@ -111,7 +189,7 @@ pub fn task_join(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     let handle = match &args[0] {
-        Value::TaskHandle(h) => h.lock().unwrap(),
+        Value::TaskHandle(h) => h.lock().unwrap_or_else(|e| e.into_inner()),
         _ => {
             return Err(RuntimeError::TypeError {
                 msg: format!("Expected TaskHandle, got {}", args[0].type_name()),
@@ -134,7 +212,7 @@ pub fn task_status(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     let handle = match &args[0] {
-        Value::TaskHandle(h) => h.lock().unwrap(),
+        Value::TaskHandle(h) => h.lock().unwrap_or_else(|e| e.into_inner()),
         _ => {
             return Err(RuntimeError::TypeError {
                 msg: format!("Expected TaskHandle, got {}", args[0].type_name()),
@@ -162,7 +240,7 @@ pub fn task_cancel(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     let handle = match &args[0] {
-        Value::TaskHandle(h) => h.lock().unwrap(),
+        Value::TaskHandle(h) => h.lock().unwrap_or_else(|e| e.into_inner()),
         _ => {
             return Err(RuntimeError::TypeError {
                 msg: format!("Expected TaskHandle, got {}", args[0].type_name()),
@@ -184,7 +262,7 @@ pub fn task_id(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     let handle = match &args[0] {
-        Value::TaskHandle(h) => h.lock().unwrap(),
+        Value::TaskHandle(h) => h.lock().unwrap_or_else(|e| e.into_inner()),
         _ => {
             return Err(RuntimeError::TypeError {
                 msg: format!("Expected TaskHandle, got {}", args[0].type_name()),
@@ -205,7 +283,7 @@ pub fn task_name(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     let handle = match &args[0] {
-        Value::TaskHandle(h) => h.lock().unwrap(),
+        Value::TaskHandle(h) => h.lock().unwrap_or_else(|e| e.into_inner()),
         _ => {
             return Err(RuntimeError::TypeError {
                 msg: format!("Expected TaskHandle, got {}", args[0].type_name()),
@@ -243,7 +321,7 @@ pub fn join_all(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     for val in handles_array.iter() {
         match val {
             Value::TaskHandle(h) => {
-                handles.push(h.lock().unwrap().clone());
+                handles.push(h.lock().unwrap_or_else(|e| e.into_inner()).clone());
             }
             _ => {
                 return Err(RuntimeError::TypeError {
@@ -314,7 +392,7 @@ pub fn channel_send(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     let sender = match &args[0] {
-        Value::ChannelSender(s) => s.lock().unwrap(),
+        Value::ChannelSender(s) => s.lock().unwrap_or_else(|e| e.into_inner()),
         _ => {
             return Err(RuntimeError::TypeError {
                 msg: format!("Expected ChannelSender, got {}", args[0].type_name()),
@@ -338,7 +416,7 @@ pub fn channel_receive(args: &[Value], span: Span) -> Result<Value, RuntimeError
     }
 
     let receiver = match &args[0] {
-        Value::ChannelReceiver(r) => r.lock().unwrap(),
+        Value::ChannelReceiver(r) => r.lock().unwrap_or_else(|e| e.into_inner()),
         _ => {
             return Err(RuntimeError::TypeError {
                 msg: format!("Expected ChannelReceiver, got {}", args[0].type_name()),
@@ -377,7 +455,7 @@ pub fn channel_select(args: &[Value], span: Span) -> Result<Value, RuntimeError>
     for val in receivers_array.iter() {
         match val {
             Value::ChannelReceiver(r) => {
-                receivers.push(r.lock().unwrap().clone());
+                receivers.push(r.lock().unwrap_or_else(|e| e.into_inner()).clone());
             }
             _ => {
                 return Err(RuntimeError::TypeError {
@@ -401,7 +479,9 @@ pub fn channel_is_closed(args: &[Value], span: Span) -> Result<Value, RuntimeErr
     }
 
     match &args[0] {
-        Value::ChannelSender(s) => Ok(Value::Bool(s.lock().unwrap().is_closed())),
+        Value::ChannelSender(s) => Ok(Value::Bool(
+            s.lock().unwrap_or_else(|e| e.into_inner()).is_closed(),
+        )),
         _ => Err(RuntimeError::TypeError {
             msg: format!("Expected ChannelSender, got {}", args[0].type_name()),
             span,
@@ -551,11 +631,18 @@ pub fn async_mutex_get(args: &[Value], span: Span) -> Result<Value, RuntimeError
         }
     };
 
-    // Block on lock acquisition
-    let value = async_runtime::block_on(async move {
-        let guard = mutex.lock().await;
-        guard.clone()
-    });
+    // Acquire the lock safely from any context (sync or Tokio async).
+    let value = if tokio::runtime::Handle::try_current().is_ok() {
+        tokio::task::block_in_place(|| {
+            let guard = mutex.blocking_lock();
+            guard.clone()
+        })
+    } else {
+        async_runtime::block_on(async move {
+            let guard = mutex.lock().await;
+            guard.clone()
+        })
+    };
 
     Ok(value)
 }
@@ -580,11 +667,18 @@ pub fn async_mutex_set(args: &[Value], span: Span) -> Result<Value, RuntimeError
 
     let new_value = args[1].clone();
 
-    // Block on lock acquisition and update
-    async_runtime::block_on(async move {
-        let mut guard = mutex.lock().await;
-        *guard = new_value;
-    });
+    // Acquire the lock safely from any context (sync or Tokio async).
+    if tokio::runtime::Handle::try_current().is_ok() {
+        tokio::task::block_in_place(|| {
+            let mut guard = mutex.blocking_lock();
+            *guard = new_value;
+        });
+    } else {
+        async_runtime::block_on(async move {
+            let mut guard = mutex.lock().await;
+            *guard = new_value;
+        });
+    }
 
     Ok(Value::Null)
 }

@@ -53,32 +53,56 @@ Lead directs — does not execute. See `gates/session-protection.md`.
 5. **Register block + phases in DB — MANDATORY before any phase work:**
    ```bash
    pt block-add B<N> "Block Title" "Acceptance criteria"    # CREATE BLOCK FIRST
-   pt phase-add B<N> "Phase title"                          # one per phase, repeat for each
-   pt phases B<N>                                           # verify the full list
+   # Then scaffold ALL phases in ONE call — see below
+   pt phases B<N>                                           # verify after
    ```
-   > **MANDATORY: READ `.claude/skills/atlas/phase-template.md` BEFORE POPULATING PHASES.**
-   > That file is the canonical definition of what every phase must contain.
-   > A phase with only a title is INCOMPLETE — it WILL be misexecuted by a cold-start agent.
 
-   **Populate ALL 7 structured fields for EVERY phase — no exceptions.**
-   Use batch syntax (one call instead of seven):
+   > ⚠️ **NEVER use `pt phase-add` in a loop.** It only sets title + description.
+   > `scaffold-phases` sets ALL 9 fields in a single transaction. Always use it.
+
+   **Use `pt scaffold-phases` — one JSON call, all phases, all fields:**
    ```bash
-   pt phase-update B<N>-P01 \
-     deps="none OR prior phase IDs (e.g. B13-P01)" \
-     files="file1.rs (~N lines), file2.rs (~N lines additions)" \
-     do="what to implement — specific, actionable, no ambiguity" \
-     dont="what NOT to do — guard rails: banned commands, out-of-scope, parity traps" \
-     verify="exact cargo check / nextest command to confirm the phase compiled" \
-     ac="specific deliverables that must be TRUE when phase is done" \
-     refs="D-XXX decisions, docs/language/foo.md, related phases"
+   echo '[
+     {
+       "title": "Phase 1 title",
+       "description": "What this phase delivers and why — scope boundary",
+       "deps": "none",
+       "files": "crates/atlas-runtime/src/parser/mod.rs, crates/atlas-runtime/src/token.rs",
+       "do": "What to implement — specific, actionable, no ambiguity",
+       "dont": "What NOT to do — banned commands, out-of-scope, parity traps",
+       "verify": "cargo check -p atlas-runtime",
+       "ac": "Specific deliverables that must be TRUE when phase is done",
+       "refs": "D-XXX, H-XXX, docs/language/foo.md"
+     },
+     {
+       "title": "Phase 2 title",
+       "description": "...",
+       "deps": "B<N>-P01",
+       "files": "crates/atlas-runtime/src/typechecker/expr.rs",
+       "do": "...",
+       "dont": "...",
+       "verify": "cargo check -p atlas-runtime",
+       "ac": "...",
+       "refs": "D-XXX"
+     }
+   ]' | pt scaffold-phases B<N>
    ```
-   Repeat for every phase in the block. This is what separates a real scaffold from a title dump.
-   The 7 fields give future cold-start agents: scope guard, file list, implementation intent,
-   explicit restrictions, verification command, acceptance criteria, and decision context.
-   Without them, the agent guesses — and guesses wrong.
 
-   `block-add` must come before `phase-add` — ensures named block row exists in `pt blocks`.
-   Never start a phase without its DB record.
+   **All 9 fields — all required, no exceptions:**
+   | Field | What it gives cold-start agents |
+   |-------|----------------------------------|
+   | `title` | Phase identity |
+   | `description` | Scope boundary — what's in, what's out |
+   | `deps` | Ordering — what must be done first |
+   | `files` | Exactly where to work — no guessing |
+   | `do` | Implementation checklist |
+   | `dont` | Guardrails — prevents known failure modes |
+   | `verify` | Definition of done — exact command |
+   | `ac` | Acceptance criteria for Gate 6 |
+   | `refs` | Decisions + issues + docs for full context |
+
+   Empty fields = agent guesses = errors and re-work. Fill all 9.
+   `block-add` must come before `scaffold-phases` — block row must exist first.
 6. Scaffold all phase files
 7. Run `pt blocks` to verify block + phase count
 8. **Commit scaffold — no push, no PR**

@@ -198,6 +198,13 @@ impl Atlas {
             // Load extern function declarations (FFI bindings)
             vm.load_extern_declarations(&ast)
                 .map_err(|e| vec![runtime_error_to_diagnostic(e, vec![], None)])?;
+            // Lazily initialise the worker pool on first VM creation so that
+            // task.spawn() / task.sleep() work without manual setup.
+            // Guard: OnceLock inside init_worker_pool prevents double-init.
+            if crate::async_runtime::worker_pool().is_none() {
+                crate::async_runtime::init_worker_pool(0, &vm);
+                crate::async_runtime::init_blocking_pool(&vm);
+            }
             let run_result = vm.run(&self.security);
             *vm_ref = Some(vm);
             run_result
@@ -389,6 +396,13 @@ impl Atlas {
         for module in &modules {
             vm.load_extern_declarations(&module.ast)
                 .map_err(|e| vec![runtime_error_to_diagnostic(e, Vec::new(), None)])?;
+        }
+
+        // Lazily initialise the worker pool so task.spawn() works.
+        // Guard: OnceLock inside init_worker_pool prevents double-init.
+        if crate::async_runtime::worker_pool().is_none() {
+            crate::async_runtime::init_worker_pool(0, &vm);
+            crate::async_runtime::init_blocking_pool(&vm);
         }
 
         match vm.run(&self.security) {

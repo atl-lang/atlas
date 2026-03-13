@@ -333,20 +333,20 @@ fn resolve_array_method(method_name: &str) -> Option<String> {
 fn resolve_hashmap_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         // Read methods
-        "get" => "hashMapGet",
-        "has" | "containsKey" => "hashMapHas",
-        "size" | "len" => "hashMapSize",
-        "isEmpty" => "hashMapIsEmpty",
-        "keys" => "hashMapKeys",
-        "values" => "hashMapValues",
-        "entries" => "hashMapEntries",
-        "forEach" => "hashMapForEach",
-        "map" => "hashMapMap",
-        "filter" => "hashMapFilter",
+        "get" => "mapGet",
+        "has" | "containsKey" => "mapHas",
+        "size" | "len" => "mapSize",
+        "isEmpty" => "mapIsEmpty",
+        "keys" => "mapKeys",
+        "values" => "mapValues",
+        "entries" => "mapEntries",
+        "forEach" => "mapForEach",
+        "map" => "mapMap",
+        "filter" => "mapFilter",
         // Mutating methods — CoW, return new map (write-back required)
-        "set" | "put" => "hashMapPut",
-        "remove" | "delete" => "hashMapRemove",
-        "clear" => "hashMapClear",
+        "set" | "put" => "mapSet",
+        "remove" | "delete" => "mapDelete",
+        "clear" => "mapClear",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -355,14 +355,14 @@ fn resolve_hashmap_method(method_name: &str) -> Option<String> {
 /// Resolve a HashSet method call to its stdlib function name.
 fn resolve_hashset_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
-        "add" => "hashSetAdd",
-        "remove" | "delete" => "hashSetRemove",
-        "has" | "contains" => "hashSetHas",
-        "size" | "len" => "hashSetSize",
-        "isEmpty" => "hashSetIsEmpty",
-        "toArray" => "hashSetToArray",
-        "forEach" => "hashSetForEach",
-        "clear" => "hashSetClear",
+        "add" => "setAdd",
+        "remove" | "delete" => "setRemove",
+        "has" | "contains" => "setHas",
+        "size" | "len" => "setSize",
+        "isEmpty" => "setIsEmpty",
+        "toArray" => "setToArray",
+        "forEach" => "setForEach",
+        "clear" => "setClear",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -890,10 +890,10 @@ pub fn namespace_hint_for_bare_global(name: &str) -> Option<&'static str> {
         "arrayReverse" => Some("arr.reverse()"),
         "arraySort" => Some("arr.sort()"),
         // HashMap bare globals
-        "hashMapGet" => Some("m.get(key)"),
-        "hashMapPut" => Some("m.set(key, val)"),
-        "hashMapRemove" => Some("m.remove(key)"),
-        "hashMapHas" => Some("m.has(key)"),
+        "mapGet" => Some("m.get(key)"),
+        "mapSet" => Some("m.set(key, val)"),
+        "mapDelete" => Some("m.remove(key)"),
+        "mapHas" => Some("m.has(key)"),
         // test
         "assert" => Some("test.assert(cond, msg?)"),
         "assertEqual" => Some("test.equal(a, b, msg?)"),
@@ -965,11 +965,11 @@ pub fn is_array_mutating_pair(func_name: &str) -> bool {
 pub fn is_collection_mutating_simple(func_name: &str) -> bool {
     matches!(
         func_name,
-        "hashMapPut"
-            | "hashMapClear"
-            | "hashSetAdd"
-            | "hashSetRemove"
-            | "hashSetClear"
+        "mapSet"
+            | "mapClear"
+            | "setAdd"
+            | "setRemove"
+            | "setClear"
             | "queueEnqueue"
             | "queueClear"
             | "stackPush"
@@ -980,7 +980,7 @@ pub fn is_collection_mutating_simple(func_name: &str) -> bool {
 /// Returns true if a stdlib function mutates a collection and returns `[extracted_value, new_collection]`.
 /// Covers: HashMap.remove, Queue.dequeue, Stack.pop.
 pub fn is_collection_mutating_pair(func_name: &str) -> bool {
-    matches!(func_name, "hashMapRemove" | "queueDequeue" | "stackPop")
+    matches!(func_name, "mapDelete" | "queueDequeue" | "stackPop")
 }
 
 /// Capitalize first letter of each snake_case segment and join.
@@ -1023,12 +1023,12 @@ pub fn is_callback_intrinsic(func_name: &str) -> bool {
             | "option_and_then"
             | "option_or_else"
             | "option_unwrap_or_else"
-            | "hashMapForEach"
-            | "hashMapMap"
-            | "hashMapFilter"
-            | "hashSetForEach"
-            | "hashSetMap"
-            | "hashSetFilter"
+            | "mapForEach"
+            | "mapMap"
+            | "mapFilter"
+            | "setForEach"
+            | "setMap"
+            | "setFilter"
     )
 }
 

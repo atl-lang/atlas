@@ -1731,15 +1731,15 @@ impl<'a> TypeChecker<'a> {
                         type_args: vec![Type::any_placeholder(), arg_type],
                     };
                 }
-                "hashMapNew" | "hash_map_new" => {
+                "mapNew" | "map_new" => {
                     if !call.args.is_empty() {
                         self.diagnostics.push(
                             error_codes::ARITY_MISMATCH
                                 .emit(call.span)
-                                .arg("name", "hashMapNew")
+                                .arg("name", "mapNew")
                                 .arg("expected", "0")
                                 .arg("found", format!("{}", call.args.len()))
-                                .with_help("hashMapNew() takes no arguments")
+                                .with_help("mapNew() takes no arguments")
                                 .build()
                                 .with_label("argument count mismatch"),
                         );
@@ -1750,17 +1750,15 @@ impl<'a> TypeChecker<'a> {
                         type_args: vec![Type::any_placeholder(), Type::any_placeholder()],
                     };
                 }
-                "hashMapPut" | "hash_map_put" => {
+                "mapSet" | "map_set" => {
                     if call.args.len() != 3 {
                         self.diagnostics.push(
                             error_codes::ARITY_MISMATCH
                                 .emit(call.span)
-                                .arg("name", "hashMapPut")
+                                .arg("name", "mapSet")
                                 .arg("expected", "3")
                                 .arg("found", format!("{}", call.args.len()))
-                                .with_help(
-                                    "hashMapPut(map, key, value) requires exactly 3 arguments",
-                                )
+                                .with_help("mapSet(map, key, value) requires exactly 3 arguments")
                                 .build()
                                 .with_label("argument count mismatch"),
                         );
@@ -1789,7 +1787,7 @@ impl<'a> TypeChecker<'a> {
                                 .arg(
                                     "detail",
                                     format!(
-                                        "hashMapPut expects HashMap for argument 1, found {}",
+                                        "mapSet expects Map for argument 1, found {}",
                                         map_type.display_name()
                                     ),
                                 )
@@ -1816,7 +1814,7 @@ impl<'a> TypeChecker<'a> {
                                     .arg(
                                         "detail",
                                         format!(
-                                            "hashMapPut key type mismatch: expected {}, found {}",
+                                            "mapSet key type mismatch: expected {}, found {}",
                                             expected_key.display_name(),
                                             key_type.display_name()
                                         ),
@@ -1842,7 +1840,7 @@ impl<'a> TypeChecker<'a> {
                                     .arg(
                                         "detail",
                                         format!(
-                                            "hashMapPut value type mismatch: expected {}, found {}",
+                                            "mapSet value type mismatch: expected {}, found {}",
                                             expected_value.display_name(),
                                             value_type.display_name()
                                         ),
@@ -1856,15 +1854,15 @@ impl<'a> TypeChecker<'a> {
 
                     return map_type;
                 }
-                "hashMapGet" | "hash_map_get" => {
+                "mapGet" | "map_get" => {
                     if call.args.len() != 2 {
                         self.diagnostics.push(
                             error_codes::ARITY_MISMATCH
                                 .emit(call.span)
-                                .arg("name", "hashMapGet")
+                                .arg("name", "mapGet")
                                 .arg("expected", "2")
                                 .arg("found", format!("{}", call.args.len()))
-                                .with_help("hashMapGet(map, key) requires exactly 2 arguments")
+                                .with_help("mapGet(map, key) requires exactly 2 arguments")
                                 .build()
                                 .with_label("argument count mismatch"),
                         );
@@ -1895,7 +1893,7 @@ impl<'a> TypeChecker<'a> {
                                 .arg(
                                     "detail",
                                     format!(
-                                        "hashMapGet expects HashMap for argument 1, found {}",
+                                        "mapGet expects Map for argument 1, found {}",
                                         map_type.display_name()
                                     ),
                                 )
@@ -1923,7 +1921,7 @@ impl<'a> TypeChecker<'a> {
                                 .arg(
                                     "detail",
                                     format!(
-                                        "hashMapGet key type mismatch: expected {}, found {}",
+                                        "mapGet key type mismatch: expected {}, found {}",
                                         expected_key.display_name(),
                                         key_type.display_name()
                                     ),
@@ -2015,7 +2013,7 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
                 // H-236: HashSet element-type checking
-                "hashSetAdd" | "hash_set_add" | "hashSetRemove" | "hash_set_remove" => {
+                "setAdd" | "set_add" | "setRemove" | "set_remove" => {
                     if call.args.len() == 2 {
                         let set_type = self.check_expr(&call.args[0]);
                         let elem_type = self.check_expr(&call.args[1]);
@@ -2115,7 +2113,7 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
                 // H-112: hashMapHas / hashSetHas return bool
-                "hashMapHas" | "hash_map_has" | "hashSetHas" | "hash_set_has" => {
+                "mapHas" | "map_has" | "setHas" | "set_has" => {
                     return Type::Bool;
                 }
                 // H-276: Result/Option predicates return bool
