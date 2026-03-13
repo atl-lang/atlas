@@ -18,10 +18,14 @@ mod async_parity;
 mod async_runtime_loops;
 #[path = "async_runtime/compiler.rs"]
 mod compiler;
+#[path = "async_runtime/concurrency.rs"]
+mod concurrency;
 #[path = "async_runtime/interpreter.rs"]
 mod interpreter;
 #[path = "async_runtime/stdlib_wiring.rs"]
 mod stdlib_wiring;
+#[path = "async_runtime/stress.rs"]
+mod stress;
 #[path = "async_runtime/value_future.rs"]
 mod value_future;
 
