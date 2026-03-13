@@ -383,8 +383,8 @@ fn format_value(value: &Value) -> String {
         Value::Array(arr) => {
             format!("[{} items]", arr.len())
         }
-        Value::HashMap(m) => format!("{{HashMap, {} entries}}", m.len()),
-        Value::HashSet(s) => {
+        Value::Map(m) => format!("{{HashMap, {} entries}}", m.len()),
+        Value::Set(s) => {
             format!("{{HashSet, {} items}}", s.inner().len())
         }
         Value::Queue(q) => {

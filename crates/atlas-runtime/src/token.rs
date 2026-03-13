@@ -138,6 +138,10 @@ pub enum TokenKind {
     /// `defer` keyword — deferred execution (LIFO on function exit)
     Defer,
 
+    // Constructor syntax (H-374)
+    /// `new` keyword — collection/object constructor: `new Map<K,V>()`
+    New,
+
     // Operators
     /// `+` (addition)
     Plus,
@@ -288,6 +292,7 @@ impl TokenKind {
             "static" => Some(TokenKind::Static),
             "const" => Some(TokenKind::Const),
             "defer" => Some(TokenKind::Defer),
+            "new" => Some(TokenKind::New),
             _ => None,
         }
     }
@@ -386,6 +391,7 @@ impl TokenKind {
             TokenKind::DocComment => "/// comment",
             TokenKind::Eof => "EOF",
             TokenKind::Error => "error",
+            TokenKind::New => "new",
         }
     }
 }

@@ -682,7 +682,7 @@ pub fn zip_list(zip_path: &Value, span: Span) -> Result<Value, RuntimeError> {
                 HashKey::String(Arc::new("method".to_string())),
                 Value::string(entry.method.clone()),
             );
-            Value::HashMap(crate::value::ValueHashMap::from_atlas(map))
+            Value::Map(crate::value::ValueHashMap::from_atlas(map))
         })
         .collect();
 

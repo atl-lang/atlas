@@ -62,7 +62,7 @@ fn test_path_parse_basic() {
     let result = call_fn("pathParse", &[Value::string("/foo/bar/baz.txt")]).unwrap();
 
     match result {
-        Value::HashMap(map) => {
+        Value::Map(map) => {
             let len = map.len();
             // Check that keys exist (cross-platform checking would be complex)
             assert!(len == 5); // root, dir, base, ext, name
@@ -435,7 +435,7 @@ fn test_path_extension_hidden_file() {
 fn test_path_parse_empty_path() {
     let result = call_fn("pathParse", &[Value::string("")]).unwrap();
     match result {
-        Value::HashMap(_) => {
+        Value::Map(_) => {
             // Should return a valid hashmap even for empty path
         }
         _ => panic!("Expected HashMap result"),
@@ -539,7 +539,7 @@ fn test_path_parsing_workflow() {
 
     // Should have all components
     match parsed {
-        Value::HashMap(map) => {
+        Value::Map(map) => {
             let len = map.len();
             assert_eq!(len, 5);
         }

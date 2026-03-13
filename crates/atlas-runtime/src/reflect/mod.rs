@@ -125,10 +125,10 @@ pub fn get_value_type_info(value: &Value) -> TypeInfo {
             }
         }
 
-        Value::HashMap(_) => {
+        Value::Map(_) => {
             // Generic HashMap type
             TypeInfo {
-                name: "HashMap".to_string(),
+                name: "Map".to_string(),
                 kind: TypeKind::Generic,
                 fields: vec![],
                 parameters: vec![],
@@ -139,10 +139,10 @@ pub fn get_value_type_info(value: &Value) -> TypeInfo {
             }
         }
 
-        Value::HashSet(_) => {
+        Value::Set(_) => {
             // Generic HashSet type
             TypeInfo {
-                name: "HashSet".to_string(),
+                name: "Set".to_string(),
                 kind: TypeKind::Generic,
                 fields: vec![],
                 parameters: vec![],

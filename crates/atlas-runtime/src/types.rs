@@ -203,7 +203,7 @@ impl Type {
             },
         ) = (&self_norm, &other_norm)
         {
-            if n1 == "HashMap" && n2 == "HashMap" {
+            if n1 == "Map" && n2 == "Map" {
                 return a1.len() == a2.len()
                     && a1
                         .iter()

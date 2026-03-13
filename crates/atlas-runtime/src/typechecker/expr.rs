@@ -888,6 +888,40 @@ impl<'a> TypeChecker<'a> {
                 let elem_types: Vec<Type> = elements.iter().map(|e| self.check_expr(e)).collect();
                 Type::Tuple(elem_types)
             }
+            Expr::New {
+                type_name,
+                type_args,
+                args,
+                span: _,
+            } => {
+                // Type-check constructor arguments (usually empty for collections)
+                for arg in args {
+                    self.check_expr(arg);
+                }
+
+                // Resolve type arguments to Type
+                let resolved_args: Vec<crate::types::Type> = type_args
+                    .iter()
+                    .map(|tr| self.resolve_type_ref(tr))
+                    .collect();
+
+                // Surface type names match internal names (D-060 + H-373)
+                let type_name_str = type_name.name.as_str();
+
+                if resolved_args.is_empty() {
+                    // new Map() — no type args, return generic with no type params
+                    crate::types::Type::Generic {
+                        name: type_name_str.to_string(),
+                        type_args: vec![],
+                    }
+                } else {
+                    crate::types::Type::Generic {
+                        name: type_name_str.to_string(),
+                        type_args: resolved_args,
+                    }
+                }
+            }
+
             Expr::Await { expr, span } => {
                 // AT4001: await outside async context
                 if !self.in_async_context {
@@ -1707,7 +1741,7 @@ impl<'a> TypeChecker<'a> {
                         return Type::Unknown;
                     }
                     return Type::Generic {
-                        name: "HashMap".to_string(),
+                        name: "Map".to_string(),
                         type_args: vec![Type::any_placeholder(), Type::any_placeholder()],
                     };
                 }
@@ -2730,11 +2764,11 @@ impl<'a> TypeChecker<'a> {
             // H-260: primitive instance methods (D-021 TypeScript parity)
             Type::Number => Some(crate::method_dispatch::TypeTag::Number),
             Type::Bool => Some(crate::method_dispatch::TypeTag::Bool),
-            Type::Generic { ref name, .. } if name == "HashMap" => {
-                Some(crate::method_dispatch::TypeTag::HashMap)
+            Type::Generic { ref name, .. } if name == "Map" => {
+                Some(crate::method_dispatch::TypeTag::Map)
             }
-            Type::Generic { ref name, .. } if name == "HashSet" => {
-                Some(crate::method_dispatch::TypeTag::HashSet)
+            Type::Generic { ref name, .. } if name == "Set" => {
+                Some(crate::method_dispatch::TypeTag::Set)
             }
             Type::Generic { ref name, .. } if name == "Queue" => {
                 Some(crate::method_dispatch::TypeTag::Queue)

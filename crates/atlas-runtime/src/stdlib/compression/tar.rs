@@ -591,7 +591,7 @@ pub fn tar_list(tar_path: &Value, span: Span) -> Result<Value, RuntimeError> {
                 HashKey::String(Arc::new("type".to_string())),
                 Value::string(entry.entry_type.clone()),
             );
-            Value::HashMap(crate::value::ValueHashMap::from_atlas(map))
+            Value::Map(crate::value::ValueHashMap::from_atlas(map))
         })
         .collect();
 

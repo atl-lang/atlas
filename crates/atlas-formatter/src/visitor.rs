@@ -672,6 +672,33 @@ impl FormatVisitor {
                 self.write("await ");
                 self.visit_expr(expr);
             }
+            Expr::New {
+                type_name,
+                type_args,
+                args,
+                ..
+            } => {
+                self.write("new ");
+                self.write(&type_name.name);
+                if !type_args.is_empty() {
+                    self.write("<");
+                    for (i, ta) in type_args.iter().enumerate() {
+                        if i > 0 {
+                            self.write(", ");
+                        }
+                        self.visit_type_ref(ta);
+                    }
+                    self.write(">");
+                }
+                self.write("(");
+                for (i, arg) in args.iter().enumerate() {
+                    if i > 0 {
+                        self.write(", ");
+                    }
+                    self.visit_expr(arg);
+                }
+                self.write(")");
+            }
         }
     }
 

@@ -79,7 +79,7 @@ fn test_zip_create_store_compression() {
     let list = atlas_zip::zip_list(&output, span()).unwrap();
     if let Value::Array(arr) = list {
         let guard = arr.as_slice();
-        if let Some(Value::HashMap(entry_map)) = guard.first() {
+        if let Some(Value::Map(entry_map)) = guard.first() {
             use atlas_runtime::stdlib::collections::hash::HashKey;
             use std::sync::Arc;
             let method_key = HashKey::String(Arc::new("method".to_string()));

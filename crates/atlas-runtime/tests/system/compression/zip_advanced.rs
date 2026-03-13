@@ -208,7 +208,7 @@ fn test_zip_list_metadata_fields() {
         let guard = arr.as_slice();
         let first = &guard[0];
 
-        if let Value::HashMap(map) = first {
+        if let Value::Map(map) = first {
             use atlas_runtime::stdlib::collections::hash::HashKey;
             use std::sync::Arc;
 

@@ -13,8 +13,8 @@ pub enum TypeTag {
     Array,
     HttpResponse,
     String,
-    HashMap,
-    HashSet,
+    Map,
+    Set,
     Queue,
     Stack,
     Option,
@@ -101,8 +101,8 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::Array => resolve_array_method(method_name),
         TypeTag::HttpResponse => resolve_http_response_method(method_name),
         TypeTag::String => resolve_string_method(method_name),
-        TypeTag::HashMap => resolve_hashmap_method(method_name),
-        TypeTag::HashSet => resolve_hashset_method(method_name),
+        TypeTag::Map => resolve_hashmap_method(method_name),
+        TypeTag::Set => resolve_hashset_method(method_name),
         TypeTag::Queue => resolve_queue_method(method_name),
         TypeTag::Stack => resolve_stack_method(method_name),
         TypeTag::Option => resolve_option_method(method_name),
@@ -178,7 +178,7 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         // Core utilities (print is console.log, not a bare global)
         | "len" | "typeof" | "type_of"
         // Type constructors
-        | "HashMap" | "HashSet" | "Queue" | "Stack"
+        | "Map" | "Set" | "Queue" | "Stack"
     )
 }
 

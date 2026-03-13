@@ -148,14 +148,14 @@ fn test_http_response_headers() {
     let code = r#"
         fn test(): string {
             let result = http.get("https://httpbin.org/get");
-            if (is_err(result)) { return "hashmap"; }
+            if (is_err(result)) { return "map"; }
             let response = unwrap(result);
             let headers = response.headers();
             return typeof(headers);
         }
         test()
     "#;
-    assert_eq!(eval_ok(code), "hashmap");
+    assert_eq!(eval_ok(code), "map");
 }
 
 #[test]

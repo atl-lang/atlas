@@ -393,6 +393,11 @@ fn collect_free_vars_expr(
         Expr::Await { expr, .. } => {
             collect_free_vars_expr(expr, scopes, free_vars);
         }
+        Expr::New { args, .. } => {
+            for arg in args {
+                collect_free_vars_expr(arg, scopes, free_vars);
+            }
+        }
         Expr::Literal(_, _) => {}
     }
 }

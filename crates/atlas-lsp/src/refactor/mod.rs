@@ -287,6 +287,11 @@ fn extract_names_from_expr(expr: &Expr, names: &mut Vec<String>) {
         Expr::Await { expr, .. } => {
             extract_names_from_expr(expr, names);
         }
+        Expr::New { args, .. } => {
+            for arg in args {
+                extract_names_from_expr(arg, names);
+            }
+        }
     }
 }
 

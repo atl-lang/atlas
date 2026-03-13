@@ -132,7 +132,7 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
                 }
             }
         }
-        Value::HashMap(map) => {
+        Value::Map(map) => {
             bytes.push(tags::HASHMAP);
             let entries = map.entries();
             bytes.extend_from_slice(&(entries.len() as u32).to_be_bytes());
@@ -141,7 +141,7 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
                 serialize_value(&v, bytes);
             }
         }
-        Value::HashSet(set) => {
+        Value::Set(set) => {
             bytes.push(tags::HASHSET);
             let elements = set.inner().to_vec();
             bytes.extend_from_slice(&(elements.len() as u32).to_be_bytes());
@@ -560,7 +560,7 @@ pub(super) fn deserialize_value(bytes: &[u8]) -> Result<(Value, usize), String> 
                 cursor += val_consumed;
                 map.insert(key, val);
             }
-            Ok((Value::HashMap(ValueHashMap::from_atlas(map)), 1 + cursor))
+            Ok((Value::Map(ValueHashMap::from_atlas(map)), 1 + cursor))
         }
         tags::HASHSET => {
             if rest.len() < 4 {
@@ -574,7 +574,7 @@ pub(super) fn deserialize_value(bytes: &[u8]) -> Result<(Value, usize), String> 
                 cursor += consumed;
                 set.insert(elem);
             }
-            Ok((Value::HashSet(ValueHashSet::from_atlas(set)), 1 + cursor))
+            Ok((Value::Set(ValueHashSet::from_atlas(set)), 1 + cursor))
         }
 
         tags::QUEUE => {
@@ -794,13 +794,13 @@ mod tests {
             HashKey::String(std::sync::Arc::new("b".to_string())),
             Value::string("two"),
         );
-        let val = Value::HashMap(ValueHashMap::from_atlas(map));
+        let val = Value::Map(ValueHashMap::from_atlas(map));
 
         let mut bytes = Vec::new();
         serialize_value(&val, &mut bytes);
         let (result, consumed) = deserialize_value(&bytes).unwrap();
         assert_eq!(consumed, bytes.len());
-        if let Value::HashMap(result_map) = result {
+        if let Value::Map(result_map) = result {
             let len = result_map.len();
             assert_eq!(len, 2);
             let found = result_map

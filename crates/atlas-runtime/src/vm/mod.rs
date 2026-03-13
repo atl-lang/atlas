@@ -388,7 +388,7 @@ impl VM {
 
     fn struct_name_for_value(&self, value: &Value) -> Option<&str> {
         match value {
-            Value::HashMap(map) => {
+            Value::Map(map) => {
                 let key = Arc::as_ptr(map.arc()) as usize;
                 self.struct_type_names.get(&key).map(|name| name.as_str())
             }
@@ -1680,7 +1680,7 @@ impl VM {
                         crate::stdlib::collections::hash::HashKey::from_value(&key_val, span)?;
 
                     match map_val {
-                        Value::HashMap(map) => match map.get(&key).cloned() {
+                        Value::Map(map) => match map.get(&key).cloned() {
                             Some(value) => self.push(value),
                             None => {
                                 let field = match key_val {
@@ -1717,7 +1717,7 @@ impl VM {
                     };
 
                     match &mut map_val {
-                        Value::HashMap(map) => {
+                        Value::Map(map) => {
                             let existing =
                                 map.get(&key)
                                     .cloned()
@@ -1911,7 +1911,7 @@ impl VM {
                         atlas_map.insert(key, value);
                     }
 
-                    self.push(Value::HashMap(ValueHashMap::from_atlas(atlas_map)));
+                    self.push(Value::Map(ValueHashMap::from_atlas(atlas_map)));
                 }
                 Opcode::Struct => {
                     use crate::stdlib::collections::hash::HashKey;
@@ -1949,7 +1949,7 @@ impl VM {
 
                     let map = ValueHashMap::from_atlas(atlas_map);
                     self.register_struct_type(&map, &struct_name);
-                    self.push(Value::HashMap(map));
+                    self.push(Value::Map(map));
                 }
 
                 // ===== Stack Manipulation =====
@@ -3764,7 +3764,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.entries(),
+            Value::Map(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapForEach() first argument must be HashMap".to_string(),
@@ -3806,7 +3806,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.entries(),
+            Value::Map(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapMap() first argument must be HashMap".to_string(),
@@ -3835,7 +3835,7 @@ impl VM {
             result_map.insert(key, new_value);
         }
 
-        Ok(Value::HashMap(ValueHashMap::from_atlas(result_map)))
+        Ok(Value::Map(ValueHashMap::from_atlas(result_map)))
     }
 
     fn vm_intrinsic_hashmap_filter(
@@ -3851,7 +3851,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.entries(),
+            Value::Map(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapFilter() first argument must be HashMap".to_string(),
@@ -3894,7 +3894,7 @@ impl VM {
             }
         }
 
-        Ok(Value::HashMap(ValueHashMap::from_atlas(result_map)))
+        Ok(Value::Map(ValueHashMap::from_atlas(result_map)))
     }
 
     fn vm_intrinsic_hashset_for_each(
@@ -3910,7 +3910,7 @@ impl VM {
         }
 
         let set = match &args[0] {
-            Value::HashSet(s) => s.inner().to_vec(),
+            Value::Set(s) => s.inner().to_vec(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashSetForEach() first argument must be HashSet".to_string(),
@@ -3952,7 +3952,7 @@ impl VM {
         }
 
         let set = match &args[0] {
-            Value::HashSet(s) => s.inner().to_vec(),
+            Value::Set(s) => s.inner().to_vec(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashSetMap() first argument must be HashSet".to_string(),
@@ -3997,7 +3997,7 @@ impl VM {
         }
 
         let set = match &args[0] {
-            Value::HashSet(s) => s.inner().to_vec(),
+            Value::Set(s) => s.inner().to_vec(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashSetFilter() first argument must be HashSet".to_string(),
@@ -4037,7 +4037,7 @@ impl VM {
             }
         }
 
-        Ok(Value::HashSet(ValueHashSet::from_atlas(result_set)))
+        Ok(Value::Set(ValueHashSet::from_atlas(result_set)))
     }
 
     /// Regex intrinsic: Replace first match using callback (VM version)
@@ -4135,7 +4135,7 @@ impl VM {
                 );
             }
 
-            let match_value = Value::HashMap(ValueHashMap::from_atlas(match_map));
+            let match_value = Value::Map(ValueHashMap::from_atlas(match_map));
 
             // Call callback with match data
             let replacement_value =
@@ -4271,7 +4271,7 @@ impl VM {
                 );
             }
 
-            let match_value = Value::HashMap(ValueHashMap::from_atlas(match_map));
+            let match_value = Value::Map(ValueHashMap::from_atlas(match_map));
 
             // Call callback with match data
             let replacement_value =

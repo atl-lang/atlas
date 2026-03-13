@@ -227,8 +227,8 @@ fn type_of_impl(args: &[Value], span: Span, name: &str) -> Result<Value, Runtime
             Value::Closure(_) => "function",
             Value::Option(_) => "option",
             Value::JsonValue(json) => json_type_name(json),
-            Value::HashMap(_) => "record",
-            Value::HashSet(_) => "record",
+            Value::Map(_) => "map",
+            Value::Set(_) => "set",
             Value::Queue(_) => "record",
             Value::Stack(_) => "record",
             Value::Range { .. } => "range",
@@ -383,7 +383,7 @@ pub fn has_field(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
                 .map(|obj| obj.contains_key(field))
                 .unwrap_or(false),
         )),
-        Value::HashMap(map) => {
+        Value::Map(map) => {
             let key = HashKey::from_value(&Value::string(field), span)?;
             Ok(Value::Bool(map.contains_key(&key)))
         }
@@ -413,7 +413,7 @@ pub fn has_method(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
                 .map(|obj| obj.contains_key(field))
                 .unwrap_or(false),
         )),
-        Value::HashMap(map) => {
+        Value::Map(map) => {
             let key = HashKey::from_value(&Value::string(field), span)?;
             Ok(Value::Bool(map.contains_key(&key)))
         }
@@ -446,7 +446,7 @@ pub fn has_tag(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
             }
             Ok(Value::Bool(false))
         }
-        Value::HashMap(map) => {
+        Value::Map(map) => {
             let key = HashKey::from_value(&Value::string("tag"), span)?;
             if let Some(Value::String(value)) = map.get(&key).cloned() {
                 return Ok(Value::Bool(value.as_ref() == tag_value));
@@ -508,8 +508,8 @@ pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::Option(None) => "None".to_string(),
         Value::Result(Ok(v)) => format!("Ok({})", value_to_display_string(v)),
         Value::Result(Err(e)) => format!("Err({})", value_to_display_string(e)),
-        Value::HashMap(_) => "[HashMap]".to_string(),
-        Value::HashSet(_) => "[HashSet]".to_string(),
+        Value::Map(_) => "[Map]".to_string(),
+        Value::Set(_) => "[Set]".to_string(),
         Value::Queue(_) => "[Queue]".to_string(),
         Value::Stack(_) => "[Stack]".to_string(),
         Value::Range { .. } => value_to_display_string(&args[0]),
@@ -620,8 +620,8 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         | Value::JsonValue(_)
         | Value::Option(_)
         | Value::Result(_)
-        | Value::HashMap(_)
-        | Value::HashSet(_)
+        | Value::Map(_)
+        | Value::Set(_)
         | Value::Queue(_)
         | Value::Stack(_)
         | Value::Range { .. }
@@ -776,8 +776,8 @@ fn type_name(value: &Value) -> &str {
         Value::JsonValue(_) => "json",
         Value::Option(_) => "option",
         Value::Result(_) => "result",
-        Value::HashMap(_) => "hashmap",
-        Value::HashSet(_) => "hashset",
+        Value::Map(_) => "map",
+        Value::Set(_) => "set",
         Value::Queue(_) => "queue",
         Value::Stack(_) => "stack",
         Value::Range { .. } => "range",
@@ -821,8 +821,8 @@ fn value_to_display_string(value: &Value) -> String {
         Value::JsonValue(_) => "[JSON]".to_string(),
         Value::Option(_) => "[Option]".to_string(),
         Value::Result(_) => "[Result]".to_string(),
-        Value::HashMap(_) => "[HashMap]".to_string(),
-        Value::HashSet(_) => "[HashSet]".to_string(),
+        Value::Map(_) => "[Map]".to_string(),
+        Value::Set(_) => "[Set]".to_string(),
         Value::Queue(_) => "[Queue]".to_string(),
         Value::Stack(_) => "[Stack]".to_string(),
         Value::Range { .. } => "[Range]".to_string(),

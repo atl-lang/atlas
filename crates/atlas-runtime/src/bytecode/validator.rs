@@ -322,7 +322,7 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::SliceTo => "SliceTo",
         Opcode::SliceFull => "SliceFull",
         Opcode::Range => "Range",
-        Opcode::HashMap => "HashMap",
+        Opcode::HashMap => "Map",
         Opcode::Struct => "Struct",
         Opcode::Pop => "Pop",
         Opcode::Dup => "Dup",

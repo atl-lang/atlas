@@ -138,8 +138,8 @@ fn extract_hashset_ref<'a>(
     span: Span,
 ) -> Result<&'a ValueHashSet, RuntimeError> {
     match value {
-        Value::HashSet(set) => Ok(set),
-        _ => Err(stdlib_arg_error(func_name, "HashSet", value, span)),
+        Value::Set(set) => Ok(set),
+        _ => Err(stdlib_arg_error(func_name, "Set", value, span)),
     }
 }
 
@@ -148,7 +148,7 @@ pub fn new_set(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
         return Err(stdlib_arity_error("HashSet.new", 0, args.len(), span));
     }
-    Ok(Value::HashSet(ValueHashSet::new()))
+    Ok(Value::Set(ValueHashSet::new()))
 }
 
 /// Create HashSet from array of hashable elements
@@ -175,7 +175,7 @@ pub fn from_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         set.insert(key);
     }
 
-    Ok(Value::HashSet(ValueHashSet::from_atlas(set)))
+    Ok(Value::Set(ValueHashSet::from_atlas(set)))
 }
 
 /// Add element to HashSet. Returns modified HashSet (CoW).
@@ -187,7 +187,7 @@ pub fn add(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let key = HashKey::from_value(&args[1], span)?;
 
     let mut set_val = args[0].clone();
-    if let Value::HashSet(ref mut s) = set_val {
+    if let Value::Set(ref mut s) = set_val {
         s.inner_mut().insert(key);
     }
     Ok(set_val)
@@ -203,15 +203,10 @@ pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let key = HashKey::from_value(&args[1], span)?;
 
     let mut set_val = args[0].clone();
-    if let Value::HashSet(ref mut s) = set_val {
+    if let Value::Set(ref mut s) = set_val {
         s.inner_mut().remove(&key);
     } else {
-        return Err(stdlib_arg_error(
-            "HashSet.remove",
-            "HashSet",
-            &args[0],
-            span,
-        ));
+        return Err(stdlib_arg_error("HashSet.remove", "Set", &args[0], span));
     }
 
     Ok(set_val)
@@ -255,7 +250,7 @@ pub fn clear(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     let mut set_val = args[0].clone();
-    if let Value::HashSet(ref mut s) = set_val {
+    if let Value::Set(ref mut s) = set_val {
         s.inner_mut().clear();
     }
     Ok(set_val)
@@ -271,7 +266,7 @@ pub fn union(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let set_b = extract_hashset_ref("HashSet.union", &args[1], span)?;
 
     let result = set_a.inner().union(set_b.inner());
-    Ok(Value::HashSet(ValueHashSet::from_atlas(result)))
+    Ok(Value::Set(ValueHashSet::from_atlas(result)))
 }
 
 /// Intersection of two HashSets
@@ -289,7 +284,7 @@ pub fn intersection(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let set_b = extract_hashset_ref("HashSet.intersection", &args[1], span)?;
 
     let result = set_a.inner().intersection(set_b.inner());
-    Ok(Value::HashSet(ValueHashSet::from_atlas(result)))
+    Ok(Value::Set(ValueHashSet::from_atlas(result)))
 }
 
 /// Difference of two HashSets (elements in A but not in B)
@@ -307,7 +302,7 @@ pub fn difference(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let set_b = extract_hashset_ref("HashSet.difference", &args[1], span)?;
 
     let result = set_a.inner().difference(set_b.inner());
-    Ok(Value::HashSet(ValueHashSet::from_atlas(result)))
+    Ok(Value::Set(ValueHashSet::from_atlas(result)))
 }
 
 /// Symmetric difference of two HashSets (elements in exactly one set)
@@ -325,7 +320,7 @@ pub fn symmetric_difference(args: &[Value], span: Span) -> Result<Value, Runtime
     let set_b = extract_hashset_ref("HashSet.symmetricDifference", &args[1], span)?;
 
     let result = set_a.inner().symmetric_difference(set_b.inner());
-    Ok(Value::HashSet(ValueHashSet::from_atlas(result)))
+    Ok(Value::Set(ValueHashSet::from_atlas(result)))
 }
 
 /// Check if set A is subset of set B

@@ -14,12 +14,12 @@
 //! ### Copy-on-write (cheap to clone via refcount, independent on mutation)
 //! - `String(Arc<String>)` — immutable interned string, shared until reassigned
 //! - `Array(ValueArray)` — `Arc<Vec<Value>>` with `Arc::make_mut` CoW
-//! - `HashSet(ValueHashSet)` — `Arc<AtlasHashSet>` with CoW
+//! - `Set(ValueHashSet)` — `Arc<AtlasHashSet>` with CoW
 //! - `Queue(ValueQueue)` — `Arc<VecDeque<Value>>` with CoW
 //! - `Stack(ValueStack)` — `Arc<Vec<Value>>` with CoW
 //!
 //! ### Copy-on-write (continued)
-//! - `HashMap(ValueHashMap)` — `Arc<AtlasHashMap>` with `Arc::make_mut` CoW
+//! - `Map(ValueHashMap)` — `Arc<AtlasHashMap>` with `Arc::make_mut` CoW
 //!
 //! ### Explicit reference semantics (opt-in only)
 //! - `SharedValue(Arc<Mutex<Value>>)` — mutations visible to all aliases.
@@ -493,9 +493,9 @@ pub enum Value {
     /// Result value (Ok(value) or Err(error))
     Result(Result<Box<Value>, Box<Value>>),
     /// HashMap collection (key-value pairs)
-    HashMap(ValueHashMap),
+    Map(ValueHashMap),
     /// HashSet collection (unique values)
-    HashSet(ValueHashSet),
+    Set(ValueHashSet),
     /// Queue collection (FIFO)
     Queue(ValueQueue),
     /// Stack collection (LIFO)
@@ -619,8 +619,8 @@ impl Value {
             Value::JsonValue(_) => "json",
             Value::Option(_) => "Option",
             Value::Result(_) => "Result",
-            Value::HashMap(_) => "hashmap",
-            Value::HashSet(_) => "hashset",
+            Value::Map(_) => "map",
+            Value::Set(_) => "set",
             Value::Queue(_) => "queue",
             Value::Stack(_) => "stack",
             Value::Range { .. } => "range",
@@ -686,8 +686,8 @@ impl PartialEq for Value {
             (Value::Bool(a), Value::Bool(b)) => a == b,
             (Value::Null, Value::Null) => true,
             (Value::Array(a), Value::Array(b)) => a == b,
-            (Value::HashMap(a), Value::HashMap(b)) => a == b,
-            (Value::HashSet(a), Value::HashSet(b)) => a == b,
+            (Value::Map(a), Value::Map(b)) => a == b,
+            (Value::Set(a), Value::Set(b)) => a == b,
             (Value::Queue(a), Value::Queue(b)) => a == b,
             (Value::Stack(a), Value::Stack(b)) => a == b,
             (
@@ -776,8 +776,8 @@ impl fmt::Display for Value {
                 Ok(val) => write!(f, "Ok({})", val),
                 Err(err) => write!(f, "Err({})", err),
             },
-            Value::HashMap(map) => write!(f, "<HashMap size={}>", map.len()),
-            Value::HashSet(set) => write!(f, "<HashSet size={}>", set.inner().len()),
+            Value::Map(map) => write!(f, "<Map size={}>", map.len()),
+            Value::Set(set) => write!(f, "<Set size={}>", set.inner().len()),
             Value::Queue(queue) => write!(f, "<Queue size={}>", queue.inner().len()),
             Value::Stack(stack) => write!(f, "<Stack size={}>", stack.inner().len()),
             Value::Range {
@@ -862,8 +862,8 @@ impl fmt::Debug for Value {
             Value::JsonValue(json) => write!(f, "JsonValue({:?})", json),
             Value::Option(opt) => write!(f, "Option({:?})", opt),
             Value::Result(res) => write!(f, "Result({:?})", res),
-            Value::HashMap(map) => write!(f, "HashMap(size={})", map.len()),
-            Value::HashSet(set) => write!(f, "HashSet(size={})", set.inner().len()),
+            Value::Map(map) => write!(f, "Map(size={})", map.len()),
+            Value::Set(set) => write!(f, "Set(size={})", set.inner().len()),
             Value::Queue(queue) => write!(f, "Queue(size={})", queue.inner().len()),
             Value::Stack(stack) => write!(f, "Stack(size={})", stack.inner().len()),
             Value::Range {
