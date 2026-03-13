@@ -523,6 +523,7 @@ fn resolve_file_ns_method(method_name: &str) -> Option<String> {
         "filterEntries" => "fileNsFilterEntries",
         "sortEntries" => "fileNsSortEntries",
         // Metadata
+        "info" => "fileNsInfo",
         "size" => "fileNsSize",
         "mtime" => "fileNsMtime",
         "ctime" => "fileNsCtime",

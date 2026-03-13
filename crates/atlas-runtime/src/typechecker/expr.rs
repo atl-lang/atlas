@@ -73,7 +73,7 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
             "dirname" | "basename" | "extension" | "extname" | "normalize" | "absolute" | "parent"
             | "canonical" | "exists" | "isAbsolute" | "isRelative",
         ) => Some(vec![str.clone()]),
-        ("path", "join") => Some(vec![str.clone(), str.clone()]),
+        ("path", "join") => None, // variadic: accepts 1+ string args
         ("path", "homedir" | "cwd" | "tempdir" | "separator") => Some(vec![]),
         // DateTime namespace
         ("datetime", "now" | "utc") => Some(vec![]),
@@ -202,6 +202,7 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         ("file", "exists" | "isDir" | "isFile" | "isSymlink") => Type::Bool,
         ("file", "readDir" | "walk" | "sortEntries") => Type::Array(Box::new(Type::String)),
         ("file", "filterEntries") => Type::Array(Box::new(Type::String)),
+        ("file", "info") => Type::JsonValue,
         ("file", "size" | "inode") => Type::Number,
         ("file", "mtime" | "ctime" | "atime" | "permissions" | "readLink") => Type::String,
         ("file", "tempFile" | "tempDir") => Type::String,

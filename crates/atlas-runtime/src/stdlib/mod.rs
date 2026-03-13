@@ -925,6 +925,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("fileNsCreateDir", |a, s, sc, _| io::create_dir(a, s, sc));
         m.insert("fileNsRemoveDir", |a, s, sc, _| io::remove_dir(a, s, sc));
         m.insert("fileInfo", |a, s, sc, _| io::file_info(a, s, sc));
+        m.insert("fileNsInfo", |a, s, sc, _| io::file_info(a, s, sc));
         m.insert("pathJoin", |a, s, sc, _| io::path_join(a, s, sc));
 
         // ====================================================================
