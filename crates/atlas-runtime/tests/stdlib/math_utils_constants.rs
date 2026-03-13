@@ -84,7 +84,11 @@ fn test_random_in_range() {
     let result = eval_ok("Math.random();");
     match result {
         Value::Number(n) => {
-            assert!(n >= 0.0 && n < 1.0, "Math.random() should return [0, 1), got {}", n);
+            assert!(
+                n >= 0.0 && n < 1.0,
+                "Math.random() should return [0, 1), got {}",
+                n
+            );
         }
         _ => panic!("Expected number"),
     }
@@ -92,7 +96,8 @@ fn test_random_in_range() {
 
 #[test]
 fn test_random_multiple_calls_differ() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         let r1 = Math.random();
         let r2 = Math.random();
         let r3 = Math.random();
@@ -101,7 +106,8 @@ fn test_random_multiple_calls_differ() {
         } else {
             return true;
         }
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(true));
 }
 

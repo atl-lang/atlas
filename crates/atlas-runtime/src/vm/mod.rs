@@ -930,15 +930,12 @@ impl VM {
                         });
                     }
 
-                    // Extend stack if needed (for local variables not yet initialized)
+                    // Extend stack if needed (for local variables not yet initialized).
+                    // The outer `index >= local_count` guard above already ensures
+                    // absolute_index < base + local_count, so extension is always
+                    // within the declared local area.
                     if absolute_index >= self.stack.len() {
-                        // Bounded extension: only up to the declared local_count
                         let needed = absolute_index - self.stack.len() + 1;
-                        if base + local_count > self.stack.len() + needed {
-                            return Err(RuntimeError::StackUnderflow {
-                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
-                            });
-                        }
                         for _ in 0..needed {
                             self.push(Value::Null);
                         }
@@ -3055,6 +3052,11 @@ impl VM {
             "every" => self.vm_intrinsic_every(args, span),
             "sort" => self.vm_intrinsic_sort(args, span),
             "sortBy" | "sort_by" => self.vm_intrinsic_sort_by(args, span),
+            // Option intrinsics (callback-based, H-328)
+            "option_map" => self.vm_intrinsic_option_map(args, span),
+            "option_and_then" => self.vm_intrinsic_option_and_then(args, span),
+            "option_or_else" => self.vm_intrinsic_option_or_else(args, span),
+            "option_unwrap_or_else" => self.vm_intrinsic_option_unwrap_or_else(args, span),
             // Result intrinsics (callback-based)
             "result_map" => self.vm_intrinsic_result_map(args, span),
             "result_map_err" => self.vm_intrinsic_result_map_err(args, span),
@@ -3679,6 +3681,153 @@ impl VM {
     // ========================================================================
     // Result Intrinsics (Callback-based operations) - VM versions
     // ========================================================================
+
+    // ── Option intrinsics (H-328) ─────────────────────────────────────────────
+
+    fn vm_intrinsic_option_map(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "option_map() expects 2 arguments (option, transform_fn)".to_string(),
+                span,
+            });
+        }
+        let transform_fn = match &args[1] {
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "option_map() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+        match &args[0] {
+            Value::Option(Some(val)) => {
+                let transformed =
+                    self.vm_call_function_value(transform_fn, vec![(**val).clone()], span)?;
+                Ok(Value::Option(Some(Box::new(transformed))))
+            }
+            Value::Option(None) => Ok(Value::Option(None)),
+            _ => Err(RuntimeError::TypeError {
+                msg: "option_map() first argument must be Option".to_string(),
+                span,
+            }),
+        }
+    }
+
+    fn vm_intrinsic_option_and_then(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "option_and_then() expects 2 arguments (option, next_fn)".to_string(),
+                span,
+            });
+        }
+        let next_fn = match &args[1] {
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "option_and_then() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+        match &args[0] {
+            Value::Option(Some(val)) => {
+                // next_fn should return an Option
+                self.vm_call_function_value(next_fn, vec![(**val).clone()], span)
+            }
+            Value::Option(None) => Ok(Value::Option(None)),
+            _ => Err(RuntimeError::TypeError {
+                msg: "option_and_then() first argument must be Option".to_string(),
+                span,
+            }),
+        }
+    }
+
+    fn vm_intrinsic_option_or_else(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "option_or_else() expects 2 arguments (option, fallback_fn)".to_string(),
+                span,
+            });
+        }
+        let fallback_fn = match &args[1] {
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "option_or_else() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+        match &args[0] {
+            Value::Option(Some(_)) => Ok(args[0].clone()),
+            Value::Option(None) => {
+                // fallback_fn() should return an Option
+                self.vm_call_function_value(fallback_fn, vec![], span)
+            }
+            _ => Err(RuntimeError::TypeError {
+                msg: "option_or_else() first argument must be Option".to_string(),
+                span,
+            }),
+        }
+    }
+
+    fn vm_intrinsic_option_unwrap_or_else(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "option_unwrap_or_else() expects 2 arguments (option, default_fn)".to_string(),
+                span,
+            });
+        }
+        let default_fn = match &args[1] {
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "option_unwrap_or_else() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+        match &args[0] {
+            Value::Option(Some(val)) => Ok((**val).clone()),
+            Value::Option(None) => {
+                // default_fn() should return a T
+                self.vm_call_function_value(default_fn, vec![], span)
+            }
+            _ => Err(RuntimeError::TypeError {
+                msg: "option_unwrap_or_else() first argument must be Option".to_string(),
+                span,
+            }),
+        }
+    }
 
     fn vm_intrinsic_result_map(
         &mut self,
@@ -4435,7 +4584,8 @@ impl VM {
                 // User-defined function - execute via VM
                 let saved_ip = self.ip;
                 let saved_frame_depth = self.frames.len();
-                let stack_base = self.stack.len();
+                // Record the clean stack top BEFORE pushing anything. We truncate here at the end.
+                let original_stack_len = self.stack.len();
                 let arg_count = args.len();
 
                 // Verify arity before pushing (B39-P05: support default params)
@@ -4453,6 +4603,13 @@ impl VM {
                         span,
                     });
                 }
+
+                // Push a sentinel so that the Return opcode's "pop function value" step
+                // consumes it rather than a real outer-scope stack item. Return always pops
+                // one extra slot (the function value) which is present in the normal
+                // execute_call path but absent here.
+                self.push(Value::Null); // sentinel — consumed by Return's extra pop
+                let stack_base = self.stack.len(); // args start here
 
                 // Push arguments onto stack (they become the function's locals)
                 for arg in args {
@@ -4489,10 +4646,11 @@ impl VM {
 
                 // Get the return value from stack
                 let return_value = result.unwrap_or(Value::Null);
-                // Clean up stack to original base
-                self.stack.truncate(stack_base);
+                // Restore the stack to exactly where it was before we started — this removes
+                // the sentinel, args, and the return_value that Return pushed.
+                self.stack.truncate(original_stack_len);
                 #[cfg(debug_assertions)]
-                self.value_origins.truncate(stack_base);
+                self.value_origins.truncate(original_stack_len);
 
                 // Restore IP
                 self.ip = saved_ip;
@@ -4505,7 +4663,8 @@ impl VM {
                 let upvalues = closure.upvalues.clone();
                 let saved_ip = self.ip;
                 let saved_frame_depth = self.frames.len();
-                let stack_base = self.stack.len();
+                // Record the clean stack top BEFORE pushing anything. We truncate here at the end.
+                let original_stack_len = self.stack.len();
                 let arg_count = args.len();
 
                 // Verify arity (B39-P05: support default params)
@@ -4523,6 +4682,10 @@ impl VM {
                         span,
                     });
                 }
+
+                // Push a sentinel so that Return's extra "pop function value" step consumes it.
+                self.push(Value::Null); // sentinel
+                let stack_base = self.stack.len(); // args start here
 
                 for arg in args {
                     self.push(arg);
@@ -4553,9 +4716,10 @@ impl VM {
 
                 let result = self.execute_loop(Some(saved_frame_depth))?;
                 let return_value = result.unwrap_or(Value::Null);
-                self.stack.truncate(stack_base);
+                // Restore the stack to exactly where it was before we started.
+                self.stack.truncate(original_stack_len);
                 #[cfg(debug_assertions)]
-                self.value_origins.truncate(stack_base);
+                self.value_origins.truncate(original_stack_len);
 
                 self.ip = saved_ip;
                 Ok(return_value)

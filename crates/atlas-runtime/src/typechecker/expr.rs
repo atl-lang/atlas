@@ -3264,9 +3264,12 @@ impl<'a> TypeChecker<'a> {
                 }
             }
 
-            // For callback-based array methods whose return type depends on the callback's
+            // For callback-based ARRAY methods whose return type depends on the callback's
             // return type (map, flatMap), infer the element type from the callback arg.
-            let return_type = if matches!(method_name.as_str(), "map" | "flatMap") {
+            // Only applies to Array targets — Option/Result also have "map" but different semantics.
+            let return_type = if matches!(method_name.as_str(), "map" | "flatMap")
+                && matches!(target_norm, Type::Array(_))
+            {
                 if let Some(args) = &member.args {
                     if let Some(callback_arg) = args.first() {
                         let cb_type = self.check_expr(callback_arg);

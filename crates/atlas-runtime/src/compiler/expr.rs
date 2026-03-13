@@ -1077,6 +1077,25 @@ impl Compiler {
         // Compile scrutinee (leaves value on stack as a temporary)
         self.compile_expr(&match_expr.scrutinee)?;
 
+        // Reserve a hidden local slot for the scrutinee value on the stack.
+        //
+        // Without this, the first pattern-variable binding in any complex pattern
+        // (tuple, struct, array, constructor) gets local_idx = N where N is the
+        // current locals count. SetLocal(N) then writes to stack[base+N], which is
+        // exactly where the scrutinee sits. This silently corrupts the scrutinee
+        // so that subsequent arms operate on the wrong value (e.g. TupleGet on 0).
+        //
+        // By pushing a placeholder local BEFORE the arms loop, pattern vars start
+        // at local_idx = N+1 and cannot alias the scrutinee slot.
+        let pre_match_locals = self.locals.len();
+        self.push_local(Local {
+            name: "$match_scrutinee".to_string(),
+            depth: self.scope_depth,
+            mutable: false,
+            scoped_name: None,
+            drop_type: None,
+        });
+
         // Temp global name for saving the match result during cleanup
         let temp_name = "$match_result";
         let temp_name_idx = self.bytecode.add_constant(Value::string(temp_name));
@@ -1171,6 +1190,9 @@ impl Compiler {
         for jump_offset in arm_end_jumps {
             self.bytecode.patch_jump(jump_offset);
         }
+
+        // Remove the hidden scrutinee placeholder local added before the loop.
+        self.locals.truncate(pre_match_locals);
 
         // Stack: [body_result] — match expression produces exactly one value
         Ok(())

@@ -1,12 +1,11 @@
 {
-  "committed_at": "2026-03-13T13:46:27Z",
-  "commit": "33343c25",
+  "committed_at": "2026-03-13T19:53:36Z",
+  "commit": "d39e3e07",
   "changed_files": [
-  "crates/atlas-runtime/src/vm/mod.rs",
-  "crates/atlas-runtime/tests/advanced_features.rs"
+  "crates/atlas-runtime/src/compiler/stmt.rs"
 ],
   "domains": [
-  "vm"
+  "compiler"
 ],
   "relevant_docs": [
   "docs/known-issues.md"

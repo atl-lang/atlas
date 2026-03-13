@@ -406,7 +406,11 @@ fn resolve_option_method(method_name: &str) -> Option<String> {
         "expect" => "expect", // H-268
         "isSome" => "isSome",
         "isNone" => "isNone",
-        "map" => "optionMap",
+        // Callback-based intrinsics (H-328)
+        "map" => "option_map",
+        "andThen" => "option_and_then",
+        "orElse" => "option_or_else",
+        "unwrapOrElse" => "option_unwrap_or_else",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -420,8 +424,13 @@ fn resolve_result_method(method_name: &str) -> Option<String> {
         "expect" => "expect", // H-268
         "isOk" => "isOk",
         "isErr" => "isErr",
-        "map" => "resultMap",
-        "mapErr" => "resultMapErr",
+        // Callback-based intrinsics (H-328)
+        "map" => "result_map",
+        "mapErr" => "result_map_err",
+        "andThen" => "result_and_then",
+        "orElse" => "result_or_else",
+        // Error context wrapping (H-329)
+        "context" => "result_context",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -1008,8 +1017,12 @@ pub fn is_callback_intrinsic(func_name: &str) -> bool {
             | "every"
             | "sort"
             | "sortBy"
-            | "resultMap"
-            | "resultMapErr"
+            | "result_map"
+            | "result_map_err"
+            | "option_map"
+            | "option_and_then"
+            | "option_or_else"
+            | "option_unwrap_or_else"
             | "hashMapForEach"
             | "hashMapMap"
             | "hashMapFilter"

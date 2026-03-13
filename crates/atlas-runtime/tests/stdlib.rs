@@ -79,6 +79,8 @@ mod integration;
 mod io;
 #[path = "stdlib/json.rs"]
 mod json;
+#[path = "stdlib/option_result_chaining.rs"]
+mod option_result_chaining;
 #[path = "stdlib/parity.rs"]
 mod parity;
 #[path = "stdlib/real_world/mod.rs"]

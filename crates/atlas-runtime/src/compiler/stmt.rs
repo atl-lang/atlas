@@ -282,11 +282,14 @@ impl Compiler {
             drop_type: None, // temp local, tuple itself doesn't need drop
         });
 
+        // GetLocal index must be function-relative (offset from current_function_base).
+        let tuple_rel_idx = (tuple_local_idx - self.current_function_base) as u16;
+
         // For each binding: load tuple via GetLocal, extract element, register as local.
         // Stack after all iterations: [tuple, elem0, elem1, ...]
         for (idx, name) in d.names.iter().enumerate() {
             self.bytecode.emit(Opcode::GetLocal, d.span);
-            self.bytecode.emit_u16(tuple_local_idx as u16);
+            self.bytecode.emit_u16(tuple_rel_idx);
             self.bytecode.emit(Opcode::TupleGet, d.span);
             self.bytecode.emit_u16(idx as u16);
             self.push_local(Local {
