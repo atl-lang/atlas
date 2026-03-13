@@ -143,18 +143,18 @@ fn stdlib_signature(func_name: &str) -> Option<&'static str> {
         // JSON — B23: bare globals removed. Use Json.* namespace.
         "formatJSON" => Some("formatJSON(value: any) -> string"),
         // Collections
-        "hashMapNew" => Some("hashMapNew() -> HashMap<string, any>"),
-        "hashMapGet" => Some("hashMapGet(map: HashMap<K,V>, key: K) -> V | null"),
-        "hashMapSet" => Some("hashMapSet(map: HashMap<K,V>, key: K, value: V) -> HashMap<K,V>"),
-        "hashMapHas" => Some("hashMapHas(map: HashMap<K,V>, key: K) -> bool"),
-        "hashMapDelete" => Some("hashMapDelete(map: HashMap<K,V>, key: K) -> HashMap<K,V>"),
-        "hashMapKeys" => Some("hashMapKeys(map: HashMap<K,V>) -> K[]"),
-        "hashMapValues" => Some("hashMapValues(map: HashMap<K,V>) -> V[]"),
-        "hashMapEntries" => Some("hashMapEntries(map: HashMap<K,V>) -> [][K, V]"),
-        "hashSetNew" => Some("hashSetNew() -> HashSet<any>"),
-        "hashSetAdd" => Some("hashSetAdd(set: HashSet<T>, value: T) -> HashSet<T>"),
-        "hashSetHas" => Some("hashSetHas(set: HashSet<T>, value: T) -> bool"),
-        "hashSetRemove" => Some("hashSetRemove(set: HashSet<T>, value: T) -> HashSet<T>"),
+        "mapNew" => Some("mapNew() -> Map<string, any>"),
+        "mapGet" => Some("mapGet(map: Map<K,V>, key: K) -> V | null"),
+        "mapSet" => Some("mapSet(map: Map<K,V>, key: K, value: V) -> Map<K,V>"),
+        "mapHas" => Some("mapHas(map: Map<K,V>, key: K) -> bool"),
+        "mapDelete" => Some("mapDelete(map: Map<K,V>, key: K) -> Map<K,V>"),
+        "mapKeys" => Some("mapKeys(map: Map<K,V>) -> K[]"),
+        "mapValues" => Some("mapValues(map: Map<K,V>) -> V[]"),
+        "mapEntries" => Some("mapEntries(map: Map<K,V>) -> [][K, V]"),
+        "setNew" => Some("setNew() -> Set<any>"),
+        "setAdd" => Some("setAdd(set: Set<T>, value: T) -> Set<T>"),
+        "setHas" => Some("setHas(set: Set<T>, value: T) -> bool"),
+        "setRemove" => Some("setRemove(set: Set<T>, value: T) -> Set<T>"),
         _ => None,
     }
 }
@@ -1015,74 +1015,58 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // ====================================================================
         // HashMap functions
         // ====================================================================
-        m.insert("hashMapNew", |a, s, _, _| {
-            collections::hashmap::new_map(a, s)
-        });
-        m.insert("hashMapFromEntries", |a, s, _, _| {
+        m.insert("mapNew", |a, s, _, _| collections::hashmap::new_map(a, s));
+        m.insert("mapFromEntries", |a, s, _, _| {
             collections::hashmap::from_entries(a, s)
         });
-        m.insert("hashMapPut", |a, s, _, _| collections::hashmap::put(a, s));
-        m.insert("hashMapCopy", |a, s, _, _| collections::hashmap::copy(a, s));
-        m.insert("hashMapGet", |a, s, _, _| collections::hashmap::get(a, s));
-        m.insert("hashMapRemove", |a, s, _, _| {
-            collections::hashmap::remove(a, s)
-        });
-        m.insert("hashMapHas", |a, s, _, _| collections::hashmap::has(a, s));
-        m.insert("hashMapSize", |a, s, _, _| collections::hashmap::size(a, s));
-        m.insert("hashMapIsEmpty", |a, s, _, _| {
+        m.insert("mapSet", |a, s, _, _| collections::hashmap::put(a, s));
+        m.insert("mapCopy", |a, s, _, _| collections::hashmap::copy(a, s));
+        m.insert("mapGet", |a, s, _, _| collections::hashmap::get(a, s));
+        m.insert("mapDelete", |a, s, _, _| collections::hashmap::remove(a, s));
+        m.insert("mapHas", |a, s, _, _| collections::hashmap::has(a, s));
+        m.insert("mapSize", |a, s, _, _| collections::hashmap::size(a, s));
+        m.insert("mapIsEmpty", |a, s, _, _| {
             collections::hashmap::is_empty(a, s)
         });
-        m.insert("hashMapClear", |a, s, _, _| {
-            collections::hashmap::clear(a, s)
-        });
-        m.insert("hashMapKeys", |a, s, _, _| collections::hashmap::keys(a, s));
-        m.insert("hashMapValues", |a, s, _, _| {
-            collections::hashmap::values(a, s)
-        });
-        m.insert("hashMapEntries", |a, s, _, _| {
+        m.insert("mapClear", |a, s, _, _| collections::hashmap::clear(a, s));
+        m.insert("mapKeys", |a, s, _, _| collections::hashmap::keys(a, s));
+        m.insert("mapValues", |a, s, _, _| collections::hashmap::values(a, s));
+        m.insert("mapEntries", |a, s, _, _| {
             collections::hashmap::entries(a, s)
         });
 
         // ====================================================================
         // HashSet functions
         // ====================================================================
-        m.insert("hashSetNew", |a, s, _, _| {
-            collections::hashset::new_set(a, s)
-        });
-        m.insert("hashSetFromArray", |a, s, _, _| {
+        m.insert("setNew", |a, s, _, _| collections::hashset::new_set(a, s));
+        m.insert("setFromArray", |a, s, _, _| {
             collections::hashset::from_array(a, s)
         });
-        m.insert("hashSetAdd", |a, s, _, _| collections::hashset::add(a, s));
-        m.insert("hashSetRemove", |a, s, _, _| {
-            collections::hashset::remove(a, s)
-        });
-        m.insert("hashSetHas", |a, s, _, _| collections::hashset::has(a, s));
-        m.insert("hashSetSize", |a, s, _, _| collections::hashset::size(a, s));
-        m.insert("hashSetIsEmpty", |a, s, _, _| {
+        m.insert("setAdd", |a, s, _, _| collections::hashset::add(a, s));
+        m.insert("setRemove", |a, s, _, _| collections::hashset::remove(a, s));
+        m.insert("setHas", |a, s, _, _| collections::hashset::has(a, s));
+        m.insert("setSize", |a, s, _, _| collections::hashset::size(a, s));
+        m.insert("setIsEmpty", |a, s, _, _| {
             collections::hashset::is_empty(a, s)
         });
-        m.insert("hashSetClear", |a, s, _, _| {
-            collections::hashset::clear(a, s)
-        });
-        m.insert("hashSetUnion", |a, s, _, _| {
-            collections::hashset::union(a, s)
-        });
-        m.insert("hashSetIntersection", |a, s, _, _| {
+        m.insert("setClear", |a, s, _, _| collections::hashset::clear(a, s));
+        m.insert("setUnion", |a, s, _, _| collections::hashset::union(a, s));
+        m.insert("setIntersection", |a, s, _, _| {
             collections::hashset::intersection(a, s)
         });
-        m.insert("hashSetDifference", |a, s, _, _| {
+        m.insert("setDifference", |a, s, _, _| {
             collections::hashset::difference(a, s)
         });
-        m.insert("hashSetSymmetricDifference", |a, s, _, _| {
+        m.insert("setSymmetricDifference", |a, s, _, _| {
             collections::hashset::symmetric_difference(a, s)
         });
-        m.insert("hashSetIsSubset", |a, s, _, _| {
+        m.insert("setIsSubset", |a, s, _, _| {
             collections::hashset::is_subset(a, s)
         });
-        m.insert("hashSetIsSuperset", |a, s, _, _| {
+        m.insert("setIsSuperset", |a, s, _, _| {
             collections::hashset::is_superset(a, s)
         });
-        m.insert("hashSetToArray", |a, s, _, _| {
+        m.insert("setToArray", |a, s, _, _| {
             collections::hashset::to_array(a, s)
         });
 
@@ -2275,38 +2259,35 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("fileInfo", "file_info"),
             ("pathJoin", "path_join"),
             // HashMap
-            ("hashMapNew", "hash_map_new"),
-            ("hashMapFromEntries", "hash_map_from_entries"),
-            ("hashMapPut", "hash_map_put"),
-            ("hashMapCopy", "hash_map_copy"),
-            ("hashMapGet", "hash_map_get"),
-            ("hashMapRemove", "hash_map_remove"),
-            ("hashMapHas", "hash_map_has"),
-            ("hashMapSize", "hash_map_size"),
-            ("hashMapIsEmpty", "hash_map_is_empty"),
-            ("hashMapClear", "hash_map_clear"),
-            ("hashMapKeys", "hash_map_keys"),
-            ("hashMapValues", "hash_map_values"),
-            ("hashMapEntries", "hash_map_entries"),
+            ("mapNew", "hash_map_new"),
+            ("mapFromEntries", "hash_map_from_entries"),
+            ("mapSet", "hash_map_put"),
+            ("mapCopy", "hash_map_copy"),
+            ("mapGet", "hash_map_get"),
+            ("mapDelete", "hash_map_remove"),
+            ("mapHas", "hash_map_has"),
+            ("mapSize", "hash_map_size"),
+            ("mapIsEmpty", "hash_map_is_empty"),
+            ("mapClear", "hash_map_clear"),
+            ("mapKeys", "hash_map_keys"),
+            ("mapValues", "hash_map_values"),
+            ("mapEntries", "hash_map_entries"),
             // HashSet
-            ("hashSetNew", "hash_set_new"),
-            ("hashSetFromArray", "hash_set_from_array"),
-            ("hashSetAdd", "hash_set_add"),
-            ("hashSetRemove", "hash_set_remove"),
-            ("hashSetHas", "hash_set_has"),
-            ("hashSetSize", "hash_set_size"),
-            ("hashSetIsEmpty", "hash_set_is_empty"),
-            ("hashSetClear", "hash_set_clear"),
-            ("hashSetUnion", "hash_set_union"),
-            ("hashSetIntersection", "hash_set_intersection"),
-            ("hashSetDifference", "hash_set_difference"),
-            (
-                "hashSetSymmetricDifference",
-                "hash_set_symmetric_difference",
-            ),
-            ("hashSetIsSubset", "hash_set_is_subset"),
-            ("hashSetIsSuperset", "hash_set_is_superset"),
-            ("hashSetToArray", "hash_set_to_array"),
+            ("setNew", "hash_set_new"),
+            ("setFromArray", "hash_set_from_array"),
+            ("setAdd", "hash_set_add"),
+            ("setRemove", "hash_set_remove"),
+            ("setHas", "hash_set_has"),
+            ("setSize", "hash_set_size"),
+            ("setIsEmpty", "hash_set_is_empty"),
+            ("setClear", "hash_set_clear"),
+            ("setUnion", "hash_set_union"),
+            ("setIntersection", "hash_set_intersection"),
+            ("setDifference", "hash_set_difference"),
+            ("setSymmetricDifference", "hash_set_symmetric_difference"),
+            ("setIsSubset", "hash_set_is_subset"),
+            ("setIsSuperset", "hash_set_is_superset"),
+            ("setToArray", "hash_set_to_array"),
             // Queue
             ("queueNew", "queue_new"),
             ("queueEnqueue", "queue_enqueue"),
@@ -2657,13 +2638,13 @@ pub fn is_array_intrinsic(name: &str) -> bool {
             | "result_and_then"
             | "result_or_else"
             // HashMap intrinsics (callback-based)
-            | "hashMapForEach" | "hash_map_for_each"
-            | "hashMapMap" | "hash_map_map"
-            | "hashMapFilter" | "hash_map_filter"
+            | "mapForEach" | "hash_map_for_each"
+            | "mapMap" | "hash_map_map"
+            | "mapFilter" | "hash_map_filter"
             // HashSet intrinsics (callback-based)
-            | "hashSetForEach" | "hash_set_for_each"
-            | "hashSetMap" | "hash_set_map"
-            | "hashSetFilter" | "hash_set_filter"
+            | "setForEach" | "hash_set_for_each"
+            | "setMap" | "hash_set_map"
+            | "setFilter" | "hash_set_filter"
             // Regex intrinsics (callback-based)
             | "regexReplaceWith" | "regex_replace_with"
             | "regexReplaceAllWith" | "regex_replace_all_with"

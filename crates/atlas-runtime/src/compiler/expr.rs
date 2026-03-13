@@ -334,16 +334,16 @@ impl Compiler {
     fn emit_cow_writeback_if_needed(&mut self, func_name: &str, call: &CallExpr) {
         const RETURNS_COLLECTION: &[&str] = &[
             // HashMap
-            "hashMapPut",
-            "hash_map_put",
-            "hashMapClear",
+            "mapSet",
+            "map_set",
+            "mapClear",
             "hash_map_clear",
             // HashSet
-            "hashSetAdd",
-            "hash_set_add",
-            "hashSetRemove",
-            "hash_set_remove",
-            "hashSetClear",
+            "setAdd",
+            "set_add",
+            "setRemove",
+            "set_remove",
+            "setClear",
             "hash_set_clear",
             // Queue
             "queueEnqueue",
@@ -362,7 +362,7 @@ impl Compiler {
         ];
         const RETURNS_PAIR: &[&str] = &[
             // HashMap / HashSet / Queue / Stack
-            "hashMapRemove",
+            "mapDelete",
             "hash_map_remove",
             "queueDequeue",
             "queue_dequeue",
@@ -989,7 +989,7 @@ impl Compiler {
     /// Compile `new TypeName<TypeArgs>(args)` constructor expression (H-374)
     ///
     /// Map  → Opcode::HashMap with 0 entries (empty map, direct VM opcode)
-    /// Set  → GetGlobal("hashSetNew") + Call(0)  (stdlib native)
+    /// Set  → GetGlobal("setNew") + Call(0)  (stdlib native)
     /// Queue → GetGlobal("queueNew") + Call(0)
     /// Stack → GetGlobal("stackNew") + Call(0)
     fn compile_new(
@@ -1010,7 +1010,7 @@ impl Compiler {
                 self.bytecode.emit_u16(0);
             }
             "Set" => {
-                let name_idx = self.bytecode.add_constant(Value::string("hashSetNew"));
+                let name_idx = self.bytecode.add_constant(Value::string("setNew"));
                 self.bytecode.emit(Opcode::GetGlobal, span);
                 self.bytecode.emit_u16(name_idx);
                 self.bytecode.emit(Opcode::Call, span);

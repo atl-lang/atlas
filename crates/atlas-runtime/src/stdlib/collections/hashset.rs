@@ -146,7 +146,7 @@ fn extract_hashset_ref<'a>(
 /// Create a new empty HashSet
 pub fn new_set(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(stdlib_arity_error("HashSet.new", 0, args.len(), span));
+        return Err(stdlib_arity_error("Set.new", 0, args.len(), span));
     }
     Ok(Value::Set(ValueHashSet::new()))
 }
@@ -197,7 +197,7 @@ pub fn add(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Use hashSetHas before removing if you need to know whether the element existed.
 pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(stdlib_arity_error("HashSet.remove", 2, args.len(), span));
+        return Err(stdlib_arity_error("Set.remove", 2, args.len(), span));
     }
 
     let key = HashKey::from_value(&args[1], span)?;
@@ -206,7 +206,7 @@ pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if let Value::Set(ref mut s) = set_val {
         s.inner_mut().remove(&key);
     } else {
-        return Err(stdlib_arg_error("HashSet.remove", "Set", &args[0], span));
+        return Err(stdlib_arg_error("Set.remove", "Set", &args[0], span));
     }
 
     Ok(set_val)

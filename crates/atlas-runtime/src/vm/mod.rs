@@ -3112,17 +3112,13 @@ impl VM {
             "result_and_then" => self.vm_intrinsic_result_and_then(args, span),
             "result_or_else" => self.vm_intrinsic_result_or_else(args, span),
             // HashMap intrinsics (callback-based)
-            "hashMapForEach" | "hash_map_for_each" => {
-                self.vm_intrinsic_hashmap_for_each(args, span)
-            }
-            "hashMapMap" | "hash_map_map" => self.vm_intrinsic_hashmap_map(args, span),
-            "hashMapFilter" | "hash_map_filter" => self.vm_intrinsic_hashmap_filter(args, span),
+            "mapForEach" | "map_for_each" => self.vm_intrinsic_hashmap_for_each(args, span),
+            "mapMap" | "map_map" => self.vm_intrinsic_hashmap_map(args, span),
+            "mapFilter" | "map_filter" => self.vm_intrinsic_hashmap_filter(args, span),
             // HashSet intrinsics (callback-based)
-            "hashSetForEach" | "hash_set_for_each" => {
-                self.vm_intrinsic_hashset_for_each(args, span)
-            }
-            "hashSetMap" | "hash_set_map" => self.vm_intrinsic_hashset_map(args, span),
-            "hashSetFilter" | "hash_set_filter" => self.vm_intrinsic_hashset_filter(args, span),
+            "setForEach" | "set_for_each" => self.vm_intrinsic_hashset_for_each(args, span),
+            "setMap" | "set_map" => self.vm_intrinsic_hashset_map(args, span),
+            "setFilter" | "set_filter" => self.vm_intrinsic_hashset_filter(args, span),
             // Regex intrinsics (callback-based)
             "regexReplaceWith" | "regex_replace_with" => {
                 self.vm_intrinsic_regex_replace_with(args, span)
@@ -4043,7 +4039,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashMapForEach() expects 2 arguments (map, callback)".to_string(),
+                msg: "mapForEach() expects 2 arguments (map, callback)".to_string(),
                 span,
             });
         }
@@ -4052,7 +4048,7 @@ impl VM {
             Value::Map(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapForEach() first argument must be HashMap".to_string(),
+                    msg: "mapForEach() first argument must be Map".to_string(),
                     span,
                 })
             }
@@ -4065,7 +4061,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapForEach() second argument must be function".to_string(),
+                    msg: "mapForEach() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4085,7 +4081,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashMapMap() expects 2 arguments (map, callback)".to_string(),
+                msg: "mapMap() expects 2 arguments (map, callback)".to_string(),
                 span,
             });
         }
@@ -4094,7 +4090,7 @@ impl VM {
             Value::Map(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapMap() first argument must be HashMap".to_string(),
+                    msg: "mapMap() first argument must be Map".to_string(),
                     span,
                 })
             }
@@ -4107,7 +4103,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapMap() second argument must be function".to_string(),
+                    msg: "mapMap() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4130,7 +4126,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashMapFilter() expects 2 arguments (map, predicate)".to_string(),
+                msg: "mapFilter() expects 2 arguments (map, predicate)".to_string(),
                 span,
             });
         }
@@ -4139,7 +4135,7 @@ impl VM {
             Value::Map(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapFilter() first argument must be HashMap".to_string(),
+                    msg: "mapFilter() first argument must be Map".to_string(),
                     span,
                 })
             }
@@ -4152,7 +4148,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashMapFilter() second argument must be function".to_string(),
+                    msg: "mapFilter() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4172,7 +4168,7 @@ impl VM {
                 Value::Bool(false) => {}
                 _ => {
                     return Err(RuntimeError::TypeError {
-                        msg: "hashMapFilter() predicate must return bool".to_string(),
+                        msg: "mapFilter() predicate must return bool".to_string(),
                         span,
                     })
                 }
@@ -4189,7 +4185,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashSetForEach() expects 2 arguments (set, callback)".to_string(),
+                msg: "setForEach() expects 2 arguments (set, callback)".to_string(),
                 span,
             });
         }
@@ -4198,7 +4194,7 @@ impl VM {
             Value::Set(s) => s.inner().to_vec(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetForEach() first argument must be HashSet".to_string(),
+                    msg: "setForEach() first argument must be Set".to_string(),
                     span,
                 })
             }
@@ -4211,7 +4207,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetForEach() second argument must be function".to_string(),
+                    msg: "setForEach() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4231,7 +4227,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashSetMap() expects 2 arguments (set, callback)".to_string(),
+                msg: "setMap() expects 2 arguments (set, callback)".to_string(),
                 span,
             });
         }
@@ -4240,7 +4236,7 @@ impl VM {
             Value::Set(s) => s.inner().to_vec(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetMap() first argument must be HashSet".to_string(),
+                    msg: "setMap() first argument must be Set".to_string(),
                     span,
                 })
             }
@@ -4253,7 +4249,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetMap() second argument must be function".to_string(),
+                    msg: "setMap() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4276,7 +4272,7 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         if args.len() != 2 {
             return Err(RuntimeError::TypeError {
-                msg: "hashSetFilter() expects 2 arguments (set, predicate)".to_string(),
+                msg: "setFilter() expects 2 arguments (set, predicate)".to_string(),
                 span,
             });
         }
@@ -4285,7 +4281,7 @@ impl VM {
             Value::Set(s) => s.inner().to_vec(),
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetFilter() first argument must be HashSet".to_string(),
+                    msg: "setFilter() first argument must be Set".to_string(),
                     span,
                 })
             }
@@ -4298,7 +4294,7 @@ impl VM {
             | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
-                    msg: "hashSetFilter() second argument must be function".to_string(),
+                    msg: "setFilter() second argument must be function".to_string(),
                     span,
                 })
             }
@@ -4315,7 +4311,7 @@ impl VM {
                 Value::Bool(false) => {}
                 _ => {
                     return Err(RuntimeError::TypeError {
-                        msg: "hashSetFilter() predicate must return bool".to_string(),
+                        msg: "setFilter() predicate must return bool".to_string(),
                         span,
                     })
                 }
