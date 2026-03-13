@@ -360,17 +360,17 @@ len(tests);
 fn test_callback_closure_mutates_global_hashmap() {
     assert_parity_number(
         r#"
-let mut m = hash_map_new();
+let mut m = hashMapNew();
 
 fn with_callback(borrow block: (): void): void {
     block();
 }
 
 with_callback(fn(): void {
-    m = hash_map_put(m, "a", 1);
+    m = hashMapPut(m, "a", 1);
 });
 
-hash_map_size(m);
+hashMapSize(m);
 "#,
         1.0,
     );

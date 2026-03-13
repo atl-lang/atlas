@@ -32,9 +32,9 @@ fn security() -> SecurityContext {
 #[test]
 fn test_hash_number_key() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, 42, "forty-two");
-        let result = hash_map_get(hm, 42);
+        let hm = hashMapNew();
+        hashMapPut(hm, 42, "forty-two");
+        let result = hashMapGet(hm, 42);
         unwrap(result)
     "#;
     assert_eval_string(code, "forty-two");
@@ -43,9 +43,9 @@ fn test_hash_number_key() {
 #[test]
 fn test_hash_string_key() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, "hello", "world");
-        let result = hash_map_get(hm, "hello");
+        let hm = hashMapNew();
+        hashMapPut(hm, "hello", "world");
+        let result = hashMapGet(hm, "hello");
         unwrap(result)
     "#;
     assert_eval_string(code, "world");
@@ -54,9 +54,9 @@ fn test_hash_string_key() {
 #[test]
 fn test_hash_bool_key() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, true, "yes");
-        let result = hash_map_get(hm, true);
+        let hm = hashMapNew();
+        hashMapPut(hm, true, "yes");
+        let result = hashMapGet(hm, true);
         unwrap(result)
     "#;
     assert_eval_string(code, "yes");
@@ -65,9 +65,9 @@ fn test_hash_bool_key() {
 #[test]
 fn test_hash_null_key() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, null, "null-value");
-        let result = hash_map_get(hm, null);
+        let hm = hashMapNew();
+        hashMapPut(hm, null, "null-value");
+        let result = hashMapGet(hm, null);
         unwrap(result)
     "#;
     assert_eval_string(code, "null-value");
@@ -76,9 +76,9 @@ fn test_hash_null_key() {
 #[test]
 fn test_cannot_hash_array() {
     let code = r#"
-        let hm = hash_map_new();
+        let hm = hashMapNew();
         let arr = [1, 2, 3];
-        hash_map_put(hm, arr, "value");
+        hashMapPut(hm, arr, "value");
     "#;
     assert_error_code(code, "AT0140");
 }
@@ -86,12 +86,12 @@ fn test_cannot_hash_array() {
 #[test]
 fn test_mixed_key_types() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, 42, "number");
-        hash_map_put(hm, "key", "string");
-        hash_map_put(hm, true, "bool");
-        hash_map_put(hm, null, "null");
-        hash_map_size(hm)
+        let hm = hashMapNew();
+        hashMapPut(hm, 42, "number");
+        hashMapPut(hm, "key", "string");
+        hashMapPut(hm, true, "bool");
+        hashMapPut(hm, null, "null");
+        hashMapSize(hm)
     "#;
     assert_eval_number(code, 4.0);
 }
@@ -99,8 +99,8 @@ fn test_mixed_key_types() {
 #[test]
 fn test_hashhm_new() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_size(hm)
+        let hm = hashMapNew();
+        hashMapSize(hm)
     "#;
     assert_eval_number(code, 0.0);
 }
@@ -108,9 +108,9 @@ fn test_hashhm_new() {
 #[test]
 fn test_hashhm_put_get() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, "key", "value");
-        let result = hash_map_get(hm, "key");
+        let hm = hashMapNew();
+        hashMapPut(hm, "key", "value");
+        let result = hashMapGet(hm, "key");
         unwrap(result)
     "#;
     assert_eval_string(code, "value");
@@ -119,9 +119,9 @@ fn test_hashhm_put_get() {
 #[test]
 fn test_hashmap_put_mutates_in_place_and_returns_map() {
     let code = r#"
-        let hm = hash_map_new();
-        let updated = hash_map_put(hm, "key", "value");
-        hash_map_size(hm) + hash_map_size(updated)
+        let hm = hashMapNew();
+        let updated = hashMapPut(hm, "key", "value");
+        hashMapSize(hm) + hashMapSize(updated)
     "#;
     assert_eval_number(code, 2.0);
 }
@@ -129,11 +129,11 @@ fn test_hashmap_put_mutates_in_place_and_returns_map() {
 #[test]
 fn test_hashmap_copy_is_independent() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, "a", 1);
-        let copy = hash_map_copy(hm);
-        hash_map_put(copy, "b", 2);
-        hash_map_size(hm)
+        let hm = hashMapNew();
+        hashMapPut(hm, "a", 1);
+        let copy = hashMapCopy(hm);
+        hashMapPut(copy, "b", 2);
+        hashMapSize(hm)
     "#;
     assert_eval_number(code, 1.0);
 }
@@ -141,8 +141,8 @@ fn test_hashmap_copy_is_independent() {
 #[test]
 fn test_hashhm_get_nonexistent() {
     let code = r#"
-        let hm = hash_map_new();
-        let result = hash_map_get(hm, "nonexistent");
+        let hm = hashMapNew();
+        let result = hashMapGet(hm, "nonexistent");
         is_none(result)
     "#;
     assert_eval_bool(code, true);
@@ -151,9 +151,9 @@ fn test_hashhm_get_nonexistent() {
 #[test]
 fn test_hashhm_remove() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, "key", "value");
-        let removed = hash_map_remove(hm, "key");
+        let hm = hashMapNew();
+        hashMapPut(hm, "key", "value");
+        let removed = hashMapRemove(hm, "key");
         is_some(removed)
     "#;
     assert_eval_bool(code, true);
@@ -162,9 +162,9 @@ fn test_hashhm_remove() {
 #[test]
 fn test_hashhm_has() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, "key", "value");
-        hash_map_has(hm, "key")
+        let hm = hashMapNew();
+        hashMapPut(hm, "key", "value");
+        hashMapHas(hm, "key")
     "#;
     assert_eval_bool(code, true);
 }
@@ -172,11 +172,11 @@ fn test_hashhm_has() {
 #[test]
 fn test_hashhm_size() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, "a", 1);
-        hash_map_put(hm, "b", 2);
-        hash_map_put(hm, "c", 3);
-        hash_map_size(hm)
+        let hm = hashMapNew();
+        hashMapPut(hm, "a", 1);
+        hashMapPut(hm, "b", 2);
+        hashMapPut(hm, "c", 3);
+        hashMapSize(hm)
     "#;
     assert_eval_number(code, 3.0);
 }
@@ -184,10 +184,10 @@ fn test_hashhm_size() {
 #[test]
 fn test_hashhm_is_empty() {
     let code = r#"
-        let hm = hash_map_new();
-        let empty1 = hash_map_is_empty(hm);
-        hash_map_put(hm, "key", "value");
-        let empty2 = hash_map_is_empty(hm);
+        let hm = hashMapNew();
+        let empty1 = hashMapIsEmpty(hm);
+        hashMapPut(hm, "key", "value");
+        let empty2 = hashMapIsEmpty(hm);
         empty1 && !empty2
     "#;
     assert_eval_bool(code, true);
@@ -196,11 +196,11 @@ fn test_hashhm_is_empty() {
 #[test]
 fn test_hashhm_clear() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, "a", 1);
-        hash_map_put(hm, "b", 2);
-        hash_map_clear(hm);
-        hash_map_size(hm)
+        let hm = hashMapNew();
+        hashMapPut(hm, "a", 1);
+        hashMapPut(hm, "b", 2);
+        hashMapClear(hm);
+        hashMapSize(hm)
     "#;
     assert_eval_number(code, 0.0);
 }
@@ -208,10 +208,10 @@ fn test_hashhm_clear() {
 #[test]
 fn test_hashhm_keys() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, "a", 1);
-        hash_map_put(hm, "b", 2);
-        let keys = hash_map_keys(hm);
+        let hm = hashMapNew();
+        hashMapPut(hm, "a", 1);
+        hashMapPut(hm, "b", 2);
+        let keys = hashMapKeys(hm);
         len(keys)
     "#;
     assert_eval_number(code, 2.0);
@@ -220,10 +220,10 @@ fn test_hashhm_keys() {
 #[test]
 fn test_hashhm_values() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, "a", 1);
-        hash_map_put(hm, "b", 2);
-        let values = hash_map_values(hm);
+        let hm = hashMapNew();
+        hashMapPut(hm, "a", 1);
+        hashMapPut(hm, "b", 2);
+        let values = hashMapValues(hm);
         len(values)
     "#;
     assert_eval_number(code, 2.0);
@@ -232,10 +232,10 @@ fn test_hashhm_values() {
 #[test]
 fn test_hashhm_entries() {
     let code = r#"
-        let hm = hash_map_new();
-        hash_map_put(hm, "a", 1);
-        hash_map_put(hm, "b", 2);
-        let entries = hash_map_entries(hm);
+        let hm = hashMapNew();
+        hashMapPut(hm, "a", 1);
+        hashMapPut(hm, "b", 2);
+        let entries = hashMapEntries(hm);
         len(entries)
     "#;
     assert_eval_number(code, 2.0);
@@ -261,30 +261,30 @@ fn eval_expect_error(code: &str) -> bool {
 
 #[test]
 fn test_hashset_new() {
-    let result = eval("hash_set_size(hash_set_new())");
+    let result = eval("hashSetSize(hashSetNew())");
     assert_eq!(result, Value::Number(0.0));
 }
 
 #[test]
 fn test_hashset_from_array() {
-    let result = eval("hash_set_size(hash_set_from_array([1, 2, 3]))");
+    let result = eval("hashSetSize(hashSetFromArray([1, 2, 3]))");
     assert_eq!(result, Value::Number(3.0));
 }
 
 #[test]
 fn test_hashset_from_array_removes_duplicates() {
-    let result = eval("hash_set_size(hash_set_from_array([1, 2, 2, 3, 3, 3]))");
+    let result = eval("hashSetSize(hashSetFromArray([1, 2, 2, 3, 3, 3]))");
     assert_eq!(result, Value::Number(3.0));
 }
 
 #[test]
 fn test_hashset_from_array_unhashable() {
-    assert!(eval_expect_error("hash_set_from_array([[1, 2]])"));
+    assert!(eval_expect_error("hashSetFromArray([[1, 2]])"));
 }
 
 #[test]
 fn test_hashset_empty_is_empty() {
-    let result = eval("hash_set_is_empty(hash_set_new())");
+    let result = eval("hashSetIsEmpty(hashSetNew())");
     assert_eq!(result, Value::Bool(true));
 }
 
@@ -294,9 +294,9 @@ fn test_hashset_empty_is_empty() {
 fn test_hashset_add_increases_size() {
     let result = eval(
         r#"
-        let set = hash_set_new();
-        hash_set_add(set, 42);
-        hash_set_size(set)
+        let set = hashSetNew();
+        hashSetAdd(set, 42);
+        hashSetSize(set)
     "#,
     );
     assert_eq!(result, Value::Number(1.0));
@@ -306,10 +306,10 @@ fn test_hashset_add_increases_size() {
 fn test_hashset_add_duplicate_idempotent() {
     let result = eval(
         r#"
-        let set = hash_set_new();
-        hash_set_add(set, 42);
-        hash_set_add(set, 42);
-        hash_set_size(set)
+        let set = hashSetNew();
+        hashSetAdd(set, 42);
+        hashSetAdd(set, 42);
+        hashSetSize(set)
     "#,
     );
     assert_eq!(result, Value::Number(1.0));
@@ -319,12 +319,12 @@ fn test_hashset_add_duplicate_idempotent() {
 fn test_hashset_add_different_types() {
     let result = eval(
         r#"
-        let set = hash_set_new();
-        hash_set_add(set, 42);
-        hash_set_add(set, "hello");
-        hash_set_add(set, true);
-        hash_set_add(set, null);
-        hash_set_size(set)
+        let set = hashSetNew();
+        hashSetAdd(set, 42);
+        hashSetAdd(set, "hello");
+        hashSetAdd(set, true);
+        hashSetAdd(set, null);
+        hashSetSize(set)
     "#,
     );
     assert_eq!(result, Value::Number(4.0));
@@ -332,12 +332,12 @@ fn test_hashset_add_different_types() {
 
 #[test]
 fn test_hashset_remove_existing() {
-    // hash_set_remove returns the updated HashSet (CoW, like hash_set_add)
+    // hashSetRemove returns the updated HashSet (CoW, like hashSetAdd)
     // After removing 2 from {1,2,3}, size = 2
     let code = r#"
-        let mut set = hash_set_from_array([1, 2, 3]);
-        set = hash_set_remove(set, 2);
-        hash_set_size(set)
+        let mut set = hashSetFromArray([1, 2, 3]);
+        set = hashSetRemove(set, 2);
+        hashSetSize(set)
     "#;
     assert_eval_number(code, 2.0);
 }
@@ -346,9 +346,9 @@ fn test_hashset_remove_existing() {
 fn test_hashset_remove_nonexistent() {
     // Removing non-existent element leaves set unchanged, size = 3
     let code = r#"
-        let mut set = hash_set_from_array([1, 2, 3]);
-        set = hash_set_remove(set, 99);
-        hash_set_size(set)
+        let mut set = hashSetFromArray([1, 2, 3]);
+        set = hashSetRemove(set, 99);
+        hashSetSize(set)
     "#;
     assert_eval_number(code, 3.0);
 }
@@ -356,7 +356,7 @@ fn test_hashset_remove_nonexistent() {
 #[test]
 fn test_hashset_add_unhashable() {
     assert!(eval_expect_error(
-        "let set = hash_set_new(); hash_set_add(set, [1, 2])"
+        "let set = hashSetNew(); hashSetAdd(set, [1, 2])"
     ));
 }
 
@@ -364,13 +364,13 @@ fn test_hashset_add_unhashable() {
 
 #[test]
 fn test_hashset_has_existing() {
-    let result = eval("hash_set_has(hash_set_from_array([1, 2, 3]), 2)");
+    let result = eval("hashSetHas(hashSetFromArray([1, 2, 3]), 2)");
     assert_eq!(result, Value::Bool(true));
 }
 
 #[test]
 fn test_hashset_has_nonexistent() {
-    let result = eval("hash_set_has(hash_set_from_array([1, 2, 3]), 99)");
+    let result = eval("hashSetHas(hashSetFromArray([1, 2, 3]), 99)");
     assert_eq!(result, Value::Bool(false));
 }
 
@@ -380,11 +380,11 @@ fn test_hashset_has_nonexistent() {
 fn test_hashset_size_reflects_count() {
     let result = eval(
         r#"
-        let set = hash_set_new();
-        hash_set_add(set, 1);
-        hash_set_add(set, 2);
-        hash_set_add(set, 3);
-        hash_set_size(set)
+        let set = hashSetNew();
+        hashSetAdd(set, 1);
+        hashSetAdd(set, 2);
+        hashSetAdd(set, 3);
+        hashSetSize(set)
     "#,
     );
     assert_eq!(result, Value::Number(3.0));
@@ -392,7 +392,7 @@ fn test_hashset_size_reflects_count() {
 
 #[test]
 fn test_hashset_is_empty_with_elements() {
-    let result = eval("hash_set_is_empty(hash_set_from_array([1, 2, 3]))");
+    let result = eval("hashSetIsEmpty(hashSetFromArray([1, 2, 3]))");
     assert_eq!(result, Value::Bool(false));
 }
 
@@ -400,9 +400,9 @@ fn test_hashset_is_empty_with_elements() {
 fn test_hashset_is_empty_after_clear() {
     let result = eval(
         r#"
-        let set = hash_set_from_array([1, 2, 3]);
-        hash_set_clear(set);
-        hash_set_is_empty(set)
+        let set = hashSetFromArray([1, 2, 3]);
+        hashSetClear(set);
+        hashSetIsEmpty(set)
     "#,
     );
     assert_eq!(result, Value::Bool(true));
@@ -414,9 +414,9 @@ fn test_hashset_is_empty_after_clear() {
 fn test_hashset_union_disjoint() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2]);
-        let b = hash_set_from_array([3, 4]);
-        hash_set_size(hash_set_union(a, b))
+        let a = hashSetFromArray([1, 2]);
+        let b = hashSetFromArray([3, 4]);
+        hashSetSize(hashSetUnion(a, b))
     "#,
     );
     assert_eq!(result, Value::Number(4.0));
@@ -426,9 +426,9 @@ fn test_hashset_union_disjoint() {
 fn test_hashset_union_overlapping() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2, 3]);
-        let b = hash_set_from_array([2, 3, 4]);
-        hash_set_size(hash_set_union(a, b))
+        let a = hashSetFromArray([1, 2, 3]);
+        let b = hashSetFromArray([2, 3, 4]);
+        hashSetSize(hashSetUnion(a, b))
     "#,
     );
     assert_eq!(result, Value::Number(4.0));
@@ -438,9 +438,9 @@ fn test_hashset_union_overlapping() {
 fn test_hashset_union_with_empty() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2, 3]);
-        let b = hash_set_new();
-        hash_set_size(hash_set_union(a, b))
+        let a = hashSetFromArray([1, 2, 3]);
+        let b = hashSetNew();
+        hashSetSize(hashSetUnion(a, b))
     "#,
     );
     assert_eq!(result, Value::Number(3.0));
@@ -452,9 +452,9 @@ fn test_hashset_union_with_empty() {
 fn test_hashset_intersection_overlapping() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2, 3]);
-        let b = hash_set_from_array([2, 3, 4]);
-        hash_set_size(hash_set_intersection(a, b))
+        let a = hashSetFromArray([1, 2, 3]);
+        let b = hashSetFromArray([2, 3, 4]);
+        hashSetSize(hashSetIntersection(a, b))
     "#,
     );
     assert_eq!(result, Value::Number(2.0));
@@ -464,9 +464,9 @@ fn test_hashset_intersection_overlapping() {
 fn test_hashset_intersection_disjoint() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2]);
-        let b = hash_set_from_array([3, 4]);
-        hash_set_size(hash_set_intersection(a, b))
+        let a = hashSetFromArray([1, 2]);
+        let b = hashSetFromArray([3, 4]);
+        hashSetSize(hashSetIntersection(a, b))
     "#,
     );
     assert_eq!(result, Value::Number(0.0));
@@ -478,10 +478,10 @@ fn test_hashset_intersection_disjoint() {
 fn test_hashset_difference() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2, 3]);
-        let b = hash_set_from_array([2, 3, 4]);
-        let d = hash_set_difference(a, b);
-        hash_set_has(d, 1)
+        let a = hashSetFromArray([1, 2, 3]);
+        let b = hashSetFromArray([2, 3, 4]);
+        let d = hashSetDifference(a, b);
+        hashSetHas(d, 1)
     "#,
     );
     assert_eq!(result, Value::Bool(true));
@@ -491,9 +491,9 @@ fn test_hashset_difference() {
 fn test_hashset_difference_disjoint() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2]);
-        let b = hash_set_from_array([3, 4]);
-        hash_set_size(hash_set_difference(a, b))
+        let a = hashSetFromArray([1, 2]);
+        let b = hashSetFromArray([3, 4]);
+        hashSetSize(hashSetDifference(a, b))
     "#,
     );
     assert_eq!(result, Value::Number(2.0));
@@ -505,9 +505,9 @@ fn test_hashset_difference_disjoint() {
 fn test_hashset_symmetric_difference() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2, 3]);
-        let b = hash_set_from_array([2, 3, 4]);
-        hash_set_size(hash_set_symmetric_difference(a, b))
+        let a = hashSetFromArray([1, 2, 3]);
+        let b = hashSetFromArray([2, 3, 4]);
+        hashSetSize(hashSetSymmetricDifference(a, b))
     "#,
     );
     assert_eq!(result, Value::Number(2.0));
@@ -517,9 +517,9 @@ fn test_hashset_symmetric_difference() {
 fn test_hashset_symmetric_difference_identical() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2, 3]);
-        let b = hash_set_from_array([1, 2, 3]);
-        hash_set_size(hash_set_symmetric_difference(a, b))
+        let a = hashSetFromArray([1, 2, 3]);
+        let b = hashSetFromArray([1, 2, 3]);
+        hashSetSize(hashSetSymmetricDifference(a, b))
     "#,
     );
     assert_eq!(result, Value::Number(0.0));
@@ -531,9 +531,9 @@ fn test_hashset_symmetric_difference_identical() {
 fn test_hashset_empty_is_subset() {
     let result = eval(
         r#"
-        let a = hash_set_new();
-        let b = hash_set_from_array([1, 2, 3]);
-        hash_set_is_subset(a, b)
+        let a = hashSetNew();
+        let b = hashSetFromArray([1, 2, 3]);
+        hashSetIsSubset(a, b)
     "#,
     );
     assert_eq!(result, Value::Bool(true));
@@ -543,8 +543,8 @@ fn test_hashset_empty_is_subset() {
 fn test_hashset_set_is_subset_of_itself() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2, 3]);
-        hash_set_is_subset(a, a)
+        let a = hashSetFromArray([1, 2, 3]);
+        hashSetIsSubset(a, a)
     "#,
     );
     assert_eq!(result, Value::Bool(true));
@@ -554,9 +554,9 @@ fn test_hashset_set_is_subset_of_itself() {
 fn test_hashset_proper_subset() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2]);
-        let b = hash_set_from_array([1, 2, 3]);
-        hash_set_is_subset(a, b)
+        let a = hashSetFromArray([1, 2]);
+        let b = hashSetFromArray([1, 2, 3]);
+        hashSetIsSubset(a, b)
     "#,
     );
     assert_eq!(result, Value::Bool(true));
@@ -566,9 +566,9 @@ fn test_hashset_proper_subset() {
 fn test_hashset_empty_not_superset_of_nonempty() {
     let result = eval(
         r#"
-        let a = hash_set_new();
-        let b = hash_set_from_array([1, 2, 3]);
-        hash_set_is_superset(a, b)
+        let a = hashSetNew();
+        let b = hashSetFromArray([1, 2, 3]);
+        hashSetIsSuperset(a, b)
     "#,
     );
     assert_eq!(result, Value::Bool(false));
@@ -578,8 +578,8 @@ fn test_hashset_empty_not_superset_of_nonempty() {
 fn test_hashset_set_is_superset_of_itself() {
     let result = eval(
         r#"
-        let a = hash_set_from_array([1, 2, 3]);
-        hash_set_is_superset(a, a)
+        let a = hashSetFromArray([1, 2, 3]);
+        hashSetIsSuperset(a, a)
     "#,
     );
     assert_eq!(result, Value::Bool(true));
@@ -593,10 +593,10 @@ fn test_hashset_reference_semantics() {
     // Adding 42 to b does not affect a.
     let result = eval(
         r#"
-        let a = hash_set_new();
+        let a = hashSetNew();
         let b = a;
-        hash_set_add(b, 42);
-        hash_set_has(a, 42)
+        hashSetAdd(b, 42);
+        hashSetHas(a, 42)
     "#,
     );
     assert_eq!(result, Value::Bool(false));
@@ -606,8 +606,8 @@ fn test_hashset_reference_semantics() {
 fn test_hashset_to_array_preserves_elements() {
     let result = eval(
         r#"
-        let set = hash_set_from_array([1, 2, 3]);
-        len(hash_set_to_array(set))
+        let set = hashSetFromArray([1, 2, 3]);
+        len(hashSetToArray(set))
     "#,
     );
     assert_eq!(result, Value::Number(3.0));
@@ -617,18 +617,18 @@ fn test_hashset_to_array_preserves_elements() {
 fn test_hashset_large_set() {
     // Test with a reasonable number of elements
     let code = r#"
-let set = hash_set_new();
-hash_set_add(set, 1);
-hash_set_add(set, 2);
-hash_set_add(set, 3);
-hash_set_add(set, 4);
-hash_set_add(set, 5);
-hash_set_add(set, 6);
-hash_set_add(set, 7);
-hash_set_add(set, 8);
-hash_set_add(set, 9);
-hash_set_add(set, 10);
-hash_set_size(set)
+let set = hashSetNew();
+hashSetAdd(set, 1);
+hashSetAdd(set, 2);
+hashSetAdd(set, 3);
+hashSetAdd(set, 4);
+hashSetAdd(set, 5);
+hashSetAdd(set, 6);
+hashSetAdd(set, 7);
+hashSetAdd(set, 8);
+hashSetAdd(set, 9);
+hashSetAdd(set, 10);
+hashSetSize(set)
 "#;
     let result = eval(code);
     assert_eq!(result, Value::Number(10.0));
@@ -638,14 +638,14 @@ hash_set_size(set)
 fn test_hashset_mixed_types() {
     let result = eval(
         r#"
-        let set = hash_set_new();
-        hash_set_add(set, 42);
-        hash_set_add(set, "hello");
-        hash_set_add(set, true);
-        hash_set_add(set, false);
-        hash_set_add(set, null);
-        hash_set_add(set, 3.14);
-        hash_set_size(set)
+        let set = hashSetNew();
+        hashSetAdd(set, 42);
+        hashSetAdd(set, "hello");
+        hashSetAdd(set, true);
+        hashSetAdd(set, false);
+        hashSetAdd(set, null);
+        hashSetAdd(set, 3.14);
+        hashSetSize(set)
     "#,
     );
     assert_eq!(result, Value::Number(6.0));
@@ -1558,8 +1558,8 @@ mod stack {
 #[test]
 fn test_hashmap_get_missing_key_returns_none() {
     let code = r#"
-        let m = hash_map_new();
-        let result = hash_map_get(m, "missing");
+        let m = hashMapNew();
+        let result = hashMapGet(m, "missing");
         is_none(result)
     "#;
     assert_eval_bool(code, true);
@@ -1568,10 +1568,10 @@ fn test_hashmap_get_missing_key_returns_none() {
 #[test]
 fn test_hashmap_put_overwrites_existing_key() {
     let code = r#"
-        let m = hash_map_new();
-        hash_map_put(m, "k", "first");
-        hash_map_put(m, "k", "second");
-        unwrap(hash_map_get(m, "k"))
+        let m = hashMapNew();
+        hashMapPut(m, "k", "first");
+        hashMapPut(m, "k", "second");
+        unwrap(hashMapGet(m, "k"))
     "#;
     assert_eval_string(code, "second");
 }
@@ -1579,8 +1579,8 @@ fn test_hashmap_put_overwrites_existing_key() {
 #[test]
 fn test_hashmap_keys_on_empty_returns_empty_array() {
     let code = r#"
-        let m = hash_map_new();
-        len(hash_map_keys(m))
+        let m = hashMapNew();
+        len(hashMapKeys(m))
     "#;
     assert_eval_number(code, 0.0);
 }
@@ -1588,8 +1588,8 @@ fn test_hashmap_keys_on_empty_returns_empty_array() {
 #[test]
 fn test_hashmap_values_on_empty_returns_empty_array() {
     let code = r#"
-        let m = hash_map_new();
-        len(hash_map_values(m))
+        let m = hashMapNew();
+        len(hashMapValues(m))
     "#;
     assert_eval_number(code, 0.0);
 }
@@ -1597,8 +1597,8 @@ fn test_hashmap_values_on_empty_returns_empty_array() {
 #[test]
 fn test_hashmap_remove_nonexistent_key_returns_none() {
     let code = r#"
-        let m = hash_map_new();
-        let result = hash_map_remove(m, "ghost");
+        let m = hashMapNew();
+        let result = hashMapRemove(m, "ghost");
         is_none(result)
     "#;
     assert_eval_bool(code, true);
@@ -1607,11 +1607,11 @@ fn test_hashmap_remove_nonexistent_key_returns_none() {
 #[test]
 fn test_hashmap_size_decrements_after_remove() {
     let code = r#"
-        let m = hash_map_new();
-        hash_map_put(m, "a", 1);
-        hash_map_put(m, "b", 2);
-        hash_map_remove(m, "a");
-        hash_map_size(m)
+        let m = hashMapNew();
+        hashMapPut(m, "a", 1);
+        hashMapPut(m, "b", 2);
+        hashMapRemove(m, "a");
+        hashMapSize(m)
     "#;
     assert_eval_number(code, 1.0);
 }
@@ -1619,8 +1619,8 @@ fn test_hashmap_size_decrements_after_remove() {
 #[test]
 fn test_hashmap_is_empty_on_new_map() {
     let code = r#"
-        let m = hash_map_new();
-        hash_map_is_empty(m)
+        let m = hashMapNew();
+        hashMapIsEmpty(m)
     "#;
     assert_eval_bool(code, true);
 }
@@ -1628,9 +1628,9 @@ fn test_hashmap_is_empty_on_new_map() {
 #[test]
 fn test_hashmap_is_empty_false_after_put() {
     let code = r#"
-        let m = hash_map_new();
-        hash_map_put(m, "x", 1);
-        hash_map_is_empty(m)
+        let m = hashMapNew();
+        hashMapPut(m, "x", 1);
+        hashMapIsEmpty(m)
     "#;
     assert_eval_bool(code, false);
 }
@@ -1638,11 +1638,11 @@ fn test_hashmap_is_empty_false_after_put() {
 #[test]
 fn test_hashmap_clear_empties_map() {
     let code = r#"
-        let m = hash_map_new();
-        hash_map_put(m, "a", 1);
-        hash_map_put(m, "b", 2);
-        hash_map_clear(m);
-        hash_map_size(m)
+        let m = hashMapNew();
+        hashMapPut(m, "a", 1);
+        hashMapPut(m, "b", 2);
+        hashMapClear(m);
+        hashMapSize(m)
     "#;
     assert_eval_number(code, 0.0);
 }
@@ -1651,8 +1651,8 @@ fn test_hashmap_clear_empties_map() {
 fn test_hashmap_from_entries_roundtrip() {
     let code = r#"
         let entries = [["k", "v"]];
-        let m = hash_map_from_entries(entries);
-        unwrap(hash_map_get(m, "k"))
+        let m = hashMapFromEntries(entries);
+        unwrap(hashMapGet(m, "k"))
     "#;
     assert_eval_string(code, "v");
 }
@@ -1662,10 +1662,10 @@ fn test_hashmap_from_entries_roundtrip() {
 #[test]
 fn test_hashset_add_duplicate_does_not_increase_size() {
     let code = r#"
-        let s = hash_set_new();
-        hash_set_add(s, "x");
-        hash_set_add(s, "x");
-        hash_set_size(s)
+        let s = hashSetNew();
+        hashSetAdd(s, "x");
+        hashSetAdd(s, "x");
+        hashSetSize(s)
     "#;
     assert_eval_number(code, 1.0);
 }
@@ -1673,9 +1673,9 @@ fn test_hashset_add_duplicate_does_not_increase_size() {
 #[test]
 fn test_hashset_remove_nonexistent_no_error() {
     let code = r#"
-        let s = hash_set_new();
-        hash_set_remove(s, "ghost");
-        hash_set_size(s)
+        let s = hashSetNew();
+        hashSetRemove(s, "ghost");
+        hashSetSize(s)
     "#;
     assert_eval_number(code, 0.0);
 }
@@ -1685,11 +1685,11 @@ fn test_hashset_remove_nonexistent_no_error() {
 fn test_h113_hashset_remove_cow_returns_set() {
     // s = hashSetRemove(s, x) should update s to a HashSet, not Bool
     let code = r#"
-        let mut s = hash_set_new();
-        s = hash_set_add(s, "apple");
-        s = hash_set_add(s, "banana");
-        s = hash_set_remove(s, "banana");
-        hash_set_size(s)
+        let mut s = hashSetNew();
+        s = hashSetAdd(s, "apple");
+        s = hashSetAdd(s, "banana");
+        s = hashSetRemove(s, "banana");
+        hashSetSize(s)
     "#;
     assert_eval_number(code, 1.0);
 }
@@ -1697,10 +1697,10 @@ fn test_h113_hashset_remove_cow_returns_set() {
 #[test]
 fn test_hashset_union_empty_with_empty() {
     let code = r#"
-        let a = hash_set_new();
-        let b = hash_set_new();
-        let u = hash_set_union(a, b);
-        hash_set_size(u)
+        let a = hashSetNew();
+        let b = hashSetNew();
+        let u = hashSetUnion(a, b);
+        hashSetSize(u)
     "#;
     assert_eval_number(code, 0.0);
 }
@@ -1708,12 +1708,12 @@ fn test_hashset_union_empty_with_empty() {
 #[test]
 fn test_hashset_intersection_empty_with_nonempty() {
     let code = r#"
-        let a = hash_set_new();
-        let b = hash_set_new();
-        hash_set_add(b, 1);
-        hash_set_add(b, 2);
-        let i = hash_set_intersection(a, b);
-        hash_set_size(i)
+        let a = hashSetNew();
+        let b = hashSetNew();
+        hashSetAdd(b, 1);
+        hashSetAdd(b, 2);
+        let i = hashSetIntersection(a, b);
+        hashSetSize(i)
     "#;
     assert_eval_number(code, 0.0);
 }
@@ -1722,14 +1722,14 @@ fn test_hashset_intersection_empty_with_nonempty() {
 fn test_hashset_difference_identical_sets_is_empty() {
     // Use two separate sets with identical contents (avoids Arc<Mutex> self-deadlock)
     let code = r#"
-        let a = hash_set_new();
-        hash_set_add(a, 1);
-        hash_set_add(a, 2);
-        let b = hash_set_new();
-        hash_set_add(b, 1);
-        hash_set_add(b, 2);
-        let d = hash_set_difference(a, b);
-        hash_set_size(d)
+        let a = hashSetNew();
+        hashSetAdd(a, 1);
+        hashSetAdd(a, 2);
+        let b = hashSetNew();
+        hashSetAdd(b, 1);
+        hashSetAdd(b, 2);
+        let d = hashSetDifference(a, b);
+        hashSetSize(d)
     "#;
     assert_eval_number(code, 0.0);
 }
@@ -1737,8 +1737,8 @@ fn test_hashset_difference_identical_sets_is_empty() {
 #[test]
 fn test_hashset_to_array_from_empty() {
     let code = r#"
-        let s = hash_set_new();
-        let arr = hash_set_to_array(s);
+        let s = hashSetNew();
+        let arr = hashSetToArray(s);
         len(arr)
     "#;
     assert_eval_number(code, 0.0);
@@ -1747,8 +1747,8 @@ fn test_hashset_to_array_from_empty() {
 #[test]
 fn test_hashset_is_empty_on_new() {
     let code = r#"
-        let s = hash_set_new();
-        hash_set_is_empty(s)
+        let s = hashSetNew();
+        hashSetIsEmpty(s)
     "#;
     assert_eval_bool(code, true);
 }

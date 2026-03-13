@@ -7,7 +7,7 @@ fn takes_numbers(borrow m: HashMap<string, number>): void {
     let _ = m;
 }
 
-let m: HashMap<string, string> = hash_map_new();
+let m: HashMap<string, string> = hashMapNew();
 takes_numbers(m);
 "#;
     let diagnostics = typecheck_source(src);
@@ -17,8 +17,8 @@ takes_numbers(m);
 #[test]
 fn hashmap_put_enforces_value_type() {
     let src = r#"
-let m: HashMap<string, number> = hash_map_new();
-hash_map_put(m, "age", "thirty");
+let m: HashMap<string, number> = hashMapNew();
+hashMapPut(m, "age", "thirty");
 "#;
     let diagnostics = typecheck_source(src);
     assert!(has_error_code(&diagnostics, "AT3001"));
@@ -27,8 +27,8 @@ hash_map_put(m, "age", "thirty");
 #[test]
 fn hashmap_get_returns_value_type() {
     let src = r#"
-let m: HashMap<string, number> = hash_map_new();
-let v: string = hash_map_get(m, "age");
+let m: HashMap<string, number> = hashMapNew();
+let v: string = hashMapGet(m, "age");
 "#;
     let diagnostics = typecheck_source(src);
     assert!(has_error_code(&diagnostics, "AT3001"));

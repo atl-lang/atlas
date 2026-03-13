@@ -664,7 +664,7 @@ fn test_datetime_timezone_roundtrip() {
 fn test_duration_from_seconds() {
     let runtime = Atlas::new();
     let result = runtime
-        .eval("let dur = durationFromSeconds(3665); let opt = hash_map_get(dur, \"hours\"); unwrap(opt)")
+        .eval("let dur = durationFromSeconds(3665); let opt = hashMapGet(dur, \"hours\"); unwrap(opt)")
         .unwrap();
     assert_eq!(result, Value::Number(1.0)); // 3665 seconds = 1 hour, 1 minute, 5 seconds
 }
@@ -674,7 +674,7 @@ fn test_duration_from_minutes() {
     let runtime = Atlas::new();
     let result = runtime
         .eval(
-            "let dur = durationFromMinutes(90); let opt = hash_map_get(dur, \"hours\"); unwrap(opt)",
+            "let dur = durationFromMinutes(90); let opt = hashMapGet(dur, \"hours\"); unwrap(opt)",
         )
         .unwrap();
     assert_eq!(result, Value::Number(1.0)); // 90 minutes = 1 hour, 30 minutes
@@ -684,7 +684,7 @@ fn test_duration_from_minutes() {
 fn test_duration_from_hours() {
     let runtime = Atlas::new();
     let result = runtime
-        .eval("let dur = durationFromHours(25); let opt = hash_map_get(dur, \"days\"); unwrap(opt)")
+        .eval("let dur = durationFromHours(25); let opt = hashMapGet(dur, \"days\"); unwrap(opt)")
         .unwrap();
     assert_eq!(result, Value::Number(1.0)); // 25 hours = 1 day, 1 hour
 }
@@ -693,7 +693,7 @@ fn test_duration_from_hours() {
 fn test_duration_from_days() {
     let runtime = Atlas::new();
     let result = runtime
-        .eval("let dur = durationFromDays(2); let opt = hash_map_get(dur, \"days\"); unwrap(opt)")
+        .eval("let dur = durationFromDays(2); let opt = hashMapGet(dur, \"days\"); unwrap(opt)")
         .unwrap();
     assert_eq!(result, Value::Number(2.0));
 }
@@ -849,7 +849,7 @@ fn test_find_returns_match() {
         let pattern = unwrap(regex_new("\\d+"));
         let result = regex_find(pattern, "hello123world");
         let match_obj = unwrap(result);
-        unwrap(hash_map_get(match_obj, "text"))
+        unwrap(hashMapGet(match_obj, "text"))
     "#;
     assert_eq!(eval_ok(code), "123");
 }
@@ -970,7 +970,7 @@ fn test_captures_named_groups() {
     let code = r#"
         let pattern = unwrap(regex_new("(?P<num>\\d+)-(?P<word>\\w+)"));
         let groups = unwrap(regex_captures_named(pattern, "123-abc"));
-        unwrap(hash_map_get(groups, "num"))
+        unwrap(hashMapGet(groups, "num"))
     "#;
     assert_eq!(eval_ok(code), "123");
 }
@@ -1056,8 +1056,8 @@ fn test_find_with_positions() {
     let code = r#"
         let pattern = unwrap(regex_new("\\d+"));
         let match_obj = unwrap(regex_find(pattern, "hello123world"));
-        let start = unwrap(hash_map_get(match_obj, "start"));
-        let end_pos = unwrap(hash_map_get(match_obj, "end"));
+        let start = unwrap(hashMapGet(match_obj, "start"));
+        let end_pos = unwrap(hashMapGet(match_obj, "end"));
         start
     "#;
     assert_eq!(eval_ok(code), "5");
@@ -1068,9 +1068,9 @@ fn test_find_all_extracts_all_text() {
     let code = r#"
         let pattern = unwrap(regex_new("\\d+"));
         let matches = regex_find_all(pattern, "1 and 22 and 333");
-        let first = unwrap(hash_map_get(matches[0], "text"));
-        let second = unwrap(hash_map_get(matches[1], "text"));
-        let third = unwrap(hash_map_get(matches[2], "text"));
+        let first = unwrap(hashMapGet(matches[0], "text"));
+        let second = unwrap(hashMapGet(matches[1], "text"));
+        let third = unwrap(hashMapGet(matches[2], "text"));
         first
     "#;
     assert_eq!(eval_ok(code), "1");
@@ -1228,7 +1228,7 @@ fn test_replace_at_boundaries() {
 fn test_replace_with_calls_callback_first_match() {
     let code = r#"
         fn bracketize(borrow m: HashMap): string {
-            return "[" + unwrap(hash_map_get(m, "text")) + "]";
+            return "[" + unwrap(hashMapGet(m, "text")) + "]";
         }
         let pattern = unwrap(regex_new("\\d+"));
         regex_replace_with(pattern, "a1b2c3", bracketize)
@@ -1240,7 +1240,7 @@ fn test_replace_with_calls_callback_first_match() {
 fn test_replace_all_with_calls_callback_all_matches() {
     let code = r#"
         fn bracketize(borrow m: HashMap): string {
-            return "[" + unwrap(hash_map_get(m, "text")) + "]";
+            return "[" + unwrap(hashMapGet(m, "text")) + "]";
         }
         let pattern = unwrap(regex_new("\\d+"));
         regex_replace_all_with(pattern, "a1b2c3", bracketize)
@@ -1252,9 +1252,9 @@ fn test_replace_all_with_calls_callback_all_matches() {
 fn test_callback_receives_correct_match_data() {
     let code = r#"
         fn formatter(borrow m: HashMap): string {
-            let text = unwrap(hash_map_get(m, "text"));
-            let start = unwrap(hash_map_get(m, "start"));
-            let end_pos = unwrap(hash_map_get(m, "end"));
+            let text = unwrap(hashMapGet(m, "text"));
+            let start = unwrap(hashMapGet(m, "start"));
+            let end_pos = unwrap(hashMapGet(m, "end"));
             return "[" + text + "@" + toString(start) + "-" + toString(end_pos) + "]";
         }
         let pattern = unwrap(regex_new("\\d+"));
@@ -1267,7 +1267,7 @@ fn test_callback_receives_correct_match_data() {
 fn test_callback_return_value_used_as_replacement() {
     let code = r#"
         fn doubler(borrow m: HashMap): string {
-            let num = unwrap(hash_map_get(m, "text"));
+            let num = unwrap(hashMapGet(m, "text"));
             return toString(unwrap(to_number(num)) * 2);
         }
         let pattern = unwrap(regex_new("\\d+"));
@@ -1280,7 +1280,7 @@ fn test_callback_return_value_used_as_replacement() {
 fn test_callback_with_capture_groups() {
     let code = r#"
         fn swapper(borrow m: HashMap): string {
-            let groups = unwrap(hash_map_get(m, "groups"));
+            let groups = unwrap(hashMapGet(m, "groups"));
             let num = groups[1];
             let word = groups[2];
             return word + ":" + num;
@@ -1295,7 +1295,7 @@ fn test_callback_with_capture_groups() {
 fn test_callback_can_use_match_positions() {
     let code = r#"
         fn firstOrOther(borrow m: HashMap): string {
-            let start = unwrap(hash_map_get(m, "start"));
+            let start = unwrap(hashMapGet(m, "start"));
             if (start == 0) {
                 return "FIRST";
             } else {
@@ -1312,7 +1312,7 @@ fn test_callback_can_use_match_positions() {
 fn test_callback_can_access_groups_array() {
     let code = r#"
         fn extractCapture(borrow m: HashMap): string {
-            let groups = unwrap(hash_map_get(m, "groups"));
+            let groups = unwrap(hashMapGet(m, "groups"));
             let captured = groups[1];
             return "[" + captured + "]";
         }
@@ -1326,7 +1326,7 @@ fn test_callback_can_access_groups_array() {
 fn test_replace_all_with_processes_all_matches() {
     let code = r#"
         fn bracketize(borrow m: HashMap): string {
-            let num = unwrap(hash_map_get(m, "text"));
+            let num = unwrap(hashMapGet(m, "text"));
             return "[" + num + "]";
         }
         let pattern = unwrap(regex_new("\\d+"));
@@ -1553,7 +1553,7 @@ fn test_integration_csv_parsing() {
 fn test_integration_text_processing_pipeline() {
     let code = r#"
         fn uppercase_numbers(borrow m: HashMap): string {
-            let num = unwrap(hash_map_get(m, "text"));
+            let num = unwrap(hashMapGet(m, "text"));
             return "[" + num + "]";
         }
         let digit_pattern = unwrap(regex_new("\\d+"));
@@ -1779,7 +1779,7 @@ fn test_regex_named_captures() {
         let r = unwrap(regex_new("(?P<year>\\d{4})-(?P<month>\\d{2})"));
         let opt = regex_captures_named(r, "2024-06");
         let m = unwrap(opt);
-        unwrap(hash_map_get(m, "year"))
+        unwrap(hashMapGet(m, "year"))
     "#;
     assert_eq!(eval_ok(code), "2024");
 }

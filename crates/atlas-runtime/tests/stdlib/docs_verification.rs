@@ -479,9 +479,9 @@ fn docs_reflect_is_empty_nonempty() {
 fn docs_hashmap_basic_ops() {
     assert_eval_bool(
         r#"
-        let hmap = hash_map_new();
-        hash_map_put(hmap, "name", "Alice");
-        hash_map_has(hmap, "name") && !hash_map_has(hmap, "email")
+        let hmap = hashMapNew();
+        hashMapPut(hmap, "name", "Alice");
+        hashMapHas(hmap, "name") && !hashMapHas(hmap, "email")
         "#,
         true,
     );
@@ -491,9 +491,9 @@ fn docs_hashmap_basic_ops() {
 fn docs_hashmap_get_returns_some() {
     assert_eval_bool(
         r#"
-        let hmap = hash_map_new();
-        hash_map_put(hmap, "x", 42);
-        is_some(hash_map_get(hmap, "x"))
+        let hmap = hashMapNew();
+        hashMapPut(hmap, "x", 42);
+        is_some(hashMapGet(hmap, "x"))
         "#,
         true,
     );
@@ -503,8 +503,8 @@ fn docs_hashmap_get_returns_some() {
 fn docs_hashmap_get_returns_none() {
     assert_eval_bool(
         r#"
-        let hmap = hash_map_new();
-        is_none(hash_map_get(hmap, "missing"))
+        let hmap = hashMapNew();
+        is_none(hashMapGet(hmap, "missing"))
         "#,
         true,
     );
@@ -514,10 +514,10 @@ fn docs_hashmap_get_returns_none() {
 fn docs_hashmap_size() {
     assert_eval_number(
         r#"
-        let hmap = hash_map_new();
-        hash_map_put(hmap, "a", 1);
-        hash_map_put(hmap, "b", 2);
-        hash_map_size(hmap)
+        let hmap = hashMapNew();
+        hashMapPut(hmap, "a", 1);
+        hashMapPut(hmap, "b", 2);
+        hashMapSize(hmap)
         "#,
         2.0,
     );
@@ -529,8 +529,8 @@ fn docs_hashmap_size() {
 fn docs_hashset_deduplication() {
     assert_eval_number(
         r#"
-        let set = hash_set_from_array([1, 2, 2, 3, 3, 3]);
-        hash_set_size(set)
+        let set = hashSetFromArray([1, 2, 2, 3, 3, 3]);
+        hashSetSize(set)
         "#,
         3.0,
     );
@@ -540,9 +540,9 @@ fn docs_hashset_deduplication() {
 fn docs_hashset_union() {
     assert_eval_number(
         r#"
-        let a = hash_set_from_array([1, 2, 3]);
-        let b = hash_set_from_array([3, 4, 5]);
-        hash_set_size(hash_set_union(a, b))
+        let a = hashSetFromArray([1, 2, 3]);
+        let b = hashSetFromArray([3, 4, 5]);
+        hashSetSize(hashSetUnion(a, b))
         "#,
         5.0,
     );
@@ -552,9 +552,9 @@ fn docs_hashset_union() {
 fn docs_hashset_intersection() {
     assert_eval_number(
         r#"
-        let a = hash_set_from_array([1, 2, 3]);
-        let b = hash_set_from_array([2, 3, 4]);
-        hash_set_size(hash_set_intersection(a, b))
+        let a = hashSetFromArray([1, 2, 3]);
+        let b = hashSetFromArray([2, 3, 4]);
+        hashSetSize(hashSetIntersection(a, b))
         "#,
         2.0,
     );

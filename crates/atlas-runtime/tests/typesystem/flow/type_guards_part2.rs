@@ -387,16 +387,16 @@ fn test_runtime_basic_guards(#[case] expr: &str, #[case] expected: Value) {
 )]
 #[case(
     r#"
-    let hmap = hash_map_new();
-    hash_map_put(hmap, "name", 1);
+    let hmap = hashMapNew();
+    hashMapPut(hmap, "name", 1);
     has_field(hmap, "name")
     "#,
     Value::Bool(true)
 )]
 #[case(
     r#"
-    let hmap = hash_map_new();
-    hash_map_put(hmap, "tag", "ok");
+    let hmap = hashMapNew();
+    hashMapPut(hmap, "tag", "ok");
     has_tag(hmap, "ok")
     "#,
     Value::Bool(true)
