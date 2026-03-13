@@ -59,17 +59,17 @@ fn docs_typeof_array() {
 
 #[test]
 fn docs_to_number_string() {
-    assert_eval_result_ok_number(r#"toNumber("42")"#, 42.0);
+    assert_eval_result_ok_number(r#"("42").toNumber()"#, 42.0);
 }
 
 #[test]
 fn docs_to_bool_zero() {
-    assert_eval_bool(r#"toBool(0)"#, false);
+    assert_eval_bool(r#"(0).toBool()"#, false);
 }
 
 #[test]
 fn docs_to_bool_nonzero() {
-    assert_eval_bool(r#"toBool(1)"#, true);
+    assert_eval_bool(r#"(1).toBool()"#, true);
 }
 
 // --- String functions ---
@@ -92,7 +92,7 @@ fn docs_join_basic() {
 
 #[test]
 fn docs_trim() {
-    assert_eval_string(r#"trim("  hello  ")"#, "hello");
+    assert_eval_string(r#""  hello  ".trim()"#, "hello");
 }
 
 #[test]
@@ -107,12 +107,12 @@ fn docs_trim_end() {
 
 #[test]
 fn docs_to_upper_case() {
-    assert_eval_string(r#"toUpperCase("hello")"#, "HELLO");
+    assert_eval_string(r#""hello".toUpperCase()"#, "HELLO");
 }
 
 #[test]
 fn docs_to_lower_case() {
-    assert_eval_string(r#"toLowerCase("WORLD")"#, "world");
+    assert_eval_string(r#""WORLD".toLowerCase()"#, "world");
 }
 
 #[test]
@@ -142,12 +142,12 @@ fn docs_includes_false() {
 
 #[test]
 fn docs_index_of_found() {
-    assert_eval_option_some_number(r#"indexOf("hello", "ll")"#, 2.0);
+    assert_eval_option_some_number(r#""hello".indexOf("ll")"#, 2.0);
 }
 
 #[test]
 fn docs_index_of_not_found() {
-    assert_eval_option_none(r#"indexOf("hello", "xyz")"#);
+    assert_eval_option_none(r#""hello".indexOf("xyz")"#);
 }
 
 #[test]
@@ -172,7 +172,7 @@ fn docs_substring() {
 
 #[test]
 fn docs_char_at() {
-    assert_eval_option_some_string(r#"charAt("hello", 0)"#, "h");
+    assert_eval_option_some_string(r#""hello".charAt(0)"#, "h");
 }
 
 #[test]
@@ -306,12 +306,12 @@ fn docs_sign_positive() {
 
 #[test]
 fn docs_is_string_true() {
-    assert_eval_bool(r#"isString("hello")"#, true);
+    assert_eval_bool(r#"typeof("hello") == "string""#, true);
 }
 
 #[test]
 fn docs_is_string_false() {
-    assert_eval_bool(r#"isString(42)"#, false);
+    assert_eval_bool(r#"typeof(42) == "string""#, false);
 }
 
 #[test]
@@ -321,12 +321,12 @@ fn docs_is_number_true() {
 
 #[test]
 fn docs_is_bool() {
-    assert_eval_bool(r#"isBool(true)"#, true);
+    assert_eval_bool(r#"typeof(true) == "bool""#, true);
 }
 
 #[test]
 fn docs_is_null() {
-    assert_eval_bool(r#"isNull(null)"#, true);
+    assert_eval_bool(r#"typeof(null) == "null""#, true);
 }
 
 #[test]
@@ -356,7 +356,7 @@ fn docs_parse_json_object() {
 
 #[test]
 fn docs_to_json() {
-    assert_eval_bool(r#"isString(Json.stringify([1, 2, 3]))"#, true);
+    assert_eval_bool(r#"typeof(Json.stringify([1, 2, 3]) == "string")"#, true);
 }
 
 #[test]
@@ -376,7 +376,7 @@ fn docs_json_as_number() {
 
 #[test]
 fn docs_json_is_null() {
-    assert_eval_bool(r#"jsonIsNull(Json.parse("null")?)"#, true);
+    assert_eval_bool(r#"json.isNull(Json.parse("null")?)"#, true);
 }
 
 // --- Result / Option functions ---
@@ -479,9 +479,9 @@ fn docs_reflect_is_empty_nonempty() {
 fn docs_hashmap_basic_ops() {
     assert_eval_bool(
         r#"
-        let hmap = hashMapNew();
-        hashMapPut(hmap, "name", "Alice");
-        hashMapHas(hmap, "name") && !hashMapHas(hmap, "email")
+        let hmap = Map();
+        hmap.set("name", "Alice");
+        hmap.has("name") && !hmap.has("email")
         "#,
         true,
     );
@@ -491,9 +491,9 @@ fn docs_hashmap_basic_ops() {
 fn docs_hashmap_get_returns_some() {
     assert_eval_bool(
         r#"
-        let hmap = hashMapNew();
-        hashMapPut(hmap, "x", 42);
-        is_some(hashMapGet(hmap, "x"))
+        let hmap = Map();
+        hmap.set("x", 42);
+        is_some(hmap.get("x"))
         "#,
         true,
     );
@@ -503,8 +503,8 @@ fn docs_hashmap_get_returns_some() {
 fn docs_hashmap_get_returns_none() {
     assert_eval_bool(
         r#"
-        let hmap = hashMapNew();
-        is_none(hashMapGet(hmap, "missing"))
+        let hmap = Map();
+        is_none(hmap.get("missing"))
         "#,
         true,
     );
@@ -514,10 +514,10 @@ fn docs_hashmap_get_returns_none() {
 fn docs_hashmap_size() {
     assert_eval_number(
         r#"
-        let hmap = hashMapNew();
-        hashMapPut(hmap, "a", 1);
-        hashMapPut(hmap, "b", 2);
-        hashMapSize(hmap)
+        let hmap = Map();
+        hmap.set("a", 1);
+        hmap.set("b", 2);
+        hmap.size()
         "#,
         2.0,
     );
@@ -529,8 +529,8 @@ fn docs_hashmap_size() {
 fn docs_hashset_deduplication() {
     assert_eval_number(
         r#"
-        let set = hashSetFromArray([1, 2, 2, 3, 3, 3]);
-        hashSetSize(set)
+        let set = Set([1, 2, 2, 3, 3, 3]);
+        set.size()
         "#,
         3.0,
     );
@@ -540,9 +540,9 @@ fn docs_hashset_deduplication() {
 fn docs_hashset_union() {
     assert_eval_number(
         r#"
-        let a = hashSetFromArray([1, 2, 3]);
-        let b = hashSetFromArray([3, 4, 5]);
-        hashSetSize(hashSetUnion(a, b))
+        let a = Set([1, 2, 3]);
+        let b = Set([3, 4, 5]);
+        a.union(b.size())
         "#,
         5.0,
     );
@@ -552,9 +552,9 @@ fn docs_hashset_union() {
 fn docs_hashset_intersection() {
     assert_eval_number(
         r#"
-        let a = hashSetFromArray([1, 2, 3]);
-        let b = hashSetFromArray([2, 3, 4]);
-        hashSetSize(hashSetIntersection(a, b))
+        let a = Set([1, 2, 3]);
+        let b = Set([2, 3, 4]);
+        a.intersection(b.size())
         "#,
         2.0,
     );

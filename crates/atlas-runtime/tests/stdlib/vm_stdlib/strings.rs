@@ -79,13 +79,13 @@ fn test_join_basic_vm() {
 
 #[test]
 fn test_trim_basic() {
-    let code = r#"trim("  hello  ")"#;
+    let code = r#""  hello  ".trim()"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_trim_unicode_whitespace() {
-    let code = "trim(\"\u{00A0}hello\u{00A0}\")";
+    let code = "\"\u{00A0}hello\u{00A0}\".trim()";
     assert_eval_string(code, "hello");
 }
 
@@ -114,25 +114,25 @@ fn eval_vm(code: &str) -> Value {
 
 #[test]
 fn test_index_of_found() {
-    let code = r#"indexOf("hello", "ll")"#;
+    let code = r#""hello".indexOf("ll")"#;
     assert_eval_option_some_number(code, 2.0);
 }
 
 #[test]
 fn test_index_of_not_found() {
-    let code = r#"indexOf("hello", "x")"#;
+    let code = r#""hello".indexOf("x")"#;
     assert_eval_option_none(code);
 }
 
 #[test]
 fn test_index_of_empty_needle() {
-    let code = r#"indexOf("hello", "")"#;
+    let code = r#""hello".indexOf("")"#;
     assert_eval_option_some_number(code, 0.0);
 }
 
 #[test]
 fn test_index_of_unicode_offset_vm() {
-    let value = eval_vm(r#"indexOf("éa😊", "😊");"#);
+    let value = eval_vm(r#""éa😊".indexOf("😊");"#);
     match value {
         Value::Option(Some(val)) => match *val {
             Value::Number(n) => assert!((n - 2.0).abs() < f64::EPSILON),
@@ -184,25 +184,25 @@ fn test_includes_not_found() {
 
 #[test]
 fn test_to_upper_case() {
-    let code = r#"toUpperCase("hello")"#;
+    let code = r#""hello".toUpperCase()"#;
     assert_eval_string(code, "HELLO");
 }
 
 #[test]
 fn test_to_upper_case_unicode() {
-    let code = r#"toUpperCase("café")"#;
+    let code = r#""café".toUpperCase()"#;
     assert_eval_string(code, "CAFÉ");
 }
 
 #[test]
 fn test_to_lower_case() {
-    let code = r#"toLowerCase("HELLO")"#;
+    let code = r#""HELLO".toLowerCase()"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_to_lower_case_unicode() {
-    let code = r#"toLowerCase("CAFÉ")"#;
+    let code = r#""CAFÉ".toLowerCase()"#;
     assert_eval_string(code, "café");
 }
 
@@ -226,19 +226,19 @@ fn test_substring_out_of_bounds() {
 
 #[test]
 fn test_char_at_basic() {
-    let code = r#"charAt("hello", 0)"#;
+    let code = r#""hello".charAt(0)"#;
     assert_eval_option_some_string(code, "h");
 }
 
 #[test]
 fn test_char_at_unicode() {
-    let code = r#"charAt("🎉🔥✨", 1)"#;
+    let code = r#""🎉🔥✨".charAt(1)"#;
     assert_eval_option_some_string(code, "🔥");
 }
 
 #[test]
 fn test_char_at_out_of_bounds() {
-    let code = r#"charAt("hello", 10)"#;
+    let code = r#""hello".charAt(10)"#;
     assert_eval_option_none(code);
 }
 

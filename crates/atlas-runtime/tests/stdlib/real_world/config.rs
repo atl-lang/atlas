@@ -42,8 +42,8 @@ fn test_config_validate_required_fields() {
     let code = r#"
         let configStr: string = "{\"host\": \"localhost\", \"port\": 8080}";
         let config: json = Json.parse(configStr)?;
-        let hasHost: bool = !jsonIsNull(config["host"]);
-        let hasPort: bool = !jsonIsNull(config["port"]);
+        let hasHost: bool = !json.isNull(config["host"]);
+        let hasPort: bool = !json.isNull(config["port"]);
         hasHost && hasPort
     "#;
     assert_eval_bool_with_io(code, true);
@@ -56,7 +56,7 @@ fn test_config_missing_field_default() {
         let config: json = Json.parse(configStr)?;
         let port: json = config["port"];
         let mut portValue: number = 8080.0;
-        if (!jsonIsNull(port)) {
+        if (!json.isNull(port)) {
             portValue = port.as_number();
         }
         portValue
@@ -140,12 +140,12 @@ fn test_config_merge_defaults() {
         let portUser: json = user["port"];
 
         let mut finalHost: string = user["host"].as_string();
-        if (jsonIsNull(hostUser)) {
+        if (json.isNull(hostUser)) {
             finalHost = def["host"].as_string();
         }
 
         let mut finalPort: number = def["port"].as_number();
-        if (!jsonIsNull(portUser)) {
+        if (!json.isNull(portUser)) {
             finalPort = user["port"].as_number();
         }
 

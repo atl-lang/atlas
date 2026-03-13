@@ -6,7 +6,7 @@ use super::type_guards_part1::eval;
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        if (isString(x) || is_number(x)) { let _y: number | string = x; return 1; }
+        if (typeof(x) == "string" || is_number(x)) { let _y: number | string = x; return 1; }
         return 2;
     }
     "#
@@ -14,7 +14,7 @@ use super::type_guards_part1::eval;
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        if (isString(x) && is_type(x, "string")) { let _y: string = x; return 1; }
+        if (typeof(x) == "string" && is_type(x, "string")) { let _y: string = x; return 1; }
         return 2;
     }
     "#
@@ -22,7 +22,7 @@ use super::type_guards_part1::eval;
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        if (!isString(x)) { let _y: number = x; return 1; }
+        if (!typeof(x) == "string") { let _y: number = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -30,7 +30,7 @@ use super::type_guards_part1::eval;
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        if (isString(x) && !isNull(x)) { let _y: string = x; return 1; }
+        if (typeof(x) == "string" && !typeof(x) == "null") { let _y: string = x; return 1; }
         return 2;
     }
     "#
@@ -46,7 +46,7 @@ use super::type_guards_part1::eval;
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        if (isString(x) && is_number(x)) { return 1; }
+        if (typeof(x) == "string" && is_number(x)) { return 1; }
         return 2;
     }
     "#
@@ -54,7 +54,7 @@ use super::type_guards_part1::eval;
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        if (isString(x)) { let _y: string = x; }
+        if (typeof(x) == "string") { let _y: string = x; }
         if (is_number(x)) { let _y: number = x; }
         return 1;
     }
@@ -63,7 +63,7 @@ use super::type_guards_part1::eval;
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        if (isString(x)) { let _y: string = x; return 1; }
+        if (typeof(x) == "string") { let _y: string = x; return 1; }
         if (is_number(x)) { let _y: number = x; return 2; }
         return 3;
     }
@@ -73,7 +73,7 @@ use super::type_guards_part1::eval;
     r#"
     fn test(borrow x: number | string): number {
         let mut result: number = 0;
-        if (isString(x)) { result = 1; }
+        if (typeof(x) == "string") { result = 1; }
         if (is_number(x)) { result = 2; }
         return result;
     }
@@ -82,7 +82,7 @@ use super::type_guards_part1::eval;
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        while (isString(x)) { let _y: string = x; return 1; }
+        while (typeof(x) == "string") { let _y: string = x; return 1; }
         return 2;
     }
     "#
@@ -312,11 +312,11 @@ fn test_is_type_guard_failing(#[case] _name: &str, #[case] source: &str) {
 // =============================================================================
 
 #[rstest]
-#[case("isString(\"ok\")", Value::Bool(true))]
-#[case("isString(1)", Value::Bool(false))]
+#[case(r#"typeof("ok") == "string""#, Value::Bool(true))]
+#[case(r#"typeof(1) == "string""#, Value::Bool(false))]
 #[case("is_number(1)", Value::Bool(true))]
-#[case("isBool(true)", Value::Bool(true))]
-#[case("isNull(null)", Value::Bool(true))]
+#[case(r#"typeof(true) == "bool""#, Value::Bool(true))]
+#[case(r#"typeof(null) == "null""#, Value::Bool(true))]
 #[case("is_array([1, 2])", Value::Bool(true))]
 #[case("is_type(\"ok\", \"string\")", Value::Bool(true))]
 #[case("is_type(1, \"number\")", Value::Bool(true))]
@@ -387,16 +387,16 @@ fn test_runtime_basic_guards(#[case] expr: &str, #[case] expected: Value) {
 )]
 #[case(
     r#"
-    let hmap = hashMapNew();
-    hashMapPut(hmap, "name", 1);
+    let hmap = Map();
+    hmap.set("name", 1);
     has_field(hmap, "name")
     "#,
     Value::Bool(true)
 )]
 #[case(
     r#"
-    let hmap = hashMapNew();
-    hashMapPut(hmap, "tag", "ok");
+    let hmap = Map();
+    hmap.set("tag", "ok");
     has_tag(hmap, "ok")
     "#,
     Value::Bool(true)

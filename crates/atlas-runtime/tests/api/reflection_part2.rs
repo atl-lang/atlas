@@ -168,10 +168,10 @@ fn test_interpreter_clone() {
 
 #[test]
 fn test_interpreter_value_to_string() {
-    let result = run_interpreter("reflectValueToString(42)");
+    let result = run_interpreter("reflect.valueToString(42)");
     assert_eq!(result, Value::string("42"));
 
-    let result = run_interpreter("reflectValueToString([1, 2, 3])");
+    let result = run_interpreter("reflect.valueToString([1, 2, 3])");
     assert_eq!(result, Value::string("[1, 2, 3]"));
 
     let result = run_interpreter("value_to_string(123)");
@@ -324,10 +324,10 @@ fn test_vm_clone() {
 
 #[test]
 fn test_vm_value_to_string() {
-    let result = run_vm("reflectValueToString(42)");
+    let result = run_vm("reflect.valueToString(42)");
     assert_eq!(result, Value::string("42"));
 
-    let result = run_vm("reflectValueToString([1, 2, 3])");
+    let result = run_vm("reflect.valueToString([1, 2, 3])");
     assert_eq!(result, Value::string("[1, 2, 3]"));
 
     let result = run_vm("value_to_string(123)");
@@ -381,7 +381,7 @@ fn test_vm_nested_deep_equals() {
 #[case("reflect_is_empty([])")]
 #[case("reflect_is_empty([1])")]
 #[case("reflect_clone(42)")]
-#[case("reflectValueToString(42)")]
+#[case("reflect.valueToString(42)")]
 #[case("value_to_string(42)")]
 fn test_parity_reflection_functions(#[case] code: &str) {
     let interpreter_result = run_interpreter(code);

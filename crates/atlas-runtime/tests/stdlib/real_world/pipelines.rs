@@ -20,7 +20,7 @@ fn test_pipeline_map_filter_reduce() {
 fn test_pipeline_filter_map_join() {
     let code = r#"
         fn isLong(borrow s: string): bool { return len(s) > 3.0; }
-        fn toUpper(borrow s: string): string { return toUpperCase(s); }
+        fn toUpper(borrow s: string): string { return s.toUpperCase(); }
 
         let words: string[] = ["hi", "hello", "bye", "world"];
         let long: string[] = filter(words, isLong);
@@ -47,8 +47,8 @@ fn test_pipeline_nested_arrays() {
 fn test_pipeline_string_processing() {
     let code = r#"
         fn trimAndLower(borrow s: string): string {
-            let t: string = trim(s);
-            return toLowerCase(t);
+            let t: string = s.trim();
+            return t.toLowerCase();
         }
 
         let input: string[] = ["  HELLO  ", "  WORLD  ", "  TEST  "];
@@ -257,7 +257,7 @@ fn test_pipeline_complex_aggregation() {
 fn test_pipeline_string_filter_map() {
     let code = r#"
         fn notEmpty(borrow s: string): bool { return len(s) > 0.0; }
-        fn firstChar(borrow s: string): string { return unwrap(charAt(s, 0.0)); }
+        fn firstChar(borrow s: string): string { return unwrap(s.charAt(0.0)); }
 
         let words: string[] = ["apple", "", "banana", "", "cherry"];
         let nonEmpty: string[] = filter(words, notEmpty);

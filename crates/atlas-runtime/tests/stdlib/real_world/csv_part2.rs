@@ -153,8 +153,8 @@ fn test_csv_trim_whitespace() {
         r#"
         fn cleanRow(borrow row: string): string {{
             let fields: string[] = split(row, ",");
-            let name: string = trim(fields[0]);
-            let value: string = trim(fields[1]);
+            let name: string = fields[0].trim();
+            let value: string = fields[1].trim();
             return name + "," + value;
         }}
 
@@ -183,7 +183,7 @@ fn test_csv_case_insensitive_filter() {
         r#"
         fn isFruit(borrow row: string): bool {{
             let fields: string[] = split(row, ",");
-            let kind: string = toLowerCase(fields[1]);
+            let kind: string = fields[1].toLowerCase();
             return kind == "fruit";
         }}
 

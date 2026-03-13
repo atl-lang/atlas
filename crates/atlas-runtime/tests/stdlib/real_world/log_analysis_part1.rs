@@ -249,7 +249,7 @@ fn test_log_case_insensitive_search() {
     let code = format!(
         r#"
         fn hasError(borrow line: string): bool {{
-            let lower: string = toLowerCase(line);
+            let lower: string = line.toLowerCase();
             return includes(lower, "error");
         }}
 
@@ -325,7 +325,7 @@ fn test_log_trim_whitespace() {
     let code = format!(
         r#"
         fn cleanLine(borrow line: string): string {{
-            return trim(line);
+            return line.trim();
         }}
 
         let logs: string = read_file("{}");

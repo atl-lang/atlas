@@ -1,11 +1,11 @@
-let hm = hashMapNew();
-hashMapPut(hm, "name", "Alice");
-hashMapPut(hm, "age", "30");
-hashMapPut(hm, "city", "Paris");
+let hm = Map();
+hm.set("name", "Alice");
+hm.set("age", "30");
+hm.set("city", "Paris");
 
-console.log(hashMapSize(hm));
-console.log(hashMapHas(hm, "name"));
-console.log(hashMapHas(hm, "missing"));
+console.log(hm.size());
+console.log(hm.has("name"));
+console.log(hm.has("missing"));
 
-let val: string = unwrap(hashMapGet(hm, "name"));
+let val: string = unwrap(hm.get("name"));
 console.log(val);

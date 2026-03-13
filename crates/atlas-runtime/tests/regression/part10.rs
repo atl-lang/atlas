@@ -63,7 +63,7 @@ fn struct_expr_basic() {
     // Struct expressions are syntactic sugar for creating HashMap objects
     let code = r#"
         let user = User { name: "Alice", age: 30 };
-        unwrap(hashMapGet(user, "name"))
+        unwrap(user.get("name"))
     "#;
     assert_eval_string(code, "Alice");
 }
@@ -72,7 +72,7 @@ fn struct_expr_basic() {
 fn struct_expr_access_field() {
     let code = r#"
         let point = Point { x: 10, y: 20 };
-        unwrap(hashMapGet(point, "y"))
+        unwrap(point.get("y"))
     "#;
     assert_eval_number(code, 20.0);
 }
@@ -81,7 +81,7 @@ fn struct_expr_access_field() {
 fn struct_expr_empty() {
     let code = r#"
         let empty = Empty {};
-        hashMapSize(empty)
+        empty.size()
     "#;
     assert_eval_number(code, 0.0);
 }

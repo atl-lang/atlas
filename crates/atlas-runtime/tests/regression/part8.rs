@@ -30,18 +30,18 @@ fn milestone_stdlib_math_min() {
 
 #[test]
 fn milestone_stdlib_string_to_upper() {
-    assert_eval_string(r#"toUpperCase("hello");"#, "HELLO");
+    assert_eval_string(r#""hello".toUpperCase();"#, "HELLO");
 }
 
 #[test]
 fn milestone_stdlib_string_to_lower() {
-    assert_eval_string(r#"toLowerCase("HELLO");"#, "hello");
+    assert_eval_string(r#""HELLO".toLowerCase();"#, "hello");
 }
 
 #[test]
 fn milestone_stdlib_string_contains() {
-    assert_eval_bool(r#"is_some(indexOf("hello world", "world"));"#, true);
-    assert_eval_bool(r#"is_some(indexOf("hello world", "xyz"));"#, false);
+    assert_eval_bool(r#"is_some("hello world".indexOf("world"));"#, true);
+    assert_eval_bool(r#"is_some("hello world".indexOf("xyz"));"#, false);
 }
 
 #[test]

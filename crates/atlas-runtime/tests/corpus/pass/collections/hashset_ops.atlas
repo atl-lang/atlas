@@ -1,9 +1,9 @@
-let hs = hashSetNew();
-hashSetAdd(hs, "apple");
-hashSetAdd(hs, "banana");
-hashSetAdd(hs, "cherry");
-hashSetAdd(hs, "apple");
+let hs = Set();
+hs.add("apple");
+hs.add("banana");
+hs.add("cherry");
+hs.add("apple");
 
-console.log(hashSetSize(hs));
-console.log(hashSetHas(hs, "banana"));
-console.log(hashSetHas(hs, "grape"));
+console.log(hs.size());
+console.log(hs.has("banana"));
+console.log(hs.has("grape"));

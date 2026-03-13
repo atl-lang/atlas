@@ -695,7 +695,7 @@ fn test_safe_cstring() {
     use atlas_runtime::ffi::SafeCString;
 
     let s = SafeCString::new("hello world").unwrap();
-    assert!(!s.as_ptr().isNull());
+    assert!(!s.as_ptr().is_null());
 }
 
 #[test]
@@ -757,8 +757,8 @@ fn test_ffi_platform_compatibility() {
     .unwrap();
 
     // Verify both trampoline and context are valid pointers
-    assert!(!handle.trampoline().isNull());
-    assert!(!handle.context().isNull());
+    assert!(!handle.trampoline().is_null());
+    assert!(!handle.context().is_null());
 }
 
 #[test]
@@ -1158,7 +1158,7 @@ fn test_marshal_string_to_char_ptr_valid() {
 
     assert!(result.is_ok());
     if let Ok(CType::CharPtr(ptr)) = result {
-        assert!(!ptr.isNull());
+        assert!(!ptr.is_null());
         unsafe {
             let c_str = std::ffi::CStr::from_ptr(ptr);
             assert_eq!(c_str.to_str().unwrap(), "hello world");

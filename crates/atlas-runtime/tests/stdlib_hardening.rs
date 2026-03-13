@@ -112,7 +112,7 @@ fn test_split_parity() {
 
 #[test]
 fn test_trim_all_whitespace() {
-    assert_eq!(eval_ok(r#"trim("   ");"#), Value::string(""));
+    assert_eq!(eval_ok(r#""   ".trim();"#), Value::string(""));
 }
 
 #[test]
@@ -127,13 +127,13 @@ fn test_trim_end_all_whitespace() {
 
 #[test]
 fn test_trim_no_whitespace() {
-    assert_eq!(eval_ok(r#"trim("hello");"#), Value::string("hello"));
+    assert_eq!(eval_ok(r#""hello".trim();"#), Value::string("hello"));
 }
 
 #[test]
 fn test_trim_parity() {
-    let i = eval_ok(r#"trim("  hello  ");"#);
-    let v = vm_eval_ok(r#"trim("  hello  ");"#);
+    let i = eval_ok(r#""  hello  ".trim();"#);
+    let v = vm_eval_ok(r#""  hello  ".trim();"#);
     assert_eq!(i, v);
 }
 
@@ -141,13 +141,13 @@ fn test_trim_parity() {
 
 #[test]
 fn test_index_of_empty_haystack() {
-    assert_eq!(eval_ok(r#"indexOf("", "x");"#), Value::Option(None));
+    assert_eq!(eval_ok(r#""".indexOf("x");"#), Value::Option(None));
 }
 
 #[test]
 fn test_index_of_empty_needle_on_empty() {
     assert_eq!(
-        eval_ok(r#"indexOf("", "");"#),
+        eval_ok(r#""".indexOf("");"#),
         Value::Option(Some(Box::new(Value::Number(0.0))))
     );
 }
@@ -170,8 +170,8 @@ fn test_last_index_of_multiple_occurrences() {
 
 #[test]
 fn test_index_of_parity() {
-    let i = eval_ok(r#"indexOf("hello world", "world");"#);
-    let v = vm_eval_ok(r#"indexOf("hello world", "world");"#);
+    let i = eval_ok(r#""hello world".indexOf("world");"#);
+    let v = vm_eval_ok(r#""hello world".indexOf("world");"#);
     assert_eq!(i, v);
 }
 
@@ -246,18 +246,18 @@ fn test_substring_parity() {
 
 #[test]
 fn test_char_at_out_of_bounds_error() {
-    assert_eq!(eval_ok(r#"charAt("hello", 10);"#), Value::Option(None));
+    assert_eq!(eval_ok(r#""hello".charAt(10);"#), Value::Option(None));
 }
 
 #[test]
 fn test_char_at_empty_string_error() {
-    assert_eq!(eval_ok(r#"charAt("", 0);"#), Value::Option(None));
+    assert_eq!(eval_ok(r#""".charAt(0);"#), Value::Option(None));
 }
 
 #[test]
 fn test_char_at_parity() {
-    let i = eval_ok(r#"charAt("abcde", 3);"#);
-    let v = vm_eval_ok(r#"charAt("abcde", 3);"#);
+    let i = eval_ok(r#""abcde".charAt(3);"#);
+    let v = vm_eval_ok(r#""abcde".charAt(3);"#);
     assert_eq!(i, v);
 }
 
@@ -380,23 +380,23 @@ fn test_starts_with_parity() {
 
 #[test]
 fn test_to_upper_already_upper() {
-    assert_eq!(eval_ok(r#"toUpperCase("HELLO");"#), Value::string("HELLO"));
+    assert_eq!(eval_ok(r#""HELLO".toUpperCase();"#), Value::string("HELLO"));
 }
 
 #[test]
 fn test_to_lower_already_lower() {
-    assert_eq!(eval_ok(r#"toLowerCase("hello");"#), Value::string("hello"));
+    assert_eq!(eval_ok(r#""hello".toLowerCase();"#), Value::string("hello"));
 }
 
 #[test]
 fn test_to_upper_empty() {
-    assert_eq!(eval_ok(r#"toUpperCase("");"#), Value::string(""));
+    assert_eq!(eval_ok(r#""".toUpperCase();"#), Value::string(""));
 }
 
 #[test]
 fn test_case_parity() {
-    let i = eval_ok(r#"toUpperCase("hello");"#);
-    let v = vm_eval_ok(r#"toUpperCase("hello");"#);
+    let i = eval_ok(r#""hello".toUpperCase();"#);
+    let v = vm_eval_ok(r#""hello".toUpperCase();"#);
     assert_eq!(i, v);
 }
 
@@ -1055,17 +1055,17 @@ fn test_is_number_false_for_string() {
 
 #[test]
 fn test_is_string_false_for_number() {
-    assert_eq!(eval_ok("isString(42);"), Value::Bool(false));
+    assert_eq!(eval_ok(r#"typeof(42) == "string";"#), Value::Bool(false));
 }
 
 #[test]
 fn test_is_bool_false_for_number() {
-    assert_eq!(eval_ok("isBool(1);"), Value::Bool(false));
+    assert_eq!(eval_ok(r#"typeof(1) == "bool";"#), Value::Bool(false));
 }
 
 #[test]
 fn test_is_null_false_for_zero() {
-    assert_eq!(eval_ok("isNull(0);"), Value::Bool(false));
+    assert_eq!(eval_ok(r#"typeof(0) == "null";"#), Value::Bool(false));
 }
 
 #[test]
@@ -1099,7 +1099,7 @@ fn test_to_string_parity() {
 #[test]
 fn test_to_number_from_bool_true() {
     assert_eq!(
-        eval_ok("toNumber(true);"),
+        eval_ok("(true).toNumber();"),
         Value::Result(Ok(Box::new(Value::Number(1.0))))
     );
 }
@@ -1107,20 +1107,20 @@ fn test_to_number_from_bool_true() {
 #[test]
 fn test_to_number_from_bool_false() {
     assert_eq!(
-        eval_ok("toNumber(false);"),
+        eval_ok("(false).toNumber();"),
         Value::Result(Ok(Box::new(Value::Number(0.0))))
     );
 }
 
 #[test]
 fn test_to_number_from_non_numeric_string_error() {
-    let result = eval_ok(r#"toNumber("abc");"#);
+    let result = eval_ok(r#"("abc").toNumber();"#);
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_to_number_from_null_error() {
-    let result = eval_ok("toNumber(null);");
+    let result = eval_ok("(null).toNumber();");
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
@@ -1128,28 +1128,28 @@ fn test_to_number_from_null_error() {
 
 #[test]
 fn test_to_bool_zero_is_false() {
-    assert_eq!(eval_ok("toBool(0);"), Value::Bool(false));
+    assert_eq!(eval_ok("(0).toBool();"), Value::Bool(false));
 }
 
 #[test]
 fn test_to_bool_empty_string_is_false() {
-    assert_eq!(eval_ok(r#"toBool("");"#), Value::Bool(false));
+    assert_eq!(eval_ok(r#"("").toBool();"#), Value::Bool(false));
 }
 
 #[test]
 fn test_to_bool_null_is_false() {
-    assert_eq!(eval_ok("toBool(null);"), Value::Bool(false));
+    assert_eq!(eval_ok("(null).toBool();"), Value::Bool(false));
 }
 
 #[test]
 fn test_to_bool_array_is_true() {
-    assert_eq!(eval_ok("toBool([]);"), Value::Bool(true));
+    assert_eq!(eval_ok("([]).toBool();"), Value::Bool(true));
 }
 
 #[test]
 fn test_to_bool_parity() {
-    let i = eval_ok("toBool(0);");
-    let v = vm_eval_ok("toBool(0);");
+    let i = eval_ok("(0).toBool();");
+    let v = vm_eval_ok("(0).toBool();");
     assert_eq!(i, v);
 }
 
@@ -1231,8 +1231,8 @@ fn test_h083_canonical_join_still_works() {
 
 #[test]
 fn test_h083_canonical_index_of_still_works() {
-    let r1 = eval_ok(r#"indexOf("hello", "ll");"#);
-    let r2 = eval_ok(r#"indexOf("hello", "ll");"#);
+    let r1 = eval_ok(r#""hello".indexOf("ll");"#);
+    let r2 = eval_ok(r#""hello".indexOf("ll");"#);
     assert_eq!(r1, r2);
 }
 

@@ -8,7 +8,7 @@ use super::*;
 fn test_typeof_guards_match() {
     let code = r#"
     let val: string = "hello";
-    typeof(val) == "string" && isString(val)
+    typeof(val) == "string" && typeof(val) == "string"
 "#;
     assert_eval_bool(code, true);
 }
@@ -18,7 +18,7 @@ fn test_type_conversion_chain() {
     let code = r#"
     let num: number = 42;
     let numStr: string = toString(num);
-    unwrap(toNumber(numStr))
+    unwrap((numStr).toNumber())
 "#;
     assert_eval_number(code, 42.0);
 }
@@ -36,14 +36,14 @@ fn test_parse_int_then_to_string() {
 fn test_type_guards_all_false_for_null() {
     let code = r#"
     let val = null;
-    !isString(val) && !is_number(val) && !isBool(val) && !is_array(val) && !is_function(val)
+    !typeof(val) == "string" && !is_number(val) && !typeof(val) == "bool" && !is_array(val) && !is_function(val)
 "#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_type_guards_only_null_true() {
-    let code = r#"isNull(null)"#;
+    let code = r#"typeof(null) == "null""#;
     assert_eval_bool(code, true);
 }
 

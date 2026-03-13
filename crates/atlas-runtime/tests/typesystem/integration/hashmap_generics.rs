@@ -7,7 +7,7 @@ fn takes_numbers(borrow m: HashMap<string, number>): void {
     let _ = m;
 }
 
-let m: HashMap<string, string> = hashMapNew();
+let m: HashMap<string, string> = Map();
 takes_numbers(m);
 "#;
     let diagnostics = typecheck_source(src);
@@ -17,8 +17,8 @@ takes_numbers(m);
 #[test]
 fn hashmap_put_enforces_value_type() {
     let src = r#"
-let m: HashMap<string, number> = hashMapNew();
-hashMapPut(m, "age", "thirty");
+let m: HashMap<string, number> = Map();
+m.set("age", "thirty");
 "#;
     let diagnostics = typecheck_source(src);
     assert!(has_error_code(&diagnostics, "AT3001"));
@@ -27,8 +27,8 @@ hashMapPut(m, "age", "thirty");
 #[test]
 fn hashmap_get_returns_value_type() {
     let src = r#"
-let m: HashMap<string, number> = hashMapNew();
-let v: string = hashMapGet(m, "age");
+let m: HashMap<string, number> = Map();
+let v: string = m.get("age");
 "#;
     let diagnostics = typecheck_source(src);
     assert!(has_error_code(&diagnostics, "AT3001"));
@@ -38,8 +38,8 @@ let v: string = hashMapGet(m, "age");
 #[test]
 fn hashmap_has_returns_bool() {
     let src = r#"
-let m: HashMap<string, number> = hashMapNew();
-let has: bool = hashMapHas(m, "key");
+let m: HashMap<string, number> = Map();
+let has: bool = m.has("key");
 "#;
     let diagnostics = typecheck_source(src);
     assert_no_errors(&diagnostics);
@@ -48,8 +48,8 @@ let has: bool = hashMapHas(m, "key");
 #[test]
 fn hashmap_has_usable_in_if_condition() {
     let src = r#"
-let m: HashMap<string, number> = hashMapNew();
-if hashMapHas(m, "key") {
+let m: HashMap<string, number> = Map();
+if m.has("key") {
     let x: number = 1;
 }
 "#;

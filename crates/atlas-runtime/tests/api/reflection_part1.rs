@@ -202,19 +202,19 @@ fn test_value_info_is_empty() {
 fn test_value_info_type_checks() {
     let num_info = ValueInfo::new(Value::Number(42.0));
     assert!(num_info.is_number());
-    assert!(!num_info.isString());
-    assert!(!num_info.isBool());
-    assert!(!num_info.isNull());
+    assert!(!num_info.is_string());
+    assert!(!num_info.is_bool());
+    assert!(!num_info.is_null());
 
     let str_info = ValueInfo::new(Value::string("test"));
-    assert!(str_info.isString());
+    assert!(str_info.is_string());
     assert!(!str_info.is_number());
 
     let bool_info = ValueInfo::new(Value::Bool(true));
-    assert!(bool_info.isBool());
+    assert!(bool_info.is_bool());
     assert!(!bool_info.is_number());
 
     let null_info = ValueInfo::new(Value::Null);
-    assert!(null_info.isNull());
+    assert!(null_info.is_null());
     assert!(!null_info.is_number());
 }

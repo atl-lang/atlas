@@ -24,7 +24,7 @@ use super::*;
 fn test_split_map_join_pipeline() {
     let code = r#"
         fn toUpper(borrow s: string): string {
-            return toUpperCase(s);
+            return s.toUpperCase();
         }
 
         let words: string[] = split("hello,world,atlas", ",");
@@ -53,11 +53,11 @@ fn test_split_filter_length() {
 fn test_string_trim_split_trim_each() {
     let code = r#"
         fn trimWord(borrow s: string): string {
-            return trim(s);
+            return s.trim();
         }
 
         let input: string = "  hello , world , atlas  ";
-        let trimmed: string = trim(input);
+        let trimmed: string = input.trim();
         let parts: string[] = split(trimmed, ",");
         let clean: string[] = map(parts, trimWord);
         join(clean, "|")
@@ -93,7 +93,7 @@ fn test_substring_map_concat() {
 fn test_index_of_filter_slice() {
     let code = r#"
         fn hasA(borrow s: string): bool {
-            return is_some(indexOf(s, "a"));
+            return is_some(s.indexOf("a"));
         }
 
         let words: string[] = ["apple", "banana", "cherry", "date", "avocado"];
@@ -822,7 +822,7 @@ fn test_repeat_then_split_count() {
 fn test_trim_all_in_array() {
     let code = r#"
         fn trimStr(borrow s: string): string {
-            return trim(s);
+            return s.trim();
         }
 
         let messy: string[] = ["  hello  ", " world", "test  "];
@@ -836,7 +836,7 @@ fn test_trim_all_in_array() {
 fn test_char_at_map() {
     let code = r#"
         fn firstChar(borrow s: string): string {
-            return unwrap(charAt(s, 0));
+            return unwrap(s.charAt(0));
         }
 
         let words: string[] = ["apple", "banana", "cherry"];
@@ -850,10 +850,10 @@ fn test_char_at_map() {
 fn test_to_upper_to_lower_pipeline() {
     let code = r#"
         fn upper(borrow s: string): string {
-            return toUpperCase(s);
+            return s.toUpperCase();
         }
         fn lower(borrow s: string): string {
-            return toLowerCase(s);
+            return s.toLowerCase();
         }
 
         let words: string[] = ["Hello", "WORLD"];
@@ -882,7 +882,7 @@ fn test_ends_with_filter() {
 fn test_index_of_map_to_numbers() {
     let code = r#"
         fn findComma(borrow s: string): number {
-            return unwrap_or(indexOf(s, ","), -1);
+            return unwrap_or(s.indexOf(","), -1);
         }
 
         let strings: string[] = ["a,b", "x,y,z", "no comma"];
@@ -1340,7 +1340,7 @@ fn test_type_check_numbers_only() {
 fn test_type_check_strings_only() {
     let code = r#"
         fn isStr(borrow val: string): bool {
-            return isString(val);
+            return typeof(val) == "string";
         }
 
         let strings: string[] = ["two", "four"];
