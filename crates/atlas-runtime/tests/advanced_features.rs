@@ -538,3 +538,49 @@ fn test_spawn_in_function_body_typechecks() {
         "#,
     );
 }
+
+// ── H-364 regression tests ───────────────────────────────────────────────────
+
+#[test]
+fn test_h364_defer_calls_user_defined_fn() {
+    // Regression: defer with user-defined function call was hanging (infinite loop)
+    let source = r#"
+        fn add(a: number, b: number): number { a + b }
+        fn f(): number {
+            defer add(1, 2);
+            7
+        }
+        f();
+    "#;
+    assert_eq!(vm_eval_num(source), 7.0);
+}
+
+#[test]
+fn test_h364_defer_user_fn_return_value_preserved() {
+    // Return value of outer function must not be affected by deferred call
+    let source = r#"
+        fn side_effect(x: number): number { x * 10 }
+        fn outer(): number {
+            defer side_effect(5);
+            42
+        }
+        outer();
+    "#;
+    assert_eq!(vm_eval_num(source), 42.0);
+}
+
+#[test]
+fn test_h364_multiple_defers_with_user_fn() {
+    // Multiple defers that call user functions — LIFO, return value intact
+    let source = r#"
+        fn nop(x: number): number { x }
+        fn f(): number {
+            defer nop(1);
+            defer nop(2);
+            defer nop(3);
+            99
+        }
+        f();
+    "#;
+    assert_eq!(vm_eval_num(source), 99.0);
+}

@@ -1408,9 +1408,16 @@ impl VM {
                                 }
                                 Opcode::Call => {
                                     let arg_count = self.read_u8()? as usize;
-                                    // Use full execute_call to handle all function types
-                                    // (Builtin, NativeFunction, Function, etc.)
+                                    let frames_before_call = self.frames.len();
                                     self.execute_call(arg_count)?;
+                                    // H-364: If execute_call pushed a new frame (user-defined
+                                    // function), drive it to completion via the full dispatch
+                                    // loop so that Return, arithmetic, GetLocal etc. all work.
+                                    // The loop stops when frames.len() drops back to
+                                    // frames_before_call, leaving the return value on the stack.
+                                    if self.frames.len() > frames_before_call {
+                                        self.execute_loop(Some(frames_before_call))?;
+                                    }
                                 }
                                 Opcode::Pop => {
                                     self.pop();
