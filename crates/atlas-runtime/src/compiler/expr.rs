@@ -55,6 +55,12 @@ impl Compiler {
                 self.bytecode.emit(Opcode::Await, *span);
                 Ok(())
             }
+            Expr::New {
+                type_name,
+                args,
+                span,
+                ..
+            } => self.compile_new(type_name, args, *span),
         }
     }
 
@@ -966,6 +972,69 @@ impl Compiler {
         // Emit HashMap instruction with entry count
         self.bytecode.emit(Opcode::HashMap, obj.span);
         self.bytecode.emit_u16(obj.entries.len() as u16);
+
+        Ok(())
+    }
+
+    /// Compile `new TypeName<TypeArgs>(args)` constructor expression (H-374)
+    ///
+    /// Map  → Opcode::HashMap with 0 entries (empty map, direct VM opcode)
+    /// Set  → GetGlobal("hashSetNew") + Call(0)  (stdlib native)
+    /// Queue → GetGlobal("queueNew") + Call(0)
+    /// Stack → GetGlobal("stackNew") + Call(0)
+    fn compile_new(
+        &mut self,
+        type_name: &Identifier,
+        args: &[Expr],
+        span: Span,
+    ) -> Result<(), Vec<Diagnostic>> {
+        // Compile constructor arguments onto the stack first
+        for arg in args {
+            self.compile_expr(arg)?;
+        }
+
+        match type_name.name.as_str() {
+            "Map" => {
+                // Emit an empty HashMap literal (0 key-value pairs)
+                self.bytecode.emit(Opcode::HashMap, span);
+                self.bytecode.emit_u16(0);
+            }
+            "Set" => {
+                let name_idx = self.bytecode.add_constant(Value::string("hashSetNew"));
+                self.bytecode.emit(Opcode::GetGlobal, span);
+                self.bytecode.emit_u16(name_idx);
+                self.bytecode.emit(Opcode::Call, span);
+                self.bytecode.emit_u8(args.len() as u8);
+            }
+            "Queue" => {
+                let name_idx = self.bytecode.add_constant(Value::string("queueNew"));
+                self.bytecode.emit(Opcode::GetGlobal, span);
+                self.bytecode.emit_u16(name_idx);
+                self.bytecode.emit(Opcode::Call, span);
+                self.bytecode.emit_u8(args.len() as u8);
+            }
+            "Stack" => {
+                let name_idx = self.bytecode.add_constant(Value::string("stackNew"));
+                self.bytecode.emit(Opcode::GetGlobal, span);
+                self.bytecode.emit_u16(name_idx);
+                self.bytecode.emit(Opcode::Call, span);
+                self.bytecode.emit_u8(args.len() as u8);
+            }
+            other => {
+                // Unknown constructor — emit error diagnostic
+                let diag = crate::diagnostic::error_codes::INTERNAL_ERROR
+                    .emit(span)
+                    .arg(
+                        "detail",
+                        format!(
+                            "`new {}()` is not a recognized constructor — supported: Map, Set, Queue, Stack",
+                            other
+                        ),
+                    )
+                    .build();
+                return Err(vec![diag]);
+            }
+        }
 
         Ok(())
     }

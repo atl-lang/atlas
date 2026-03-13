@@ -385,6 +385,11 @@ fn find_references_in_expr(expr: &Expr, identifier: &str, references: &mut Vec<R
         Expr::Await { expr, .. } => {
             find_references_in_expr(expr, identifier, references);
         }
+        Expr::New { args, .. } => {
+            for arg in args {
+                find_references_in_expr(arg, identifier, references);
+            }
+        }
     }
 }
 

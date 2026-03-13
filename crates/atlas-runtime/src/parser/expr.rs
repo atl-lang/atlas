@@ -39,6 +39,7 @@ impl Parser {
             TokenKind::LeftBrace => self.parse_block_or_anon_struct(),
             TokenKind::Minus | TokenKind::Bang => self.parse_unary(),
             TokenKind::Await => self.parse_await(),
+            TokenKind::New => self.parse_new(),
             TokenKind::If => self.parse_if_expr(),
             TokenKind::Match => self.parse_match_expr(),
             TokenKind::Fn => self.parse_anon_fn(),
@@ -49,7 +50,7 @@ impl Parser {
                     SYNTAX_ERROR
                         .emit(span)
                         .arg("detail", "expected an expression")
-                        .with_help("expressions include literals, identifiers, function calls, operators, `if`, `match`, and `fn`")
+                        .with_help("expressions include literals, identifiers, function calls, operators, `if`, `match`, `fn`, and `new`")
                         .with_note("if you meant to write a statement, check for a missing semicolon on the previous line"),
                 );
                 Err(())
@@ -502,6 +503,51 @@ impl Parser {
         })
     }
 
+    /// Parse `new TypeName<TypeArgs>(args)` constructor expression (H-374)
+    ///
+    /// Syntax: `new Map<K, V>()` | `new Set<T>()` | `new Queue<T>()` | `new Stack<T>()`
+    fn parse_new(&mut self) -> Result<Expr, ()> {
+        let new_span = self.advance().span; // consume `new`
+
+        // Parse type name (must be an identifier)
+        let name_token = self.consume_identifier("a type name after `new`")?;
+        let type_name = crate::ast::Identifier {
+            name: name_token.lexeme.clone(),
+            span: name_token.span,
+        };
+
+        // Parse optional type arguments: `<K, V>`
+        let type_args = self.try_parse_call_type_args()?;
+
+        // Parse argument list: `()`  or  `(arg1, arg2, ...)`
+        self.consume(
+            TokenKind::LeftParen,
+            "Expected '(' after type name in `new` expression",
+        )?;
+        let mut args = Vec::new();
+        if !self.check(TokenKind::RightParen) {
+            loop {
+                args.push(self.parse_expression()?);
+                if !self.match_token(TokenKind::Comma) {
+                    break;
+                }
+            }
+        }
+        let end_span = self
+            .consume(
+                TokenKind::RightParen,
+                "Expected ')' to close `new` expression",
+            )?
+            .span;
+
+        Ok(Expr::New {
+            type_name,
+            type_args,
+            args,
+            span: new_span.merge(end_span),
+        })
+    }
+
     /// Parse unary expression
     fn parse_unary(&mut self) -> Result<Expr, ()> {
         let op_token = self.advance();
@@ -714,6 +760,7 @@ impl Parser {
                 | TokenKind::Fn
                 | TokenKind::Range
                 | TokenKind::RangeInclusive
+                | TokenKind::New
         )
     }
 

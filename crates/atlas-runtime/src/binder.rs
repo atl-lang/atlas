@@ -1559,6 +1559,11 @@ impl Binder {
             Expr::Await { expr, .. } => {
                 self.bind_expr(expr);
             }
+            Expr::New { args, .. } => {
+                for arg in args {
+                    self.bind_expr(arg);
+                }
+            }
         }
     }
 

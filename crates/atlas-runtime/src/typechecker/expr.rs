@@ -888,6 +888,46 @@ impl<'a> TypeChecker<'a> {
                 let elem_types: Vec<Type> = elements.iter().map(|e| self.check_expr(e)).collect();
                 Type::Tuple(elem_types)
             }
+            Expr::New {
+                type_name,
+                type_args,
+                args,
+                span: _,
+            } => {
+                // Type-check constructor arguments (usually empty for collections)
+                for arg in args {
+                    self.check_expr(arg);
+                }
+
+                // Resolve type arguments to Type
+                let resolved_args: Vec<crate::types::Type> = type_args
+                    .iter()
+                    .map(|tr| self.resolve_type_ref(tr))
+                    .collect();
+
+                // Map surface type names (D-060 TypeScript style) to internal names
+                let internal_name = match type_name.name.as_str() {
+                    "Map" => "HashMap",
+                    "Set" => "HashSet",
+                    "Queue" => "Queue",
+                    "Stack" => "Stack",
+                    other => other,
+                };
+
+                if resolved_args.is_empty() {
+                    // new Map() — no type args, return generic with Unknown params
+                    crate::types::Type::Generic {
+                        name: internal_name.to_string(),
+                        type_args: vec![],
+                    }
+                } else {
+                    crate::types::Type::Generic {
+                        name: internal_name.to_string(),
+                        type_args: resolved_args,
+                    }
+                }
+            }
+
             Expr::Await { expr, span } => {
                 // AT4001: await outside async context
                 if !self.in_async_context {

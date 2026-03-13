@@ -701,6 +701,17 @@ pub enum Expr {
         expr: Box<Expr>,
         span: Span,
     },
+    /// `new TypeName<TypeArgs>(args)` — collection/struct constructor (H-374)
+    /// Examples: `new Map<string, number>()`, `new Set<string>()`
+    New {
+        /// The type being constructed (e.g. "Map", "Set", "Queue", "Stack")
+        type_name: Identifier,
+        /// Optional generic type arguments: `<K, V>` in `new Map<K, V>()`
+        type_args: Vec<TypeRef>,
+        /// Constructor arguments (usually empty for collections)
+        args: Vec<Expr>,
+        span: Span,
+    },
 }
 
 /// Unary expression
@@ -1063,6 +1074,7 @@ impl Expr {
             Expr::Block(block) => block.span,
             Expr::EnumVariant(e) => e.span,
             Expr::Await { span, .. } => *span,
+            Expr::New { span, .. } => *span,
         }
     }
 }
