@@ -96,52 +96,52 @@ fn run_interpreter(code: &str) -> Value {
 }
 
 #[rstest]
-#[case("reflect_typeof(42)", "number")]
-#[case("reflect_typeof(\"hello\")", "string")]
-#[case("reflect_typeof(true)", "bool")]
-#[case("reflect_typeof(null)", "null")]
-#[case("reflect_typeof([1, 2, 3])", "array")]
+#[case("reflect.typeOf(42)", "number")]
+#[case("reflect.typeOf(\"hello\")", "string")]
+#[case("reflect.typeOf(true)", "bool")]
+#[case("reflect.typeOf(null)", "null")]
+#[case("reflect.typeOf([1, 2, 3])", "array")]
 fn test_interpreter_typeof(#[case] code: &str, #[case] expected: &str) {
     let result = run_interpreter(code);
     assert_eq!(result, Value::string(expected));
 }
 
 #[rstest]
-#[case("reflect_is_primitive(42)", true)]
-#[case("reflect_is_primitive(\"test\")", true)]
-#[case("reflect_is_primitive(true)", true)]
-#[case("reflect_is_primitive(null)", true)]
-#[case("reflect_is_primitive([1, 2])", false)]
+#[case("reflect.isPrimitive(42)", true)]
+#[case("reflect.isPrimitive(\"test\")", true)]
+#[case("reflect.isPrimitive(true)", true)]
+#[case("reflect.isPrimitive(null)", true)]
+#[case("reflect.isPrimitive([1, 2])", false)]
 fn test_interpreter_is_primitive(#[case] code: &str, #[case] expected: bool) {
     let result = run_interpreter(code);
     assert_eq!(result, Value::Bool(expected));
 }
 
 #[rstest]
-#[case("reflect_same_type(42, 99)", true)]
-#[case("reflect_same_type(42, \"test\")", false)]
-#[case("reflect_same_type(\"a\", \"b\")", true)]
-#[case("reflect_same_type(true, false)", true)]
+#[case("reflect.sameType(42, 99)", true)]
+#[case("reflect.sameType(42, \"test\")", false)]
+#[case("reflect.sameType(\"a\", \"b\")", true)]
+#[case("reflect.sameType(true, false)", true)]
 fn test_interpreter_same_type(#[case] code: &str, #[case] expected: bool) {
     let result = run_interpreter(code);
     assert_eq!(result, Value::Bool(expected));
 }
 
 #[rstest]
-#[case("reflect_get_length([1, 2, 3])", 3.0)]
-#[case("reflect_get_length(\"hello\")", 5.0)]
-#[case("reflect_get_length([])", 0.0)]
-#[case("reflect_get_length(\"\")", 0.0)]
+#[case("reflect.getLength([1, 2, 3])", 3.0)]
+#[case("reflect.getLength(\"hello\")", 5.0)]
+#[case("reflect.getLength([])", 0.0)]
+#[case("reflect.getLength(\"\")", 0.0)]
 fn test_interpreter_get_length(#[case] code: &str, #[case] expected: f64) {
     let result = run_interpreter(code);
     assert_eq!(result, Value::Number(expected));
 }
 
 #[rstest]
-#[case("reflect_is_empty([])", true)]
-#[case("reflect_is_empty(\"\")", true)]
-#[case("reflect_is_empty([1])", false)]
-#[case("reflect_is_empty(\"x\")", false)]
+#[case("reflect.isEmpty([])", true)]
+#[case("reflect.isEmpty(\"\")", true)]
+#[case("reflect.isEmpty([1])", false)]
+#[case("reflect.isEmpty(\"x\")", false)]
 fn test_interpreter_is_empty(#[case] code: &str, #[case] expected: bool) {
     let result = run_interpreter(code);
     assert_eq!(result, Value::Bool(expected));
@@ -149,20 +149,20 @@ fn test_interpreter_is_empty(#[case] code: &str, #[case] expected: bool) {
 
 #[test]
 fn test_interpreter_type_describe() {
-    let result = run_interpreter("reflect_type_describe(42)");
+    let result = run_interpreter("reflect.typeDescribe(42)");
     assert_eq!(result, Value::string("primitive number type"));
 
-    let result = run_interpreter("reflect_type_describe([1, 2])");
+    let result = run_interpreter("reflect.typeDescribe([1, 2])");
     // Just verify it returns a string
     assert!(matches!(result, Value::String(_)));
 }
 
 #[test]
 fn test_interpreter_clone() {
-    let result = run_interpreter("reflect_clone(42)");
+    let result = run_interpreter("reflect.clone(42)");
     assert_eq!(result, Value::Number(42.0));
 
-    let result = run_interpreter("reflect_clone(\"test\")");
+    let result = run_interpreter("reflect.clone(\"test\")");
     assert_eq!(result, Value::string("test"));
 }
 
@@ -174,7 +174,7 @@ fn test_interpreter_value_to_string() {
     let result = run_interpreter("reflect.valueToString([1, 2, 3])");
     assert_eq!(result, Value::string("[1, 2, 3]"));
 
-    let result = run_interpreter("value_to_string(123)");
+    let result = run_interpreter("reflect.valueToString(123)");
     assert_eq!(result, Value::string("123"));
 }
 
@@ -183,7 +183,7 @@ fn test_interpreter_deep_equals() {
     let code = r#"
         let a = [1, 2, 3];
         let b = [1, 2, 3];
-        reflect_deep_equals(a, b)
+        reflect.deepEquals(a, b)
     "#;
     let result = run_interpreter(code);
     assert_eq!(result, Value::Bool(true));
@@ -191,7 +191,7 @@ fn test_interpreter_deep_equals() {
     let code = r#"
         let a = [1, 2, 3];
         let b = [1, 2, 4];
-        reflect_deep_equals(a, b)
+        reflect.deepEquals(a, b)
     "#;
     let result = run_interpreter(code);
     assert_eq!(result, Value::Bool(false));
@@ -202,7 +202,7 @@ fn test_interpreter_nested_deep_equals() {
     let code = r#"
         let a = [[1, 2], [3, 4]];
         let b = [[1, 2], [3, 4]];
-        reflect_deep_equals(a, b)
+        reflect.deepEquals(a, b)
     "#;
     let result = run_interpreter(code);
     assert_eq!(result, Value::Bool(true));
@@ -213,92 +213,60 @@ fn test_interpreter_nested_deep_equals() {
 // ============================================================================
 
 fn run_vm(code: &str) -> Value {
-    use atlas_runtime::compiler::Compiler;
-    use atlas_runtime::lexer::Lexer;
-    use atlas_runtime::parser::Parser;
-    use atlas_runtime::vm::VM;
-    use atlas_runtime::SecurityContext;
-
-    // Add semicolon if needed (like Atlas::eval() does)
-    let code = code.trim();
-    let code_with_semi = if !code.is_empty() && !code.ends_with(';') && !code.ends_with('}') {
-        format!("{};", code)
-    } else {
-        code.to_string()
-    };
-
-    // Lex
-    let mut lexer = Lexer::new(&code_with_semi);
-    let (tokens, lex_diags) = lexer.tokenize();
-    if !lex_diags.is_empty() {
-        panic!("Lexer errors: {:?}", lex_diags);
-    }
-
-    // Parse
-    let mut parser = Parser::new(tokens);
-    let (ast, parse_diags) = parser.parse();
-    if !parse_diags.is_empty() {
-        panic!("Parser errors: {:?}", parse_diags);
-    }
-
-    // Compile
-    let mut compiler = Compiler::new();
-    let bytecode = compiler.compile(&ast).expect("Compilation failed");
-
-    // Run in VM
-    let mut vm = VM::new(bytecode);
-    vm.run(&SecurityContext::allow_all())
-        .expect("VM execution failed")
-        .expect("VM returned None")
+    // Use the full Runtime pipeline (lex → parse → typecheck → compile → VM).
+    // The typechecker must run before compilation to set type_tag on member expressions,
+    // which is required for namespace method dispatch (e.g. reflect.typeOf).
+    let runtime = Atlas::new();
+    runtime.eval(code).expect("VM execution failed")
 }
 
 #[rstest]
-#[case("reflect_typeof(42)", "number")]
-#[case("reflect_typeof(\"hello\")", "string")]
-#[case("reflect_typeof(true)", "bool")]
-#[case("reflect_typeof(null)", "null")]
-#[case("reflect_typeof([1, 2, 3])", "array")]
+#[case("reflect.typeOf(42)", "number")]
+#[case("reflect.typeOf(\"hello\")", "string")]
+#[case("reflect.typeOf(true)", "bool")]
+#[case("reflect.typeOf(null)", "null")]
+#[case("reflect.typeOf([1, 2, 3])", "array")]
 fn test_vm_typeof(#[case] code: &str, #[case] expected: &str) {
     let result = run_vm(code);
     assert_eq!(result, Value::string(expected));
 }
 
 #[rstest]
-#[case("reflect_is_primitive(42)", true)]
-#[case("reflect_is_primitive(\"test\")", true)]
-#[case("reflect_is_primitive(true)", true)]
-#[case("reflect_is_primitive(null)", true)]
-#[case("reflect_is_primitive([1, 2])", false)]
+#[case("reflect.isPrimitive(42)", true)]
+#[case("reflect.isPrimitive(\"test\")", true)]
+#[case("reflect.isPrimitive(true)", true)]
+#[case("reflect.isPrimitive(null)", true)]
+#[case("reflect.isPrimitive([1, 2])", false)]
 fn test_vm_is_primitive(#[case] code: &str, #[case] expected: bool) {
     let result = run_vm(code);
     assert_eq!(result, Value::Bool(expected));
 }
 
 #[rstest]
-#[case("reflect_same_type(42, 99)", true)]
-#[case("reflect_same_type(42, \"test\")", false)]
-#[case("reflect_same_type(\"a\", \"b\")", true)]
-#[case("reflect_same_type(true, false)", true)]
+#[case("reflect.sameType(42, 99)", true)]
+#[case("reflect.sameType(42, \"test\")", false)]
+#[case("reflect.sameType(\"a\", \"b\")", true)]
+#[case("reflect.sameType(true, false)", true)]
 fn test_vm_same_type(#[case] code: &str, #[case] expected: bool) {
     let result = run_vm(code);
     assert_eq!(result, Value::Bool(expected));
 }
 
 #[rstest]
-#[case("reflect_get_length([1, 2, 3])", 3.0)]
-#[case("reflect_get_length(\"hello\")", 5.0)]
-#[case("reflect_get_length([])", 0.0)]
-#[case("reflect_get_length(\"\")", 0.0)]
+#[case("reflect.getLength([1, 2, 3])", 3.0)]
+#[case("reflect.getLength(\"hello\")", 5.0)]
+#[case("reflect.getLength([])", 0.0)]
+#[case("reflect.getLength(\"\")", 0.0)]
 fn test_vm_get_length(#[case] code: &str, #[case] expected: f64) {
     let result = run_vm(code);
     assert_eq!(result, Value::Number(expected));
 }
 
 #[rstest]
-#[case("reflect_is_empty([])", true)]
-#[case("reflect_is_empty(\"\")", true)]
-#[case("reflect_is_empty([1])", false)]
-#[case("reflect_is_empty(\"x\")", false)]
+#[case("reflect.isEmpty([])", true)]
+#[case("reflect.isEmpty(\"\")", true)]
+#[case("reflect.isEmpty([1])", false)]
+#[case("reflect.isEmpty(\"x\")", false)]
 fn test_vm_is_empty(#[case] code: &str, #[case] expected: bool) {
     let result = run_vm(code);
     assert_eq!(result, Value::Bool(expected));
@@ -306,19 +274,19 @@ fn test_vm_is_empty(#[case] code: &str, #[case] expected: bool) {
 
 #[test]
 fn test_vm_type_describe() {
-    let result = run_vm("reflect_type_describe(42)");
+    let result = run_vm("reflect.typeDescribe(42)");
     assert_eq!(result, Value::string("primitive number type"));
 
-    let result = run_vm("reflect_type_describe([1, 2])");
+    let result = run_vm("reflect.typeDescribe([1, 2])");
     assert!(matches!(result, Value::String(_)));
 }
 
 #[test]
 fn test_vm_clone() {
-    let result = run_vm("reflect_clone(42)");
+    let result = run_vm("reflect.clone(42)");
     assert_eq!(result, Value::Number(42.0));
 
-    let result = run_vm("reflect_clone(\"test\")");
+    let result = run_vm("reflect.clone(\"test\")");
     assert_eq!(result, Value::string("test"));
 }
 
@@ -330,7 +298,7 @@ fn test_vm_value_to_string() {
     let result = run_vm("reflect.valueToString([1, 2, 3])");
     assert_eq!(result, Value::string("[1, 2, 3]"));
 
-    let result = run_vm("value_to_string(123)");
+    let result = run_vm("reflect.valueToString(123)");
     assert_eq!(result, Value::string("123"));
 }
 
@@ -339,7 +307,7 @@ fn test_vm_deep_equals() {
     let code = r#"
         let a = [1, 2, 3];
         let b = [1, 2, 3];
-        reflect_deep_equals(a, b)
+        reflect.deepEquals(a, b)
     "#;
     let result = run_vm(code);
     assert_eq!(result, Value::Bool(true));
@@ -347,7 +315,7 @@ fn test_vm_deep_equals() {
     let code = r#"
         let a = [1, 2, 3];
         let b = [1, 2, 4];
-        reflect_deep_equals(a, b)
+        reflect.deepEquals(a, b)
     "#;
     let result = run_vm(code);
     assert_eq!(result, Value::Bool(false));
@@ -358,7 +326,7 @@ fn test_vm_nested_deep_equals() {
     let code = r#"
         let a = [[1, 2], [3, 4]];
         let b = [[1, 2], [3, 4]];
-        reflect_deep_equals(a, b)
+        reflect.deepEquals(a, b)
     "#;
     let result = run_vm(code);
     assert_eq!(result, Value::Bool(true));
@@ -369,20 +337,19 @@ fn test_vm_nested_deep_equals() {
 // ============================================================================
 
 #[rstest]
-#[case("reflect_typeof(42)")]
-#[case("reflect_typeof(\"test\")")]
-#[case("reflect_typeof([1, 2, 3])")]
-#[case("reflect_is_primitive(42)")]
-#[case("reflect_is_primitive([1])")]
-#[case("reflect_same_type(1, 2)")]
-#[case("reflect_same_type(1, \"a\")")]
-#[case("reflect_get_length([1, 2, 3])")]
-#[case("reflect_get_length(\"hello\")")]
-#[case("reflect_is_empty([])")]
-#[case("reflect_is_empty([1])")]
-#[case("reflect_clone(42)")]
+#[case("reflect.typeOf(42)")]
+#[case("reflect.typeOf(\"test\")")]
+#[case("reflect.typeOf([1, 2, 3])")]
+#[case("reflect.isPrimitive(42)")]
+#[case("reflect.isPrimitive([1])")]
+#[case("reflect.sameType(1, 2)")]
+#[case("reflect.sameType(1, \"a\")")]
+#[case("reflect.getLength([1, 2, 3])")]
+#[case("reflect.getLength(\"hello\")")]
+#[case("reflect.isEmpty([])")]
+#[case("reflect.isEmpty([1])")]
+#[case("reflect.clone(42)")]
 #[case("reflect.valueToString(42)")]
-#[case("value_to_string(42)")]
 fn test_parity_reflection_functions(#[case] code: &str) {
     let interpreter_result = run_interpreter(code);
     let vm_result = run_vm(code);
@@ -397,11 +364,11 @@ fn test_parity_reflection_functions(#[case] code: &str) {
 #[test]
 fn test_parity_deep_equals() {
     let cases = vec![
-        "reflect_deep_equals([1, 2], [1, 2])",
-        "reflect_deep_equals([1, 2], [1, 3])",
-        "reflect_deep_equals([[1]], [[1]])",
-        "reflect_deep_equals(42, 42)",
-        "reflect_deep_equals(\"a\", \"a\")",
+        "reflect.deepEquals([1, 2], [1, 2])",
+        "reflect.deepEquals([1, 2], [1, 3])",
+        "reflect.deepEquals([[1]], [[1]])",
+        "reflect.deepEquals(42, 42)",
+        "reflect.deepEquals(\"a\", \"a\")",
     ];
 
     for code in cases {
