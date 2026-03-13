@@ -30,7 +30,7 @@ All stdlib functions use `namespace.method()` syntax (D-021, D-049).
 | Namespace | Description |
 |-----------|-------------|
 | `io` | Console I/O: readLine, readLinePrompt |
-| `File` | File operations: read, write, exists, delete, copy, move |
+| `file` | File operations: read, write, append, exists, remove, rename, copy, readAsync, writeAsync, appendAsync, renameAsync, copyAsync |
 | `Path` | Path manipulation: join, dirname, basename, extname, resolve |
 
 ### System
@@ -64,6 +64,13 @@ All stdlib functions use `namespace.method()` syntax (D-021, D-049).
 | `task` | Tasks: spawn, join, sleep |
 | `future` | Futures: resolve, reject, all, race |
 | `sync` | Synchronization: atomic, rwLock, semaphore, channel |
+
+### Reflection & Database
+
+| Namespace | Description |
+|-----------|-------------|
+| `reflect` | Type introspection: typeOf, fields, isCallable, isPrimitive, sameType, clone |
+| `sqlite` | SQLite database: open, execute, query, close |
 
 ## Instance Methods
 
@@ -100,5 +107,5 @@ Values have methods called with dot syntax.
 
 ## Casing Convention (D-049)
 
-- Lowercase: `console`, `test`, `io`, `task`, `future`, `sync`, `process`
-- PascalCase: `Math`, `Json`, `File`, `Path`, `Env`, `DateTime`, `Http`, `Net`, `Crypto`, `Encoding`, `Regex`, `Gzip`, `Tar`, `Zip`
+- Lowercase: `console`, `test`, `io`, `file`, `task`, `future`, `sync`, `process`, `reflect`, `sqlite`
+- PascalCase: `Math`, `Json`, `Path`, `Env`, `DateTime`, `Http`, `Net`, `Crypto`, `Encoding`, `Regex`, `Gzip`, `Tar`, `Zip`
