@@ -1,19 +1,11 @@
 // B15: Tuple match patterns
 
-fn classify(own pair: (number, number)) : string {
+fn classify(own pair: (number, number)): string {
     match pair {
-        (0, 0) => {
-            return "origin";
-        },
-        (x, 0) => {
-            return "x-axis";
-        },
-        (0, y) => {
-            return "y-axis";
-        },
-        (x, y) => {
-            return "quadrant";
-        }
+        (0, 0) => "origin",
+        (x, 0) => "x-axis",
+        (0, y) => "y-axis",
+        (x, y) => "quadrant"
     }
 }
 
@@ -24,15 +16,11 @@ console.log(classify((2, 4)));
 
 // Wildcard in tuple
 match (42, "hello") {
-    (_, s) => {
-        console.log(s);
-    }
+    (_, s) => console.log(s)
 }
 
 // Nested destructuring via match + let
 let (a, b) = (100, 200);
 match (a, b) {
-    (x, y) => {
-        console.log(x + y);
-    }
+    (x, y) => console.log(x + y)
 }
