@@ -298,6 +298,176 @@ pub fn append_file_async(
     Ok(Value::Future(Arc::new(future)))
 }
 
+/// Rename/move a file asynchronously
+///
+/// Args:
+/// - src: string (source path)
+/// - dst: string (destination path)
+///
+/// Returns: Future<null> (completes when done)
+///
+/// Checks write permission on both source and destination.
+pub fn rename_file_async(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("file.renameAsync", 2, args.len(), span));
+    }
+
+    let src_str = match &args[0] {
+        Value::String(s) => s.to_string(),
+        _ => {
+            return Err(stdlib_arg_error(
+                "file.renameAsync",
+                "string",
+                &args[0],
+                span,
+            ))
+        }
+    };
+
+    let dst_str = match &args[1] {
+        Value::String(s) => s.to_string(),
+        _ => {
+            return Err(stdlib_arg_error(
+                "file.renameAsync",
+                "string",
+                &args[1],
+                span,
+            ))
+        }
+    };
+
+    // Source must exist for permission check
+    let src_path = PathBuf::from(&src_str);
+    let abs_src = src_path.canonicalize().map_err(|e| RuntimeError::IoError {
+        message: format!("file.renameAsync: source '{}' not found: {}", src_str, e),
+        span,
+    })?;
+
+    security.check_filesystem_write(&abs_src).map_err(|_| {
+        RuntimeError::FilesystemPermissionDenied {
+            operation: "file rename".to_string(),
+            path: abs_src.display().to_string(),
+            span,
+        }
+    })?;
+
+    // Check destination parent
+    let dst_path = PathBuf::from(&dst_str);
+    let dst_parent = dst_path.parent().unwrap_or_else(|| Path::new("."));
+    let abs_dst_parent = dst_parent
+        .canonicalize()
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("file.renameAsync: destination parent not found: {}", e),
+            span,
+        })?;
+
+    security
+        .check_filesystem_write(&abs_dst_parent)
+        .map_err(|_| RuntimeError::FilesystemPermissionDenied {
+            operation: "file rename".to_string(),
+            path: abs_dst_parent.display().to_string(),
+            span,
+        })?;
+
+    let future = AtlasFuture::new_pending();
+    let future_clone = future.clone();
+
+    let task = async move {
+        match fs::rename(&src_path, &dst_path).await {
+            Ok(()) => future_clone.resolve(Value::Null),
+            Err(e) => future_clone.reject(Value::string(format!(
+                "file.renameAsync: failed to rename '{}' to '{}': {}",
+                src_str, dst_str, e
+            ))),
+        }
+    };
+
+    block_on(task);
+    Ok(Value::Future(Arc::new(future)))
+}
+
+/// Copy a file asynchronously
+///
+/// Args:
+/// - src: string (source path)
+/// - dst: string (destination path)
+///
+/// Returns: Future<null> (completes when done)
+///
+/// Checks read permission on source, write permission on destination.
+pub fn copy_file_async(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("file.copyAsync", 2, args.len(), span));
+    }
+
+    let src_str = match &args[0] {
+        Value::String(s) => s.to_string(),
+        _ => return Err(stdlib_arg_error("file.copyAsync", "string", &args[0], span)),
+    };
+
+    let dst_str = match &args[1] {
+        Value::String(s) => s.to_string(),
+        _ => return Err(stdlib_arg_error("file.copyAsync", "string", &args[1], span)),
+    };
+
+    // Source must exist for permission check
+    let src_path = PathBuf::from(&src_str);
+    let abs_src = src_path.canonicalize().map_err(|e| RuntimeError::IoError {
+        message: format!("file.copyAsync: source '{}' not found: {}", src_str, e),
+        span,
+    })?;
+
+    security.check_filesystem_read(&abs_src).map_err(|_| {
+        RuntimeError::FilesystemPermissionDenied {
+            operation: "file copy read".to_string(),
+            path: abs_src.display().to_string(),
+            span,
+        }
+    })?;
+
+    // Check destination parent
+    let dst_path = PathBuf::from(&dst_str);
+    let dst_parent = dst_path.parent().unwrap_or_else(|| Path::new("."));
+    let abs_dst_parent = dst_parent
+        .canonicalize()
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("file.copyAsync: destination parent not found: {}", e),
+            span,
+        })?;
+
+    security
+        .check_filesystem_write(&abs_dst_parent)
+        .map_err(|_| RuntimeError::FilesystemPermissionDenied {
+            operation: "file copy write".to_string(),
+            path: abs_dst_parent.display().to_string(),
+            span,
+        })?;
+
+    let future = AtlasFuture::new_pending();
+    let future_clone = future.clone();
+
+    let task = async move {
+        match fs::copy(&src_path, &dst_path).await {
+            Ok(_) => future_clone.resolve(Value::Null),
+            Err(e) => future_clone.reject(Value::string(format!(
+                "file.copyAsync: failed to copy '{}' to '{}': {}",
+                src_str, dst_str, e
+            ))),
+        }
+    };
+
+    block_on(task);
+    Ok(Value::Future(Arc::new(future)))
+}
+
 // ============================================================================
 // Async HTTP Operations
 // ============================================================================

@@ -542,6 +542,12 @@ fn resolve_file_ns_method(method_name: &str) -> Option<String> {
         // Watch
         "watch" => "fileNsWatch",
         "watchNext" => "fileNsWatchNext",
+        // Async operations (B40-P07)
+        "readAsync" => "fileNsReadAsync",
+        "writeAsync" => "fileNsWriteAsync",
+        "appendAsync" => "fileNsAppendAsync",
+        "renameAsync" => "fileNsRenameAsync",
+        "copyAsync" => "fileNsCopyAsync",
         _ => return None,
     };
     Some(func_name.to_string())

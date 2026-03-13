@@ -207,6 +207,15 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         ("file", "tempFile" | "tempDir") => Type::String,
         ("file", "watch") => Type::JsonValue, // watcher handle
         ("file", "watchNext") => Type::String,
+        // B40-P07: Async file operations — return Future<Result<T, string>>
+        ("file", "readAsync") => Type::Generic {
+            name: "Future".to_string(),
+            type_args: vec![Type::String],
+        },
+        ("file", "writeAsync" | "appendAsync" | "renameAsync" | "copyAsync") => Type::Generic {
+            name: "Future".to_string(),
+            type_args: vec![Type::Null],
+        },
         // Process namespace
         ("process", "cwd") => Type::String,
         ("process", "pid") => Type::Number,

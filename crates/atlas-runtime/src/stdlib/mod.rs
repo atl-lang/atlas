@@ -906,6 +906,22 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("fileNsRemove", |a, s, sc, _| io::remove_file(a, s, sc));
         m.insert("fileNsRename", |a, s, sc, _| io::rename_file(a, s, sc));
         m.insert("fileNsCopy", |a, s, sc, _| io::copy_file(a, s, sc));
+        // B40-P07: Async file operations via file.* namespace
+        m.insert("fileNsReadAsync", |a, s, sc, _| {
+            async_io::read_file_async(a, s, sc)
+        });
+        m.insert("fileNsWriteAsync", |a, s, sc, _| {
+            async_io::write_file_async(a, s, sc)
+        });
+        m.insert("fileNsAppendAsync", |a, s, sc, _| {
+            async_io::append_file_async(a, s, sc)
+        });
+        m.insert("fileNsRenameAsync", |a, s, sc, _| {
+            async_io::rename_file_async(a, s, sc)
+        });
+        m.insert("fileNsCopyAsync", |a, s, sc, _| {
+            async_io::copy_file_async(a, s, sc)
+        });
         m.insert("fileNsCreateDir", |a, s, sc, _| io::create_dir(a, s, sc));
         m.insert("fileNsRemoveDir", |a, s, sc, _| io::remove_dir(a, s, sc));
         m.insert("fileInfo", |a, s, sc, _| io::file_info(a, s, sc));
@@ -1311,19 +1327,11 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         });
 
         // ====================================================================
-        // Async I/O functions (feature = "http") — HTTP async ops need reqwest
+        // Async HTTP functions (feature = "http") — HTTP async ops need reqwest
+        // B40-P07: bare file async globals removed — use file.readAsync() etc.
         // ====================================================================
         #[cfg(feature = "http")]
         {
-            m.insert("readFileAsync", |a, s, sc, _| {
-                async_io::read_file_async(a, s, sc)
-            });
-            m.insert("writeFileAsync", |a, s, sc, _| {
-                async_io::write_file_async(a, s, sc)
-            });
-            m.insert("appendFileAsync", |a, s, sc, _| {
-                async_io::append_file_async(a, s, sc)
-            });
             m.insert("httpSendAsync", |a, s, _, _| {
                 async_io::http_send_async(a, s)
             });
@@ -2409,9 +2417,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("futureCatch", "future_catch"),
             ("futureAll", "future_all"),
             ("futureRace", "future_race"),
-            ("readFileAsync", "read_file_async"),
-            ("writeFileAsync", "write_file_async"),
-            ("appendFileAsync", "append_file_async"),
+            // B40-P07: bare file async globals removed — use file.readAsync() etc.
             ("httpSendAsync", "http_send_async"),
             ("httpGetAsync", "http_get_async"),
             ("httpPostAsync", "http_post_async"),
@@ -2498,6 +2504,12 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("fileNsReadLink", "file_ns_read_link"),
             ("fileNsWatch", "file_ns_watch"),
             ("fileNsWatchNext", "file_ns_watch_next"),
+            // B40-P07: Async file operations
+            ("fileNsReadAsync", "file_ns_read_async"),
+            ("fileNsWriteAsync", "file_ns_write_async"),
+            ("fileNsAppendAsync", "file_ns_append_async"),
+            ("fileNsRenameAsync", "file_ns_rename_async"),
+            ("fileNsCopyAsync", "file_ns_copy_async"),
             // Compression
             ("gzipCompress", "gzip_compress"),
             ("gzipDecompress", "gzip_decompress"),

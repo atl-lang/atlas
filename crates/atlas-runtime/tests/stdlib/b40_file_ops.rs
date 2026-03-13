@@ -340,3 +340,149 @@ fn test_file_rename_then_copy() {
         assert_eq!(result.to_string(), "test data");
     }
 }
+
+// ============================================================================
+// Async file operations (B40-P07)
+// ============================================================================
+
+#[test]
+fn test_file_read_async_returns_future() {
+    let temp_dir = TempDir::new().unwrap();
+    let src = temp_dir.path().join("test.txt");
+    fs::write(&src, "async content").unwrap();
+
+    let code = format!(
+        r#"
+        let f = file.readAsync("{}");
+        reflect.typeOf(f)
+        "#,
+        path_for_atlas(&src)
+    );
+
+    let mut security = SecurityContext::new();
+    security.grant_filesystem_read(temp_dir.path(), true);
+    let runtime = Atlas::new_with_security(security);
+    let result = runtime.eval(&code).unwrap();
+
+    assert_eq!(result.to_string(), "Future");
+}
+
+#[test]
+fn test_file_write_async_returns_future() {
+    let temp_dir = TempDir::new().unwrap();
+    let dst = temp_dir.path().join("async_write.txt");
+
+    let code = format!(
+        r#"
+        let f = file.writeAsync("{}", "data");
+        reflect.typeOf(f)
+        "#,
+        path_for_atlas(&dst)
+    );
+
+    let mut security = SecurityContext::new();
+    security.grant_filesystem_write(temp_dir.path(), true);
+    let runtime = Atlas::new_with_security(security);
+    let result = runtime.eval(&code).unwrap();
+
+    assert_eq!(result.to_string(), "Future");
+}
+
+#[test]
+fn test_file_append_async_returns_future() {
+    let temp_dir = TempDir::new().unwrap();
+    let dst = temp_dir.path().join("async_append.txt");
+    fs::write(&dst, "start").unwrap();
+
+    let code = format!(
+        r#"
+        let f = file.appendAsync("{}", " end");
+        reflect.typeOf(f)
+        "#,
+        path_for_atlas(&dst)
+    );
+
+    let mut security = SecurityContext::new();
+    security.grant_filesystem_write(temp_dir.path(), true);
+    let runtime = Atlas::new_with_security(security);
+    let result = runtime.eval(&code).unwrap();
+
+    assert_eq!(result.to_string(), "Future");
+}
+
+#[test]
+fn test_file_rename_async_returns_future() {
+    let temp_dir = TempDir::new().unwrap();
+    let src = temp_dir.path().join("to_rename.txt");
+    let dst = temp_dir.path().join("renamed.txt");
+    fs::write(&src, "data").unwrap();
+
+    let code = format!(
+        r#"
+        let f = file.renameAsync("{}", "{}");
+        reflect.typeOf(f)
+        "#,
+        path_for_atlas(&src),
+        path_for_atlas(&dst)
+    );
+
+    let mut security = SecurityContext::new();
+    security.grant_filesystem_write(temp_dir.path(), true);
+    security.grant_filesystem_read(temp_dir.path(), true);
+    let runtime = Atlas::new_with_security(security);
+    let result = runtime.eval(&code).unwrap();
+
+    assert_eq!(result.to_string(), "Future");
+}
+
+#[test]
+fn test_file_copy_async_returns_future() {
+    let temp_dir = TempDir::new().unwrap();
+    let src = temp_dir.path().join("to_copy.txt");
+    let dst = temp_dir.path().join("copied.txt");
+    fs::write(&src, "data").unwrap();
+
+    let code = format!(
+        r#"
+        let f = file.copyAsync("{}", "{}");
+        reflect.typeOf(f)
+        "#,
+        path_for_atlas(&src),
+        path_for_atlas(&dst)
+    );
+
+    let mut security = SecurityContext::new();
+    security.grant_filesystem_write(temp_dir.path(), true);
+    security.grant_filesystem_read(temp_dir.path(), true);
+    let runtime = Atlas::new_with_security(security);
+    let result = runtime.eval(&code).unwrap();
+
+    assert_eq!(result.to_string(), "Future");
+}
+
+#[test]
+fn test_bare_async_globals_removed() {
+    // B40-P07: bare globals readFileAsync/writeFileAsync/appendFileAsync are removed
+    let runtime = Atlas::new();
+
+    // readFileAsync should not be defined
+    let result = runtime.eval(r#"readFileAsync("test.txt")"#);
+    assert!(
+        result.is_err(),
+        "readFileAsync bare global should be removed"
+    );
+
+    // writeFileAsync should not be defined
+    let result = runtime.eval(r#"writeFileAsync("test.txt", "data")"#);
+    assert!(
+        result.is_err(),
+        "writeFileAsync bare global should be removed"
+    );
+
+    // appendFileAsync should not be defined
+    let result = runtime.eval(r#"appendFileAsync("test.txt", "data")"#);
+    assert!(
+        result.is_err(),
+        "appendFileAsync bare global should be removed"
+    );
+}
