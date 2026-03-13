@@ -123,6 +123,55 @@ pub fn spawn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     Ok(Value::TaskHandle(Arc::new(Mutex::new(handle))))
 }
 
+/// Spawn a CPU-bound or blocking-I/O function on Tokio's blocking thread pool.
+///
+/// Atlas signature: `spawnBlocking(callable: fn | closure, name: string | null) -> TaskHandle`
+///
+/// Unlike `spawn()` which runs on cooperative `LocalSet` workers, `spawnBlocking`
+/// submits the callable to Tokio's dedicated blocking thread pool so CPU-heavy
+/// or blocking-I/O work never starves cooperative async tasks.
+pub fn spawn_blocking(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("spawnBlocking", 2, args.len(), span));
+    }
+
+    let name = match &args[1] {
+        Value::Null => None,
+        Value::String(s) => Some(s.as_ref().clone()),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: format!(
+                    "Expected string or null for name, got {}",
+                    args[1].type_name()
+                ),
+                span,
+            })
+        }
+    };
+
+    let handle = match &args[0] {
+        Value::Function(f) => {
+            use crate::async_runtime::task::{spawn_blocking_task, FunctionCallable};
+            spawn_blocking_task(FunctionCallable::Function(f.clone()), vec![], name)
+        }
+        Value::Closure(c) => {
+            use crate::async_runtime::task::{spawn_blocking_task, FunctionCallable};
+            spawn_blocking_task(FunctionCallable::Closure(c.clone()), vec![], name)
+        }
+        other => {
+            return Err(RuntimeError::TypeError {
+                msg: format!(
+                    "spawnBlocking() expects a function or closure; got {}",
+                    other.type_name()
+                ),
+                span,
+            })
+        }
+    };
+
+    Ok(Value::TaskHandle(Arc::new(Mutex::new(handle))))
+}
+
 /// Join a task (await its completion)
 ///
 /// Atlas signature: `taskJoin(handle: TaskHandle) -> Future<T>`

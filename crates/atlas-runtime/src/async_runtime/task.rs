@@ -458,6 +458,82 @@ pub fn spawn_function_task(
     handle
 }
 
+// ── spawn_blocking_task ───────────────────────────────────────────────────────
+
+/// Spawn a CPU-bound or blocking-I/O Atlas function on Tokio's blocking thread pool.
+///
+/// Unlike [`spawn_function_task`] (which runs on a cooperative `LocalSet`
+/// worker), `spawn_blocking_task` uses `tokio::task::spawn_blocking` — a
+/// dedicated OS thread pool designed for long-running or blocking operations.
+/// This prevents CPU-heavy Atlas functions from starving cooperative I/O tasks.
+///
+/// Each blocking task receives its own isolated VM cloned from the snapshot
+/// registered via [`crate::async_runtime::init_blocking_pool`].
+///
+/// ## When to use
+///
+/// - Pure computations (hashing, encoding, parsing) that run for > ~1 ms
+/// - Blocking file or network I/O that hasn't been ported to async
+///
+/// ## Ordering
+///
+/// Blocking tasks are fully independent; they run in parallel across the
+/// OS thread pool and their completion order is non-deterministic.
+pub fn spawn_blocking_task(
+    callable: FunctionCallable,
+    args: Vec<Value>,
+    name: Option<String>,
+) -> TaskHandle {
+    let handle = TaskHandle::new(name);
+    let state = handle.state_ref();
+
+    // Clone a VM for this blocking invocation.
+    let vm = match crate::async_runtime::blocking_vm() {
+        Some(v) => v,
+        None => {
+            let mut status = state.status.lock().unwrap_or_else(|e| e.into_inner());
+            *status = TaskStatus::Failed;
+            *state.result.lock().unwrap_or_else(|e| e.into_inner()) = Some(Err(
+                "blocking pool not initialised — call init_blocking_pool() at startup".to_string(),
+            ));
+            return handle;
+        }
+    };
+
+    let state_clone = Arc::clone(&state);
+
+    // Spawn on the multi-thread runtime so we can `.spawn_blocking` inside.
+    crate::async_runtime::runtime().spawn(async move {
+        let task_result = tokio::task::spawn_blocking(move || {
+            let security = crate::security::SecurityContext::default();
+            let mut vm = vm;
+            vm.execute_task_function(&callable, args, &security)
+        })
+        .await;
+
+        let mut status = state_clone.status.lock().unwrap_or_else(|e| e.into_inner());
+        if *status == TaskStatus::Running {
+            match task_result {
+                Ok(Ok(value)) => {
+                    *status = TaskStatus::Completed;
+                    *state_clone.result.lock().unwrap_or_else(|e| e.into_inner()) = Some(Ok(value));
+                }
+                Ok(Err(msg)) => {
+                    *status = TaskStatus::Failed;
+                    *state_clone.result.lock().unwrap_or_else(|e| e.into_inner()) = Some(Err(msg));
+                }
+                Err(join_err) => {
+                    *status = TaskStatus::Failed;
+                    *state_clone.result.lock().unwrap_or_else(|e| e.into_inner()) =
+                        Some(Err(format!("blocking task panicked: {join_err}")));
+                }
+            }
+        }
+    });
+
+    handle
+}
+
 // ── spawn_and_await ──────────────────────────────────────────────────────────
 
 /// Run a future to completion, blocking the current thread until done.

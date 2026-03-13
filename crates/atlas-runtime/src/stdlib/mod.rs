@@ -1357,6 +1357,9 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // Async primitives - tasks
         // ====================================================================
         m.insert("spawn", |a, s, _, _| async_primitives::spawn(a, s));
+        m.insert("spawnBlocking", |a, s, _, _| {
+            async_primitives::spawn_blocking(a, s)
+        });
         m.insert("taskJoin", |a, s, _, _| async_primitives::task_join(a, s));
         m.insert("taskStatus", |a, s, _, _| {
             async_primitives::task_status(a, s)
@@ -1401,6 +1404,9 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // task.spawn → taskNsSpawn, task.join → taskNsJoin, etc.
         // ====================================================================
         m.insert("taskNsSpawn", |a, s, _, _| async_primitives::spawn(a, s));
+        m.insert("taskNsSpawnBlocking", |a, s, _, _| {
+            async_primitives::spawn_blocking(a, s)
+        });
         m.insert("taskNsJoin", |a, s, _, _| async_primitives::task_join(a, s));
         m.insert("taskNsJoinAll", |a, s, _, _| {
             async_primitives::join_all(a, s)

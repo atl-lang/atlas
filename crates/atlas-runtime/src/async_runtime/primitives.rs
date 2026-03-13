@@ -17,30 +17,28 @@ use tokio::sync::Mutex as TokioMutex;
 /// Returns a Future that resolves after the specified number of milliseconds.
 /// Currently blocks the current thread (true async will be added in future versions).
 pub fn sleep(milliseconds: u64) -> AtlasFuture {
-    // Synchronous sleep - blocks the current thread
-    // True non-blocking async will require language-level async/await support
-    std::thread::sleep(Duration::from_millis(milliseconds));
+    // Use Tokio's timer so the multi-thread runtime can do other work while
+    // the current (calling) thread is suspended.  `block_on` is safe here
+    // because `sleep()` is called from the sync VM stdlib dispatch path.
+    crate::async_runtime::block_on(async move {
+        tokio::time::sleep(Duration::from_millis(milliseconds)).await;
+    });
     AtlasFuture::resolved(Value::Null)
 }
 
-/// Create a timer that fires after a delay
+/// Create a timer that fires after a delay.
 ///
-/// Similar to sleep but explicitly models a timer that completes.
+/// Equivalent to `sleep` — models an explicit one-shot timer.
 pub fn timer(milliseconds: u64) -> AtlasFuture {
     sleep(milliseconds)
 }
 
-/// Create a repeating interval timer
+/// Create a repeating interval tick.
 ///
-/// Returns a Future that can be polled repeatedly.
-/// Each poll waits for the interval duration.
-///
-/// Note: This is a simplified synchronous implementation.
-/// True non-blocking async will require language-level async/await support.
+/// Waits `milliseconds` and resolves.  The caller is expected to call
+/// `interval()` again to model subsequent ticks (polling pattern).
 pub fn interval(milliseconds: u64) -> AtlasFuture {
-    // Synchronous implementation - wait for the interval then resolve
-    std::thread::sleep(Duration::from_millis(milliseconds));
-    AtlasFuture::resolved(Value::Null)
+    sleep(milliseconds)
 }
 
 // ============================================================================
@@ -112,25 +110,31 @@ impl std::fmt::Debug for AsyncMutex {
 /// Currently uses synchronous polling (true async will be added in future versions).
 pub fn timeout(future: AtlasFuture, milliseconds: u64) -> AtlasFuture {
     let duration = Duration::from_millis(milliseconds);
-    let start = std::time::Instant::now();
-    let poll_interval = Duration::from_millis(10);
 
-    // Poll the future until resolved, rejected, or timeout
-    loop {
-        match future.get_state() {
-            crate::async_runtime::FutureState::Resolved(value) => {
-                return AtlasFuture::resolved(value);
-            }
-            crate::async_runtime::FutureState::Rejected(error) => {
-                return AtlasFuture::rejected(error);
-            }
-            crate::async_runtime::FutureState::Pending => {
-                if start.elapsed() > duration {
-                    return AtlasFuture::rejected(Value::string("Operation timed out"));
+    // Drive the AtlasFuture poll loop inside a Tokio timeout so the
+    // deadline is enforced by the Tokio timer wheel (no busy-spin).
+    // `block_on` is safe here because `timeout()` is called from the sync
+    // VM stdlib dispatch path, not from within an async task.
+    let result = crate::async_runtime::block_on(async move {
+        tokio::time::timeout(duration, async move {
+            loop {
+                match future.get_state() {
+                    crate::async_runtime::FutureState::Resolved(value) => return value,
+                    crate::async_runtime::FutureState::Rejected(error) => return error,
+                    crate::async_runtime::FutureState::Pending => {
+                        // Yield to Tokio for 1 ms between polls so other
+                        // tasks can make progress.
+                        tokio::time::sleep(Duration::from_millis(1)).await;
+                    }
                 }
-                std::thread::sleep(poll_interval);
             }
-        }
+        })
+        .await
+    });
+
+    match result {
+        Ok(value) => AtlasFuture::resolved(value),
+        Err(_elapsed) => AtlasFuture::rejected(Value::string("Operation timed out")),
     }
 }
 
