@@ -28,6 +28,7 @@
 //! sent over the per-worker MPSC channel (wired in P04).
 
 use std::pin::Pin;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::thread;
 
@@ -128,6 +129,8 @@ impl Worker {
 /// Created once at runtime init; accessed thereafter via [`worker_pool()`].
 pub struct WorkerPool {
     workers: Vec<Worker>,
+    /// Round-robin counter for task distribution.
+    next: AtomicUsize,
 }
 
 impl WorkerPool {
@@ -148,7 +151,10 @@ impl WorkerPool {
             .map(|id| Worker::spawn(id, base_ctx.clone()))
             .collect();
 
-        WorkerPool { workers }
+        WorkerPool {
+            workers,
+            next: AtomicUsize::new(0),
+        }
     }
 
     /// Number of workers in the pool.
@@ -161,7 +167,19 @@ impl WorkerPool {
         self.workers.is_empty()
     }
 
-    /// Send a task to worker `id` (round-robin routing wired in P04).
+    /// Submit a task to the next worker (round-robin).
+    ///
+    /// Returns `Err(task)` if all workers' channels are full (backpressure).
+    /// The caller may retry or fall back as appropriate.
+    pub fn submit(&self, task: WorkerTask) -> Result<(), WorkerTask> {
+        let idx = self.next.fetch_add(1, Ordering::Relaxed) % self.workers.len();
+        self.workers[idx]
+            .sender
+            .try_send(task)
+            .map_err(|e| e.into_inner())
+    }
+
+    /// Send a task to a specific worker by index.
     ///
     /// Returns `Err` if the worker channel is closed (pool is shutting down).
     pub fn send_to(&self, worker_id: usize, task: WorkerTask) -> Result<(), WorkerTask> {
@@ -169,7 +187,7 @@ impl WorkerPool {
         worker.sender.try_send(task).map_err(|e| e.into_inner())
     }
 
-    /// Sender for worker `id` — used by P04 task spawning.
+    /// Sender for worker `id` — used by P04/P06 task routing.
     pub fn sender(&self, worker_id: usize) -> &mpsc::Sender<WorkerTask> {
         &self.workers[worker_id % self.workers.len()].sender
     }
