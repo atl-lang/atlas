@@ -1,7 +1,19 @@
 // B28: http namespace — options-object API tests
-// All network-dependent tests carry #[ignore] — preserved exactly
+// Network-dependent tests: gated by ATLAS_TEST_NETWORK=1 env var.
+// Default runs skip them (#[ignore]). Enable with:
+//   ATLAS_TEST_NETWORK=1 cargo nextest run --test http --run-ignored
 
 use atlas_runtime::{Atlas, SecurityContext};
+
+/// Runtime guard — call at start of every network test body.
+/// If ATLAS_TEST_NETWORK is not set, returns early (test passes as no-op).
+macro_rules! require_network {
+    () => {
+        if std::env::var("ATLAS_TEST_NETWORK").unwrap_or_default() != "1" {
+            return;
+        }
+    };
+}
 
 // ============================================================================
 // Test Helpers
@@ -66,6 +78,7 @@ fn test_http_check_permission_placeholder() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_get_simple() {
+    require_network!();
     let code = r#"
         let result = http.get("https://httpbin.org/get");
         is_ok(result) || is_err(result)
@@ -76,6 +89,7 @@ fn test_http_get_simple() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_get_returns_result_type() {
+    require_network!();
     let code = r#"typeof(http.get("https://httpbin.org/get"))"#;
     assert_eq!(eval_ok(code), "record");
 }
@@ -83,6 +97,7 @@ fn test_http_get_returns_result_type() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_response_status() {
+    require_network!();
     let code = r#"
         fn test(): number {
             let result = http.get("https://httpbin.org/status/200");
@@ -99,6 +114,7 @@ fn test_http_response_status() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_response_body() {
+    require_network!();
     let code = r#"
         fn test(): string {
             let result = http.get("https://httpbin.org/get");
@@ -114,6 +130,7 @@ fn test_http_response_body() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_response_is_success_200() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let result = http.get("https://httpbin.org/status/200");
@@ -130,6 +147,7 @@ fn test_http_response_is_success_200() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_response_is_success_404() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let result = http.get("https://httpbin.org/status/404");
@@ -145,6 +163,7 @@ fn test_http_response_is_success_404() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_response_headers() {
+    require_network!();
     let code = r#"
         fn test(): string {
             let result = http.get("https://httpbin.org/get");
@@ -161,6 +180,7 @@ fn test_http_response_headers() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_response_url() {
+    require_network!();
     let code = r#"
         fn test(): string {
             let result = http.get("https://httpbin.org/get");
@@ -180,6 +200,7 @@ fn test_http_response_url() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_get_with_headers_option() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let opts = {"headers": {"X-Test": "atlas"}};
@@ -197,6 +218,7 @@ fn test_http_get_with_headers_option() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_get_with_query_option() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let opts = {"query": {"name": "atlas", "version": "0.3"}};
@@ -214,6 +236,7 @@ fn test_http_get_with_query_option() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_get_with_timeout_option() {
+    require_network!();
     let code = r#"
         fn test(): string {
             let opts = {"timeout": 5000};
@@ -228,6 +251,7 @@ fn test_http_get_with_timeout_option() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_get_with_useragent_option() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let opts = {"userAgent": "AtlasBot/1.0"};
@@ -245,6 +269,7 @@ fn test_http_get_with_useragent_option() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_get_with_bearer_auth() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let opts = {"auth": "mytoken123"};
@@ -262,6 +287,7 @@ fn test_http_get_with_bearer_auth() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_get_with_basic_auth() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let opts = {"auth": "user:pass"};
@@ -283,6 +309,7 @@ fn test_http_get_with_basic_auth() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_post_simple() {
+    require_network!();
     let code = r#"
         let result = http.post("https://httpbin.org/post", "test data");
         is_ok(result) || is_err(result)
@@ -293,6 +320,7 @@ fn test_http_post_simple() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_post_with_body() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let body = "name=Atlas&version=0.3";
@@ -310,6 +338,7 @@ fn test_http_post_with_body() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_post_with_options() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let opts = {"headers": {"Content-Type": "application/x-www-form-urlencoded"}};
@@ -327,6 +356,7 @@ fn test_http_post_with_options() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_post_no_body() {
+    require_network!();
     let code = r#"
         let result = http.post("https://httpbin.org/post");
         is_ok(result) || is_err(result)
@@ -341,6 +371,7 @@ fn test_http_post_no_body() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_put_simple() {
+    require_network!();
     let code = r#"
         let result = http.put("https://httpbin.org/put", "test data");
         typeof(result)
@@ -351,6 +382,7 @@ fn test_http_put_simple() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_delete_simple() {
+    require_network!();
     let code = r#"
         let result = http.delete("https://httpbin.org/delete");
         typeof(result)
@@ -361,6 +393,7 @@ fn test_http_delete_simple() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_patch_simple() {
+    require_network!();
     let code = r#"
         let result = http.patch("https://httpbin.org/patch", "patch data");
         typeof(result)
@@ -371,6 +404,7 @@ fn test_http_patch_simple() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_put_workflow() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let opts = {"headers": {"Content-Type": "text/plain"}};
@@ -388,6 +422,7 @@ fn test_http_put_workflow() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_delete_workflow() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let result = http.delete("https://httpbin.org/delete");
@@ -404,6 +439,7 @@ fn test_http_delete_workflow() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_patch_workflow() {
+    require_network!();
     let code = r#"
         fn test(): bool {
             let result = http.patch("https://httpbin.org/patch", "partial update");
@@ -424,6 +460,7 @@ fn test_http_patch_workflow() {
 #[test]
 #[ignore = "requires network"]
 fn test_http_invalid_host_returns_error() {
+    require_network!();
     let code = r#"
         let result = http.get("https://this-domain-definitely-does-not-exist-12345.com");
         is_err(result)
