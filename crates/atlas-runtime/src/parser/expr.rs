@@ -590,6 +590,7 @@ impl Parser {
         Ok(Expr::Call(CallExpr {
             callee: Box::new(callee),
             args,
+            type_args: vec![],
             span: callee_span.merge(end_span),
         }))
     }
@@ -757,6 +758,14 @@ impl Parser {
             }
         };
 
+        // Check for generic type arguments: method<T>(args)
+        // Only parse as type args if we see < followed by type-like content
+        let type_args = if self.check(TokenKind::Less) {
+            self.try_parse_call_type_args()?
+        } else {
+            vec![]
+        };
+
         // Check for method call (with parentheses)
         let (args, end_span) = if self.check(TokenKind::LeftParen) {
             self.consume(TokenKind::LeftParen, "Expected '('")?;
@@ -783,6 +792,7 @@ impl Parser {
             target: Box::new(target),
             member,
             args,
+            type_args,
             type_tag: std::cell::Cell::new(None),
             trait_dispatch: std::cell::RefCell::new(None),
             static_dispatch: std::cell::RefCell::new(None),
@@ -1103,6 +1113,29 @@ impl Parser {
             type_args,
             span,
         })
+    }
+
+    /// Try to parse type arguments for a generic call: `<T1, T2, ...>`
+    /// Returns empty vec if `<` is not present.
+    /// Used for: `Json.parse<User>(str)`, `fn<T>(x)`
+    fn try_parse_call_type_args(&mut self) -> Result<Vec<TypeRef>, ()> {
+        if !self.match_token(TokenKind::Less) {
+            return Ok(vec![]);
+        }
+
+        // Parse type arguments
+        let mut type_args = vec![];
+        loop {
+            type_args.push(self.parse_type_ref()?);
+            if !self.match_token(TokenKind::Comma) {
+                break;
+            }
+        }
+
+        // Consume '>'
+        self.consume(TokenKind::Greater, "Expected '>' after type arguments")?;
+
+        Ok(type_args)
     }
 
     // parse_function_type removed in favor of parse_paren_type

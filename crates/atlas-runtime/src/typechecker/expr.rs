@@ -2364,8 +2364,41 @@ impl<'a> TypeChecker<'a> {
         if let crate::ast::Expr::Identifier(id) = member.target.as_ref() {
             if let Some(ns_tag) = crate::method_dispatch::namespace_type_tag(&id.name) {
                 member.type_tag.set(Some(ns_tag));
-                // Resolve return type for namespace method calls
-                let return_type = resolve_namespace_return_type(&id.name, &member.member.name);
+
+                // H-293: Json.parse<T>() returns Result<T, string> instead of Result<JsonValue, string>
+                let return_type = if id.name.eq_ignore_ascii_case("json")
+                    && member.member.name == "parse"
+                    && !member.type_args.is_empty()
+                {
+                    // Resolve the type argument
+                    let type_arg = self.resolve_type_ref(&member.type_args[0]);
+                    // Validate that it's a struct type (structural type)
+                    if !matches!(type_arg, Type::Structural { .. }) {
+                        self.diagnostics.push(
+                            error_codes::TYPE_ERROR
+                                .emit(member.type_args[0].span())
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Json.parse<T> requires T to be a struct type, found {}",
+                                        type_arg.display_name()
+                                    ),
+                                )
+                                .with_help("use a struct type: Json.parse<User>(str)")
+                                .build()
+                                .with_label("expected struct type"),
+                        );
+                    }
+                    // Return Result<T, string>
+                    Type::Generic {
+                        name: "Result".to_string(),
+                        type_args: vec![type_arg, Type::String],
+                    }
+                } else {
+                    // Standard namespace return type
+                    resolve_namespace_return_type(&id.name, &member.member.name)
+                };
+
                 // D-010: Type::Unknown is always an error state, never a silent wildcard.
                 // If a namespace method has no type entry, emit a diagnostic immediately.
                 if return_type == Type::Unknown {

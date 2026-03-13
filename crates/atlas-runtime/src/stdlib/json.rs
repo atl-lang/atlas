@@ -879,6 +879,119 @@ pub fn json_ns_is_null(args: &[Value], span: Span) -> Result<Value, RuntimeError
     Ok(Value::Bool(is_null))
 }
 
+// ============================================================================
+// Typed JSON Deserialization (H-293)
+// ============================================================================
+
+/// Json.parse<T>(json_str) → Result<T, string>
+///
+/// Parses JSON string and deserializes into a struct instance.
+/// The struct_name argument is passed by the compiler from the type parameter.
+///
+/// # Atlas Usage
+/// ```atlas
+/// struct User { name: string, age: number }
+/// let u = Json.parse<User>('{"name": "Alice", "age": 30}')?;
+/// console.log(u.name);  // "Alice"
+/// ```
+pub fn json_parse_typed(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("jsonParseTyped", 2, args.len(), span));
+    }
+
+    let json_str = match &args[0] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.parse<T>() requires string argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let struct_name = match &args[1] {
+        Value::String(s) => s.as_ref().clone(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.parse<T>() internal error: struct name must be string".to_string(),
+                span,
+            })
+        }
+    };
+
+    // Parse JSON
+    let parsed: serde_json::Value = match serde_json::from_str(json_str) {
+        Ok(v) => v,
+        Err(e) => {
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "Invalid JSON: {}",
+                e
+            ))))));
+        }
+    };
+
+    // Ensure it's an object
+    let obj = match parsed {
+        serde_json::Value::Object(obj) => obj,
+        _ => {
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "Json.parse<{}>(): expected JSON object, got {}",
+                struct_name,
+                match parsed {
+                    serde_json::Value::Null => "null",
+                    serde_json::Value::Bool(_) => "boolean",
+                    serde_json::Value::Number(_) => "number",
+                    serde_json::Value::String(_) => "string",
+                    serde_json::Value::Array(_) => "array",
+                    serde_json::Value::Object(_) => "object",
+                }
+            ))))));
+        }
+    };
+
+    // Convert JSON object to Atlas HashMap (struct instance)
+    use crate::stdlib::collections::hash::HashKey;
+    use crate::stdlib::collections::hashmap::AtlasHashMap;
+    use crate::value::ValueHashMap;
+
+    let mut atlas_map = AtlasHashMap::with_capacity(obj.len());
+
+    for (key, value) in obj {
+        let atlas_value = json_to_atlas_value(value);
+        let hash_key = HashKey::String(Arc::new(key));
+        atlas_map.insert(hash_key, atlas_value);
+    }
+
+    // Return as Result<HashMap, string> - the HashMap IS the struct instance
+    let map = ValueHashMap::from_atlas(atlas_map);
+    Ok(Value::Result(Ok(Box::new(Value::HashMap(map)))))
+}
+
+/// Convert a JSON value to an Atlas Value (for typed deserialization)
+fn json_to_atlas_value(value: serde_json::Value) -> Value {
+    match value {
+        serde_json::Value::Null => Value::Null,
+        serde_json::Value::Bool(b) => Value::Bool(b),
+        serde_json::Value::Number(n) => Value::Number(n.as_f64().unwrap_or(0.0)),
+        serde_json::Value::String(s) => Value::string(s),
+        serde_json::Value::Array(arr) => {
+            Value::array(arr.into_iter().map(json_to_atlas_value).collect())
+        }
+        serde_json::Value::Object(obj) => {
+            use crate::stdlib::collections::hash::HashKey;
+            use crate::stdlib::collections::hashmap::AtlasHashMap;
+            use crate::value::ValueHashMap;
+
+            let mut atlas_map = AtlasHashMap::with_capacity(obj.len());
+            for (key, v) in obj {
+                let hash_key = HashKey::String(Arc::new(key));
+                atlas_map.insert(hash_key, json_to_atlas_value(v));
+            }
+            Value::HashMap(ValueHashMap::from_atlas(atlas_map))
+        }
+    }
+}
+
 /// Helper: Get type name of JsonValue for error messages
 fn json_type_name(json: &JsonValue) -> &'static str {
     match json {

@@ -560,6 +560,51 @@ impl Compiler {
                 return Ok(());
             }
 
+            // H-293: Json.parse<T>() — typed JSON deserialization
+            // When type arguments are present, call jsonParseTyped with struct name
+            if matches!(type_tag, crate::method_dispatch::TypeTag::JsonNs)
+                && member.member.name == "parse"
+                && !member.type_args.is_empty()
+            {
+                // Extract struct name from type argument
+                let struct_name = match &member.type_args[0] {
+                    crate::ast::TypeRef::Named(name, _) => name.clone(),
+                    crate::ast::TypeRef::Generic { name, .. } => name.clone(),
+                    _ => {
+                        return Err(vec![crate::diagnostic::Diagnostic::error(
+                            "Json.parse<T> requires a struct type name".to_string(),
+                            member.span,
+                        )]);
+                    }
+                };
+
+                // Load jsonParseTyped function
+                let func_value =
+                    crate::value::Value::Builtin(std::sync::Arc::from("jsonParseTyped"));
+                let const_idx = self.bytecode.add_constant(func_value);
+                self.bytecode.emit(Opcode::Constant, member.span);
+                self.bytecode.emit_u16(const_idx);
+
+                // Compile the JSON string argument
+                if let Some(args) = &member.args {
+                    for arg in args {
+                        self.compile_expr(arg)?;
+                    }
+                }
+
+                // Push struct name as second argument
+                let struct_name_idx = self.bytecode.add_constant(Value::string(&struct_name));
+                self.bytecode.emit(Opcode::Constant, member.span);
+                self.bytecode.emit_u16(struct_name_idx);
+
+                // Call with 2 arguments: (json_str, struct_name)
+                let arg_count = member.args.as_ref().map(|a| a.len()).unwrap_or(0) + 1;
+                self.bytecode.emit(Opcode::Call, member.span);
+                self.bytecode.emit_u8(arg_count as u8);
+
+                return Ok(());
+            }
+
             let func_name = crate::method_dispatch::resolve_method(type_tag, &member.member.name)
                 .ok_or_else(|| {
                 vec![crate::diagnostic::Diagnostic::error(

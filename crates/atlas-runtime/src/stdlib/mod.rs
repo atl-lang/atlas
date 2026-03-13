@@ -671,6 +671,8 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             json::json_ns_get_object(a, s)
         });
         m.insert("jsonNsIsNull", |a, s, _, _| json::json_ns_is_null(a, s));
+        // H-293: Typed JSON deserialization — Json.parse<T>(str)
+        m.insert("jsonParseTyped", |a, s, _, _| json::json_parse_typed(a, s));
 
         // ====================================================================
         // Type checking functions

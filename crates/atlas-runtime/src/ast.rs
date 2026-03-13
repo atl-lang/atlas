@@ -712,6 +712,8 @@ pub struct BinaryExpr {
 pub struct CallExpr {
     pub callee: Box<Expr>,
     pub args: Vec<Expr>,
+    /// Type arguments for generic calls: `Json.parse<User>(str)`
+    pub type_args: Vec<TypeRef>,
     pub span: Span,
 }
 
@@ -741,6 +743,8 @@ pub struct MemberExpr {
     pub member: Identifier,
     /// Arguments if this is a method call, None if property access
     pub args: Option<Vec<Expr>>,
+    /// Type arguments for generic method calls: `obj.method<T>(x)`
+    pub type_args: Vec<TypeRef>,
     /// Type tag for method dispatch (set by typechecker, used by interpreter/compiler)
     #[serde(skip)]
     pub type_tag: Cell<Option<TypeTag>>,
@@ -761,6 +765,7 @@ impl PartialEq for MemberExpr {
         self.target == other.target
             && self.member == other.member
             && self.args == other.args
+            && self.type_args == other.type_args
             && self.span == other.span
     }
 }
