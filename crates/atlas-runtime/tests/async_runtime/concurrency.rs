@@ -230,6 +230,53 @@ fn parity_sequential_vs_concurrent_results() {
     assert_eq!(concurrent_count, 10);
 }
 
+// ── H-386: sleep/timeout must not panic from async task context ───────────────
+
+#[test]
+fn sleep_from_async_task_does_not_panic() {
+    ensure_pool();
+
+    // sleep() previously called block_on() which panics from a Tokio async context.
+    // The task must complete (not fail/panic).
+    let handle = spawn_task(
+        async {
+            atlas_runtime::async_runtime::sleep(10);
+            Value::Null
+        },
+        None,
+    );
+    let status = wait_settled(&handle, 5_000);
+    assert!(
+        matches!(status, TaskStatus::Completed),
+        "sleep() panicked inside async task: {status:?}"
+    );
+}
+
+#[test]
+fn atlas_future_is_std_future() {
+    ensure_pool();
+
+    // AtlasFuture must implement std::future::Future so it can be .await-ed.
+    // This test spawns a task that awaits an already-resolved AtlasFuture.
+    use atlas_runtime::async_runtime::AtlasFuture;
+
+    let handle = spawn_task(
+        async {
+            let f = AtlasFuture::resolved(Value::Number(7.0));
+            match f.await {
+                Ok(v) => v,
+                Err(_) => Value::Null,
+            }
+        },
+        None,
+    );
+    let status = wait_settled(&handle, 2_000);
+    assert!(
+        matches!(status, TaskStatus::Completed),
+        "AtlasFuture::await did not complete: {status:?}"
+    );
+}
+
 // ── No deadlock under concurrent load ────────────────────────────────────────
 
 #[test]

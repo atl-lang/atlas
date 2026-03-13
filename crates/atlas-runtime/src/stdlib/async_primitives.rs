@@ -623,11 +623,18 @@ pub fn async_mutex_get(args: &[Value], span: Span) -> Result<Value, RuntimeError
         }
     };
 
-    // Block on lock acquisition
-    let value = async_runtime::block_on(async move {
-        let guard = mutex.lock().await;
-        guard.clone()
-    });
+    // Acquire the lock safely from any context (sync or Tokio async).
+    let value = if tokio::runtime::Handle::try_current().is_ok() {
+        tokio::task::block_in_place(|| {
+            let guard = mutex.blocking_lock();
+            guard.clone()
+        })
+    } else {
+        async_runtime::block_on(async move {
+            let guard = mutex.lock().await;
+            guard.clone()
+        })
+    };
 
     Ok(value)
 }
@@ -652,11 +659,18 @@ pub fn async_mutex_set(args: &[Value], span: Span) -> Result<Value, RuntimeError
 
     let new_value = args[1].clone();
 
-    // Block on lock acquisition and update
-    async_runtime::block_on(async move {
-        let mut guard = mutex.lock().await;
-        *guard = new_value;
-    });
+    // Acquire the lock safely from any context (sync or Tokio async).
+    if tokio::runtime::Handle::try_current().is_ok() {
+        tokio::task::block_in_place(|| {
+            let mut guard = mutex.blocking_lock();
+            *guard = new_value;
+        });
+    } else {
+        async_runtime::block_on(async move {
+            let mut guard = mutex.lock().await;
+            *guard = new_value;
+        });
+    }
 
     Ok(Value::Null)
 }

@@ -8,10 +8,19 @@
 //!
 //! Futures support chaining via `then` and `catch` methods, and combinators
 //! like `futureAll` and `futureRace` for working with multiple futures.
+//!
+//! ## std::future::Future integration
+//!
+//! `AtlasFuture` implements `std::future::Future<Output = Result<Value, Value>>`.
+//! Resolved → `Poll::Ready(Ok(value))`, Rejected → `Poll::Ready(Err(error))`.
+//! Wakers registered via `poll()` are fired when `resolve()`/`reject()` is called,
+//! so Tokio (and any other executor) gets notified immediately.
 
 use crate::value::Value;
 use std::fmt;
+use std::pin::Pin;
 use std::sync::{Arc, Mutex};
+use std::task::{Context, Poll, Waker};
 
 /// Future state representing the status of an async computation
 #[derive(Clone)]
@@ -34,92 +43,114 @@ impl fmt::Debug for FutureState {
     }
 }
 
-/// Atlas Future - represents a pending asynchronous computation
+// ── Internal state ────────────────────────────────────────────────────────────
+
+struct AtlasFutureInner {
+    state: FutureState,
+    /// Wakers registered by `poll()` while the future is Pending.
+    /// Drained and woken when the future transitions to Resolved/Rejected.
+    wakers: Vec<Waker>,
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+/// Atlas Future — represents a pending asynchronous computation.
 ///
-/// Futures are the foundation of Atlas's async I/O system. They represent
-/// values that may not be available yet but will be computed asynchronously.
+/// Implements `std::future::Future<Output = Result<Value, Value>>`:
+/// - `Ok(value)` when the future resolves successfully.
+/// - `Err(error)` when the future is rejected.
 ///
-/// # State Machine
-/// - Pending → Resolved (success)
-/// - Pending → Rejected (error)
-/// - Once Resolved or Rejected, state is final
-///
-/// # Example Usage (Atlas code)
-/// ```atlas
-/// let f = futureResolve(42);
-/// let f2 = then(f, |x| x * 2);
-/// // f2 will resolve to 84
-/// ```
+/// Wakers are registered on `poll()` and notified on `resolve()`/`reject()`,
+/// making this compatible with Tokio and any `std::future` executor.
 #[derive(Clone)]
 pub struct AtlasFuture {
-    state: Arc<Mutex<FutureState>>,
+    inner: Arc<Mutex<AtlasFutureInner>>,
 }
 
 impl AtlasFuture {
-    /// Create a new pending future
+    /// Create a new pending future.
     pub fn new_pending() -> Self {
         Self {
-            state: Arc::new(Mutex::new(FutureState::Pending)),
+            inner: Arc::new(Mutex::new(AtlasFutureInner {
+                state: FutureState::Pending,
+                wakers: Vec::new(),
+            })),
         }
     }
 
-    /// Create an immediately resolved future
+    /// Create an immediately resolved future.
     pub fn resolved(value: Value) -> Self {
         Self {
-            state: Arc::new(Mutex::new(FutureState::Resolved(value))),
+            inner: Arc::new(Mutex::new(AtlasFutureInner {
+                state: FutureState::Resolved(value),
+                wakers: Vec::new(),
+            })),
         }
     }
 
-    /// Create an immediately rejected future
+    /// Create an immediately rejected future.
     pub fn rejected(error: Value) -> Self {
         Self {
-            state: Arc::new(Mutex::new(FutureState::Rejected(error))),
+            inner: Arc::new(Mutex::new(AtlasFutureInner {
+                state: FutureState::Rejected(error),
+                wakers: Vec::new(),
+            })),
         }
     }
 
-    /// Check if the future is pending
+    /// Check if the future is pending.
     pub fn is_pending(&self) -> bool {
-        matches!(*self.state.lock().unwrap(), FutureState::Pending)
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+        matches!(inner.state, FutureState::Pending)
     }
 
-    /// Check if the future is resolved
+    /// Check if the future is resolved.
     pub fn is_resolved(&self) -> bool {
-        matches!(*self.state.lock().unwrap(), FutureState::Resolved(_))
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+        matches!(inner.state, FutureState::Resolved(_))
     }
 
-    /// Check if the future is rejected
+    /// Check if the future is rejected.
     pub fn is_rejected(&self) -> bool {
-        matches!(*self.state.lock().unwrap(), FutureState::Rejected(_))
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+        matches!(inner.state, FutureState::Rejected(_))
     }
 
-    /// Get the current state (cloned)
+    /// Get the current state (cloned).
     pub fn get_state(&self) -> FutureState {
-        self.state.lock().unwrap().clone()
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+        inner.state.clone()
     }
 
-    /// Resolve the future with a value
+    /// Resolve the future with a value.
     ///
-    /// This transitions the future from Pending to Resolved.
-    /// If the future is already resolved or rejected, this is a no-op.
+    /// Transitions Pending → Resolved and wakes all registered wakers.
+    /// No-op if the future is already settled.
     pub fn resolve(&self, value: Value) {
-        let mut state = self.state.lock().unwrap();
-        if matches!(*state, FutureState::Pending) {
-            *state = FutureState::Resolved(value);
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+        if matches!(inner.state, FutureState::Pending) {
+            inner.state = FutureState::Resolved(value);
+            for waker in inner.wakers.drain(..) {
+                waker.wake();
+            }
         }
     }
 
-    /// Reject the future with an error
+    /// Reject the future with an error.
     ///
-    /// This transitions the future from Pending to Rejected.
-    /// If the future is already resolved or rejected, this is a no-op.
+    /// Transitions Pending → Rejected and wakes all registered wakers.
+    /// No-op if the future is already settled.
     pub fn reject(&self, error: Value) {
-        let mut state = self.state.lock().unwrap();
-        if matches!(*state, FutureState::Pending) {
-            *state = FutureState::Rejected(error);
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+        if matches!(inner.state, FutureState::Pending) {
+            inner.state = FutureState::Rejected(error);
+            for waker in inner.wakers.drain(..) {
+                waker.wake();
+            }
         }
     }
 
-    /// Apply a transformation to a resolved future
+    /// Apply a transformation to a resolved future.
     ///
     /// Creates a new future that will contain the result of applying
     /// the handler to this future's value (when it resolves).
@@ -130,25 +161,13 @@ impl AtlasFuture {
         F: FnOnce(Value) -> Value + 'static,
     {
         match self.get_state() {
-            FutureState::Resolved(value) => {
-                // Future already resolved, apply handler immediately
-                let result = handler(value);
-                Self::resolved(result)
-            }
-            FutureState::Rejected(error) => {
-                // Future rejected, propagate error
-                Self::rejected(error)
-            }
-            FutureState::Pending => {
-                // For now, pending futures can't be chained dynamically
-                // This would require a more complex executor with callback queues
-                // For phase-11a, we focus on immediately resolved/rejected futures
-                Self::new_pending()
-            }
+            FutureState::Resolved(value) => Self::resolved(handler(value)),
+            FutureState::Rejected(error) => Self::rejected(error),
+            FutureState::Pending => Self::new_pending(),
         }
     }
 
-    /// Handle a rejected future
+    /// Handle a rejected future.
     ///
     /// Creates a new future that will contain the result of applying
     /// the error handler to this future's error (when it rejects).
@@ -159,32 +178,44 @@ impl AtlasFuture {
         F: FnOnce(Value) -> Value + 'static,
     {
         match self.get_state() {
-            FutureState::Resolved(value) => {
-                // Future resolved, propagate value
-                Self::resolved(value)
-            }
-            FutureState::Rejected(error) => {
-                // Future rejected, apply error handler
-                let result = handler(error);
-                Self::resolved(result)
-            }
+            FutureState::Resolved(value) => Self::resolved(value),
+            FutureState::Rejected(error) => Self::resolved(handler(error)),
+            FutureState::Pending => Self::new_pending(),
+        }
+    }
+}
+
+// ── std::future::Future ───────────────────────────────────────────────────────
+
+impl std::future::Future for AtlasFuture {
+    type Output = Result<Value, Value>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+        match &inner.state {
+            FutureState::Resolved(v) => Poll::Ready(Ok(v.clone())),
+            FutureState::Rejected(e) => Poll::Ready(Err(e.clone())),
             FutureState::Pending => {
-                // Pending future - would need executor support
-                Self::new_pending()
+                inner.wakers.push(cx.waker().clone());
+                Poll::Pending
             }
         }
     }
 }
 
+// ── Display / Debug ───────────────────────────────────────────────────────────
+
 impl fmt::Debug for AtlasFuture {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Future({:?})", *self.state.lock().unwrap())
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+        write!(f, "Future({:?})", inner.state)
     }
 }
 
 impl fmt::Display for AtlasFuture {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self.state.lock().unwrap() {
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+        match &inner.state {
             FutureState::Pending => write!(f, "Future(pending)"),
             FutureState::Resolved(_) => write!(f, "Future(resolved)"),
             FutureState::Rejected(_) => write!(f, "Future(rejected)"),
@@ -192,7 +223,9 @@ impl fmt::Display for AtlasFuture {
     }
 }
 
-/// Combine multiple futures into one that resolves when all resolve
+// ── Combinators ───────────────────────────────────────────────────────────────
+
+/// Combine multiple futures into one that resolves when all resolve.
 ///
 /// Returns a future containing an array of all results.
 /// If any future rejects, the combined future rejects immediately.
@@ -202,39 +235,25 @@ pub fn future_all(futures: Vec<AtlasFuture>) -> AtlasFuture {
     for future in futures {
         match future.get_state() {
             FutureState::Resolved(value) => results.push(value),
-            FutureState::Rejected(error) => {
-                // Any rejection causes immediate rejection
-                return AtlasFuture::rejected(error);
-            }
-            FutureState::Pending => {
-                // If any future is pending, result is pending
-                return AtlasFuture::new_pending();
-            }
+            FutureState::Rejected(error) => return AtlasFuture::rejected(error),
+            FutureState::Pending => return AtlasFuture::new_pending(),
         }
     }
 
-    // All futures resolved successfully
     AtlasFuture::resolved(Value::array(results))
 }
 
-/// Return the first future to complete (resolve or reject)
+/// Return the first future to complete (resolve or reject).
 ///
 /// Creates a future that adopts the state of the first future to complete.
 pub fn future_race(futures: Vec<AtlasFuture>) -> AtlasFuture {
     for future in futures {
         match future.get_state() {
-            FutureState::Resolved(value) => {
-                return AtlasFuture::resolved(value);
-            }
-            FutureState::Rejected(error) => {
-                return AtlasFuture::rejected(error);
-            }
-            FutureState::Pending => {
-                // Continue checking other futures
-            }
+            FutureState::Resolved(value) => return AtlasFuture::resolved(value),
+            FutureState::Rejected(error) => return AtlasFuture::rejected(error),
+            FutureState::Pending => {}
         }
     }
 
-    // All futures still pending
     AtlasFuture::new_pending()
 }
