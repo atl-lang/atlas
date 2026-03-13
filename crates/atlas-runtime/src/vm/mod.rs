@@ -2178,6 +2178,46 @@ impl VM {
                     }
                 }
 
+                Opcode::IsStruct => {
+                    // Stack: [value] -> [bool]
+                    // Push true if the value is a named struct (Map registered in struct_type_names)
+                    let val = self.pop();
+                    let is_struct = if let Value::Map(ref m) = val {
+                        let key = std::sync::Arc::as_ptr(m.arc()) as usize;
+                        self.struct_type_names.contains_key(&key)
+                    } else {
+                        false
+                    };
+                    self.push(Value::Bool(is_struct));
+                }
+
+                Opcode::CheckStructType => {
+                    // [u16 name_const_idx]  Stack: [value] -> [bool]
+                    // Pop value; push true if its registered struct name equals the string constant.
+                    let name_idx = self.read_u16()? as usize;
+                    let expected_name = match self.bytecode.constants.get(name_idx) {
+                        Some(Value::String(s)) => s.as_ref().clone(),
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "CheckStructType: expected string constant for type name"
+                                    .to_string(),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            });
+                        }
+                    };
+                    let val = self.pop();
+                    let matches_type = if let Value::Map(ref m) = val {
+                        let key = std::sync::Arc::as_ptr(m.arc()) as usize;
+                        self.struct_type_names
+                            .get(&key)
+                            .map(|name| name == &expected_name)
+                            .unwrap_or(false)
+                    } else {
+                        false
+                    };
+                    self.push(Value::Bool(matches_type));
+                }
+
                 // ===== Async (Phase 10) =====
                 //
                 // Encoding:
@@ -2367,7 +2407,8 @@ impl VM {
                     | Opcode::Tuple
                     | Opcode::TupleGet
                     | Opcode::HashMap
-                    | Opcode::DeferPush => ip += 2,
+                    | Opcode::DeferPush
+                    | Opcode::CheckStructType => ip += 2,
                     Opcode::Struct => ip += 4,
                     Opcode::MakeClosure => ip += 4,
                     Opcode::Call => ip += 1,

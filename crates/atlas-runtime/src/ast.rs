@@ -904,6 +904,18 @@ pub struct MatchArm {
     pub span: Span,
 }
 
+/// A single field binding in a struct pattern: `field_name` or `field_name: sub_pattern`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StructFieldPattern {
+    /// The struct field name being matched
+    pub name: Identifier,
+    /// Sub-pattern to match the field value against.
+    /// `None` = shorthand: bind the field value to a variable with the same name.
+    /// `Some(p)` = explicit: `field: pattern` form.
+    pub pattern: Option<Pattern>,
+    pub span: Span,
+}
+
 /// Pattern for match expressions
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Pattern {
@@ -939,6 +951,13 @@ pub enum Pattern {
     BareVariant {
         name: Identifier,
         args: Vec<Pattern>,
+        span: Span,
+    },
+    /// Struct/record pattern: `Point { x, y }` or `Point { x: px, y: py }`.
+    /// `type_name` is `None` for anonymous-record patterns like `{ x, y }`.
+    Struct {
+        type_name: Option<Identifier>,
+        fields: Vec<StructFieldPattern>,
         span: Span,
     },
 }
@@ -1139,6 +1158,7 @@ impl Pattern {
             Pattern::Or(_, span) => *span,
             Pattern::EnumVariant { span, .. } => *span,
             Pattern::BareVariant { span, .. } => *span,
+            Pattern::Struct { span, .. } => *span,
         }
     }
 }

@@ -443,6 +443,18 @@ fn collect_pattern_bindings(
             }
         }
         atlas_runtime::ast::Pattern::Literal(_, _) | atlas_runtime::ast::Pattern::Wildcard(_) => {}
+        atlas_runtime::ast::Pattern::Struct { fields, .. } => {
+            for field in fields {
+                match &field.pattern {
+                    Some(sub) => collect_pattern_bindings(sub, scopes),
+                    None => {
+                        if let Some(scope) = scopes.back_mut() {
+                            scope.insert(field.name.name.clone());
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

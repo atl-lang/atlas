@@ -216,7 +216,8 @@ fn read_operand(opcode: Opcode, code: &[u8], ip: usize) -> Result<(usize, i64), 
         | Opcode::GetUpvalue
         | Opcode::SetUpvalue
         | Opcode::Array
-        | Opcode::HashMap => {
+        | Opcode::HashMap
+        | Opcode::CheckStructType => {
             if ip + 1 >= code.len() {
                 return Err(opcode_name(opcode));
             }
@@ -340,6 +341,8 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::EnumVariant => "EnumVariant",
         Opcode::CheckEnumVariant => "CheckEnumVariant",
         Opcode::ExtractEnumData => "ExtractEnumData",
+        Opcode::IsStruct => "IsStruct",
+        Opcode::CheckStructType => "CheckStructType",
         Opcode::Halt => "Halt",
         Opcode::MakeClosure => "MakeClosure",
         Opcode::GetUpvalue => "GetUpvalue",
@@ -479,7 +482,11 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
         | Opcode::IsArray
         | Opcode::GetArrayLen
         | Opcode::ExtractEnumData
+        | Opcode::IsStruct
         | Opcode::Halt => Some(0),
+
+        // CheckStructType: pop 1 (value), push 1 (bool) — net 0
+        Opcode::CheckStructType => Some(0),
 
         // Pop 1
         Opcode::Pop | Opcode::JumpIfFalse => Some(-1),

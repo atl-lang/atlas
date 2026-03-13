@@ -980,6 +980,26 @@ impl FormatVisitor {
                     self.write(")");
                 }
             }
+            Pattern::Struct {
+                type_name, fields, ..
+            } => {
+                if let Some(tname) = type_name {
+                    self.write(&tname.name);
+                    self.write(" ");
+                }
+                self.write("{ ");
+                for (i, field) in fields.iter().enumerate() {
+                    if i > 0 {
+                        self.write(", ");
+                    }
+                    self.write(&field.name.name);
+                    if let Some(sub) = &field.pattern {
+                        self.write(": ");
+                        self.visit_pattern(sub);
+                    }
+                }
+                self.write(" }");
+            }
         }
     }
 

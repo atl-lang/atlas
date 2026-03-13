@@ -1695,6 +1695,9 @@ impl Parser {
                             span,
                         })
                     }
+                } else if self.check(TokenKind::LeftBrace) {
+                    // Struct pattern: TypeName { field, field: sub_pattern, ... }
+                    self.parse_struct_pattern(Some(id))
                 } else if self.check(TokenKind::LeftParen) {
                     // Built-in constructors (Ok, Err, Some) stay as Pattern::Constructor.
                     // User-defined uppercase variants with args become Pattern::BareVariant.
@@ -1785,6 +1788,69 @@ impl Parser {
         Ok(Pattern::Array {
             elements,
             span: start_span.merge(end_span),
+        })
+    }
+
+    /// Parse struct pattern: `TypeName { field, field: sub_pattern }` or anonymous `{ field }`.
+    ///
+    /// `type_name` is `Some(id)` for named structs, `None` for anonymous record patterns.
+    fn parse_struct_pattern(
+        &mut self,
+        type_name: Option<Identifier>,
+    ) -> Result<crate::ast::Pattern, ()> {
+        use crate::ast::{Pattern, StructFieldPattern};
+
+        let start_span = type_name
+            .as_ref()
+            .map(|id| id.span)
+            .unwrap_or_else(|| self.peek().span);
+
+        self.consume(TokenKind::LeftBrace, "Expected '{' in struct pattern")?;
+
+        let mut fields = Vec::new();
+
+        if !self.check(TokenKind::RightBrace) {
+            loop {
+                let field_tok = self.consume_identifier("a struct field name in pattern")?;
+                let field_name = Identifier {
+                    name: field_tok.lexeme.clone(),
+                    span: field_tok.span,
+                };
+                let field_span = field_tok.span;
+
+                // `field: sub_pattern` or shorthand `field`
+                let sub_pattern = if self.check(TokenKind::Colon) {
+                    self.advance(); // consume ':'
+                    Some(self.parse_or_pattern()?)
+                } else {
+                    None
+                };
+
+                let end_span = sub_pattern.as_ref().map(|p| p.span()).unwrap_or(field_span);
+
+                fields.push(StructFieldPattern {
+                    name: field_name,
+                    pattern: sub_pattern,
+                    span: field_span.merge(end_span),
+                });
+
+                if !self.match_token(TokenKind::Comma) {
+                    break;
+                }
+                // Allow trailing comma
+                if self.check(TokenKind::RightBrace) {
+                    break;
+                }
+            }
+        }
+
+        let end_tok = self.consume(TokenKind::RightBrace, "Expected '}' after struct pattern")?;
+        let span = start_span.merge(end_tok.span);
+
+        Ok(Pattern::Struct {
+            type_name,
+            fields,
+            span,
         })
     }
 

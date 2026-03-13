@@ -1618,6 +1618,16 @@ impl Binder {
                     vars.extend(self.collect_pattern_variables(arg));
                 }
             }
+            Pattern::Struct { fields, .. } => {
+                // Collect variables from struct field patterns
+                for field in fields {
+                    match &field.pattern {
+                        Some(sub) => vars.extend(self.collect_pattern_variables(sub)),
+                        // Shorthand binding: field name becomes a variable
+                        None => vars.push((field.name.name.clone(), field.name.span)),
+                    }
+                }
+            }
         }
 
         vars
