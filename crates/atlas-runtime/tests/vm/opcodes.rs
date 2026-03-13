@@ -165,6 +165,7 @@ fn test_vm_call_frame_creation() {
         defaults: vec![],
         return_ownership: None,
         is_async: false,
+        has_rest_param: false,
     };
     let func_idx = bytecode.add_constant(Value::Function(func_ref));
     bytecode.emit(Opcode::Constant, Span::dummy());
@@ -201,6 +202,7 @@ fn test_vm_call_with_arguments() {
         defaults: vec![],
         return_ownership: None,
         is_async: false,
+        has_rest_param: false,
     };
     let func_idx = bytecode.add_constant(Value::Function(func_ref));
     bytecode.emit(Opcode::Constant, Span::dummy());
@@ -244,6 +246,7 @@ fn test_vm_call_wrong_arity() {
         defaults: vec![],
         return_ownership: None,
         is_async: false,
+        has_rest_param: false,
     };
     let func_idx = bytecode.add_constant(Value::Function(func_ref));
     bytecode.emit(Opcode::Constant, Span::dummy());
