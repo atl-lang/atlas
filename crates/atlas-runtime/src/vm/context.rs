@@ -113,9 +113,10 @@ impl VMContext {
     /// Reset this context to a clean worker state (empty stack, no frames,
     /// all scratch buffers cleared).
     ///
-    /// Used by [`crate::async_runtime::worker::Worker`] after cloning the
-    /// base context.  Workers start with an empty execution state; the
-    /// compiler/VM will push a proper main frame when a task is dispatched.
+    /// Used by work-stealing (B44-P06) when a worker is reassigned.
+    /// Workers in the normal path receive a fresh VM via [`VM::new_for_worker`]
+    /// which already has a clean context, so this is reserved for reuse scenarios.
+    #[allow(dead_code)]
     pub(crate) fn reset_for_worker(&mut self) {
         self.stack.clear();
         self.frames.clear();

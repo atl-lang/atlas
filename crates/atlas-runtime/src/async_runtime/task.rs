@@ -210,7 +210,7 @@ impl fmt::Display for TaskHandle {
 ///
 /// 1. `spawn_function_task` wraps this in a `WorkerTask` and submits it.
 /// 2. The worker's event loop receives the `WorkerTask` and calls it with
-///    `Arc<WorkerContext>`.
+///    `Rc<WorkerContext>`.
 /// 3. (P05) The worker extracts the `FunctionTask` from the closure and
 ///    executes `func` with `args` on `ctx.vm_ctx`, sending the result on
 ///    `result_tx`.
@@ -355,7 +355,7 @@ pub fn spawn_function_task(
     let handle = TaskHandle::new(name);
     let state = handle.state_ref();
 
-    let (result_tx, mut result_rx) = oneshot::channel::<Result<Value, String>>();
+    let (result_tx, result_rx) = oneshot::channel::<Result<Value, String>>();
 
     let fn_task = FunctionTask {
         callable,
@@ -363,26 +363,40 @@ pub fn spawn_function_task(
         result_tx,
     };
 
-    // Wrap FunctionTask in a WorkerTask.  The worker calls this closure with
-    // its WorkerContext; P05 will use ctx.vm_ctx to execute the function.
-    // For now we send a pending-implementation marker so the handle settles.
-    let task: crate::async_runtime::WorkerTask = Box::new(move |_ctx| {
-        // Move fn_task into the async block so the result_tx is dropped on
-        // the worker thread (not the submitting thread).
-        let _fn_task = fn_task; // P05 will use this; for now it's a no-op placeholder.
+    // Build the WorkerTask.  The closure is `Send` (travels the MPSC channel)
+    // and its returned future is `!Send + 'static` (runs on the LocalSet).
+    //
+    // Function execution is synchronous within the async block: the VM
+    // executes the function body to completion, then sends the result on
+    // the oneshot channel.  Because tasks on a LocalSet run cooperatively,
+    // no other task can modify `ctx.vm` while this block holds `borrow_mut`.
+    let task: crate::async_runtime::WorkerTask = Box::new(move |ctx| {
         Box::pin(async move {
-            // B44-P05 will replace this with actual VM function execution via ctx.
-            // Dropping _fn_task here closes result_tx, which is caught below.
+            // Execute the function on the worker's isolated VM.
+            // `borrow_mut()` will panic if another task somehow holds the borrow —
+            // which cannot happen in cooperative LocalSet scheduling.
+            let exec_result = {
+                let security = crate::security::SecurityContext::default();
+                ctx.vm.borrow_mut().execute_task_function(
+                    &fn_task.callable,
+                    fn_task.args,
+                    &security,
+                )
+            };
+            // Send result back to the TaskState bridge below.
+            // Ignore send error: if the receiver was dropped, the TaskHandle
+            // was discarded and we simply discard the result too.
+            let _ = fn_task.result_tx.send(exec_result);
         })
     });
 
-    // Drive the result_rx → TaskState bridge on a background task so the
-    // handle settles once the worker either executes (P05) or drops the tx.
+    // Drive oneshot result_rx → TaskState so the handle settles.
+    // We spawn a dedicated OS thread here because `block_on(result_rx.await)`
+    // from a sync context is the correct bridge pattern.  This thread exits
+    // as soon as the worker sends (or drops) the channel.
     let state_bridge = Arc::clone(&state);
     std::thread::spawn(move || {
-        // Block until the worker sends a result or drops the sender.
-        let result =
-            crate::async_runtime::runtime().block_on(async move { result_rx.try_recv().ok() });
+        let result = crate::async_runtime::runtime().block_on(async move { result_rx.await.ok() });
 
         let mut status = state_bridge
             .status
@@ -405,14 +419,13 @@ pub fn spawn_function_task(
                         .unwrap_or_else(|e| e.into_inner()) = Some(Err(msg));
                 }
                 None => {
-                    // Sender was dropped without sending (P05 not yet implemented).
+                    // Channel closed without sending — worker shut down.
                     *status = TaskStatus::Failed;
                     *state_bridge
                         .result
                         .lock()
-                        .unwrap_or_else(|e| e.into_inner()) = Some(Err(
-                        "function task execution not yet implemented (B44-P05)".to_string(),
-                    ));
+                        .unwrap_or_else(|e| e.into_inner()) =
+                        Some(Err("worker shut down before task completed".to_string()));
                 }
             }
         }

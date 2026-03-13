@@ -28,14 +28,15 @@
 //! sent over the per-worker MPSC channel (wired in P04).
 
 use std::pin::Pin;
+use std::rc::Rc;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, OnceLock};
+use std::sync::OnceLock;
 use std::thread;
 
 use tokio::sync::mpsc;
 use tokio::task::LocalSet;
 
-use crate::vm::context::VMContext;
+use crate::vm::VM;
 
 /// The default worker channel capacity (backpressure buffer per worker).
 const TASK_QUEUE_CAPACITY: usize = 256;
@@ -47,21 +48,27 @@ const TASK_QUEUE_CAPACITY: usize = 256;
 /// `!Send` futures inside the worker's `LocalSet` — the `FnOnce` wrapper
 /// is `Send`, its *output* (`Pin<Box<dyn Future>>`) is `!Send`.
 pub type WorkerTask = Box<
-    dyn FnOnce(Arc<WorkerContext>) -> Pin<Box<dyn std::future::Future<Output = ()> + 'static>>
+    dyn FnOnce(Rc<WorkerContext>) -> Pin<Box<dyn std::future::Future<Output = ()> + 'static>>
         + Send
         + 'static,
 >;
 
 /// Shared resources handed to every task running inside a worker.
 ///
-/// Wraps the worker's isolated `VMContext` in an `Arc` so task closures can
-/// reference it without borrowing the `Worker` directly.  Since tasks are
-/// sequenced on a single `LocalSet` (no concurrent mutation), `Arc` alone is
-/// sufficient — no `Mutex` required.
+/// Each worker owns a full isolated [`VM`] (bytecode + globals + context),
+/// wrapped in a `RefCell` for interior mutability.  Tasks running on the
+/// worker's `LocalSet` execute cooperatively — only one task is active at a
+/// time — so `RefCell` is sufficient and no locking is needed.
+///
+/// `WorkerContext` is NOT `Send` (due to `RefCell`), which is correct: it
+/// lives entirely on the worker thread and must never cross thread boundaries.
 pub struct WorkerContext {
-    /// Isolated VM execution state for this worker thread.
-    pub vm_ctx: VMContext,
-    /// Worker index (0-based).
+    /// Fully isolated VM instance for this worker thread.
+    ///
+    /// `RefCell` enables interior mutability for cooperative-single-threaded
+    /// task execution without locking overhead.
+    pub vm: std::cell::RefCell<VM>,
+    /// Worker index (0-based) for diagnostics and routing.
     pub worker_id: usize,
 }
 
@@ -78,22 +85,19 @@ pub struct Worker {
 impl Worker {
     /// Spawn a new worker thread.
     ///
-    /// The worker clones `base_ctx` and immediately resets it to a fresh state,
-    /// then enters a `LocalSet` event loop waiting for tasks.
-    fn spawn(id: usize, base_ctx: VMContext) -> Self {
+    /// `worker_vm` is a pre-constructed isolated VM for this worker (see
+    /// [`VM::new_for_worker`]).  The worker enters a `LocalSet` event loop and
+    /// waits for tasks, executing each one on its isolated VM.
+    fn spawn(id: usize, worker_vm: VM) -> Self {
         let (sender, mut receiver) = mpsc::channel::<WorkerTask>(TASK_QUEUE_CAPACITY);
 
         let thread_handle = thread::Builder::new()
             .name(format!("atlas-worker-{id}"))
             .spawn(move || {
-                // Each worker owns an isolated VMContext — cloned from base, then
-                // reset to a clean empty state.  No shared mutable state across
-                // workers.
-                let mut vm_ctx = base_ctx.clone();
-                vm_ctx.reset_for_worker();
-
-                let worker_ctx = Arc::new(WorkerContext {
-                    vm_ctx,
+                // Rc (not Arc) — WorkerContext stays on this thread forever.
+                // Rc<RefCell<VM>> gives interior mutability without locking.
+                let worker_ctx = Rc::new(WorkerContext {
+                    vm: std::cell::RefCell::new(worker_vm),
                     worker_id: id,
                 });
 
@@ -108,7 +112,7 @@ impl Worker {
                 // Event loop: drain the task queue inside the LocalSet.
                 rt.block_on(local.run_until(async move {
                     while let Some(task) = receiver.recv().await {
-                        let ctx = Arc::clone(&worker_ctx);
+                        let ctx = Rc::clone(&worker_ctx);
                         tokio::task::spawn_local(task(ctx));
                     }
                     // Channel closed → pool is shutting down; exit cleanly.
@@ -134,11 +138,11 @@ pub struct WorkerPool {
 }
 
 impl WorkerPool {
-    /// Create a pool with `n` workers, each seeded from `base_ctx`.
+    /// Create a pool with `n` workers, each with an isolated VM cloned from `base_vm`.
     ///
     /// Pass `n = 0` to use the hardware concurrency level
     /// (`std::thread::available_parallelism`).
-    pub fn new(n: usize, base_ctx: VMContext) -> Self {
+    pub fn new(n: usize, base_vm: &VM) -> Self {
         let count = if n == 0 {
             thread::available_parallelism()
                 .map(|p| p.get())
@@ -148,7 +152,7 @@ impl WorkerPool {
         };
 
         let workers = (0..count)
-            .map(|id| Worker::spawn(id, base_ctx.clone()))
+            .map(|id| Worker::spawn(id, base_vm.new_for_worker()))
             .collect();
 
         WorkerPool {
@@ -198,14 +202,19 @@ static WORKER_POOL: OnceLock<WorkerPool> = OnceLock::new();
 
 /// Initialize the global worker pool.
 ///
-/// Must be called exactly once, after [`crate::async_runtime::init_runtime()`].
+/// Must be called exactly once, typically right after the first `VM::run()`
+/// so workers inherit the correct bytecode and globals snapshot.
 /// `n = 0` → use hardware concurrency.
+///
+/// Each worker receives an isolated `VM` cloned from `base_vm` via
+/// [`VM::new_for_worker`] — same bytecode and globals, independent execution
+/// context.
 ///
 /// # Panics
 /// Panics if called more than once.
-pub fn init_worker_pool(n: usize, base_ctx: VMContext) {
+pub fn init_worker_pool(n: usize, base_vm: &VM) {
     WORKER_POOL
-        .set(WorkerPool::new(n, base_ctx))
+        .set(WorkerPool::new(n, base_vm))
         .ok()
         .expect("init_worker_pool called more than once");
 }

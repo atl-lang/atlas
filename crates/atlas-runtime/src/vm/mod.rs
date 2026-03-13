@@ -316,6 +316,79 @@ impl VM {
         self.output_writer = writer;
     }
 
+    /// Create an isolated VM for a worker thread (D-057).
+    ///
+    /// Clones the bytecode and globals from the source VM so each worker
+    /// starts with the same program text and global bindings but executes
+    /// on a completely independent stack and frame list.  The output writer
+    /// is cloned by reference (it is `Arc<Mutex<Box<dyn Write+Send>>>`) so
+    /// all workers share the same output sink.
+    ///
+    /// # Design
+    ///
+    /// Workers do NOT share globals at runtime — mutations in a spawned task
+    /// are local to that worker's VM instance.  Cross-worker communication
+    /// uses channels (B44-P07).
+    pub fn new_for_worker(&self) -> Self {
+        let bytecode = self.bytecode.clone();
+
+        #[cfg(debug_assertions)]
+        let main_local_count = bytecode.top_level_local_count;
+
+        let main_frame = crate::vm::frame::CallFrame {
+            function_name: "<worker-main>".to_string(),
+            return_ip: 0,
+            stack_base: 0,
+            local_count: bytecode.top_level_local_count,
+            upvalues: std::sync::Arc::new(Vec::new()),
+        };
+
+        Self {
+            ctx: VMContext::new(
+                main_frame,
+                #[cfg(debug_assertions)]
+                main_local_count,
+            ),
+            globals: self.globals.clone(),
+            bytecode,
+            profiler: None,
+            debugger: None,
+            current_security: self.current_security.clone(),
+            execution_limits: self.execution_limits.clone(),
+            output_writer: self.output_writer.clone(),
+            library_loader: LibraryLoader::new(),
+            extern_functions: self.extern_functions.clone(),
+            jit: None, // JIT not supported on worker threads yet
+        }
+    }
+
+    /// Execute an Atlas function or closure as a task on this VM.
+    ///
+    /// Pushes `args` onto the stack, sets the IP to the callable's bytecode
+    /// offset, drives `execute_loop` until the function returns, and gives
+    /// back the return value.  The VM's call stack is restored to its prior
+    /// state after execution.
+    ///
+    /// This is the entry point called by workers when they receive a
+    /// [`crate::async_runtime::task::FunctionTask`].
+    pub fn execute_task_function(
+        &mut self,
+        callable: &crate::async_runtime::task::FunctionCallable,
+        args: Vec<Value>,
+        security: &crate::security::SecurityContext,
+    ) -> Result<Value, String> {
+        self.current_security = Some(std::sync::Arc::new(security.clone()));
+
+        let func_value = match callable {
+            crate::async_runtime::task::FunctionCallable::Function(f) => Value::Function(f.clone()),
+            crate::async_runtime::task::FunctionCallable::Closure(c) => Value::Closure(c.clone()),
+        };
+
+        let span = crate::span::Span::dummy();
+        self.vm_call_function_value(&func_value, args, span)
+            .map_err(|e| format!("{e}"))
+    }
+
     /// Drain and return all runtime warnings collected during execution.
     /// Called by the runtime layer after execute() to surface warnings through
     /// the proper diagnostic system instead of inline eprintln!().
