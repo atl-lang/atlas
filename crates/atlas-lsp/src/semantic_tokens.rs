@@ -478,7 +478,7 @@ fn get_builtin_names() -> std::collections::HashSet<&'static str> {
         "exp",
         "random",
         "random_range",
-        // HashMap
+        // Map
         "keys",
         "values",
         "entries",
@@ -617,7 +617,7 @@ mod tests {
     #[test]
     fn test_is_type_name() {
         assert!(is_type_name("MyType"));
-        assert!(is_type_name("HashMap"));
+        assert!(is_type_name("Map"));
         assert!(!is_type_name("myVariable"));
         assert!(!is_type_name("CONSTANT"));
         assert!(!is_type_name(""));

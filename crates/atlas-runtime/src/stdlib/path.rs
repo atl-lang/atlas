@@ -128,7 +128,7 @@ pub fn path_parse(path_str: &str, _span: Span) -> Result<Value, RuntimeError> {
         Value::string(name),
     );
 
-    Ok(Value::HashMap(crate::value::ValueHashMap::from_atlas(map)))
+    Ok(Value::Map(crate::value::ValueHashMap::from_atlas(map)))
 }
 
 /// Normalize path

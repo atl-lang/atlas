@@ -560,8 +560,8 @@ impl Compiler {
         if let Some(type_tag) = member.type_tag.get() {
             // For HashMap targets, if resolve_method fails, fall back to treating the member
             // as a callable field. This handles namespace imports (`import * as ns`) which are
-            // stored as Value::HashMap but whose fields are user-defined functions.
-            if matches!(type_tag, crate::method_dispatch::TypeTag::HashMap)
+            // stored as Value::Map but whose fields are user-defined functions.
+            if matches!(type_tag, crate::method_dispatch::TypeTag::Map)
                 && member.args.is_some()
                 && crate::method_dispatch::resolve_method(type_tag, &member.member.name).is_none()
             {

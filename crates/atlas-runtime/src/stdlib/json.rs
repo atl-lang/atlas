@@ -964,7 +964,7 @@ pub fn json_parse_typed(args: &[Value], span: Span) -> Result<Value, RuntimeErro
 
     // Return as Result<HashMap, string> - the HashMap IS the struct instance
     let map = ValueHashMap::from_atlas(atlas_map);
-    Ok(Value::Result(Ok(Box::new(Value::HashMap(map)))))
+    Ok(Value::Result(Ok(Box::new(Value::Map(map)))))
 }
 
 /// Convert a JSON value to an Atlas Value (for typed deserialization)
@@ -987,7 +987,7 @@ fn json_to_atlas_value(value: serde_json::Value) -> Value {
                 let hash_key = HashKey::String(Arc::new(key));
                 atlas_map.insert(hash_key, json_to_atlas_value(v));
             }
-            Value::HashMap(ValueHashMap::from_atlas(atlas_map))
+            Value::Map(ValueHashMap::from_atlas(atlas_map))
         }
     }
 }
@@ -1107,7 +1107,7 @@ fn value_to_json(
             msg: "Cannot serialize Result to JSON".to_string(),
             span,
         }),
-        Value::HashMap(map_ref) => {
+        Value::Map(map_ref) => {
             use crate::stdlib::collections::hash::HashKey;
 
             // Check for circular reference using pointer address
@@ -1155,7 +1155,7 @@ fn value_to_json(
 
             Ok(format!("{{{}}}", json_entries.join(",")))
         }
-        Value::HashSet(_) => Err(RuntimeError::TypeError {
+        Value::Set(_) => Err(RuntimeError::TypeError {
             msg: "Cannot serialize HashSet to JSON".to_string(),
             span,
         }),

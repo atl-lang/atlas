@@ -298,7 +298,7 @@ pub fn fields_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     let fields = match &args[0] {
-        Value::HashMap(m) => {
+        Value::Map(m) => {
             // Get keys from HashMap (struct instances are stored as HashMap)
             use crate::stdlib::collections::hash::HashKey;
             m.as_inner()
@@ -357,8 +357,8 @@ pub fn has_method_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
     let type_tag = match &args[0] {
         Value::Array(_) => Some(TypeTag::Array),
         Value::String(_) => Some(TypeTag::String),
-        Value::HashMap(_) => Some(TypeTag::HashMap),
-        Value::HashSet(_) => Some(TypeTag::HashSet),
+        Value::Map(_) => Some(TypeTag::Map),
+        Value::Set(_) => Some(TypeTag::Set),
         Value::Queue(_) => Some(TypeTag::Queue),
         Value::Stack(_) => Some(TypeTag::Stack),
         Value::Option(_) => Some(TypeTag::Option),

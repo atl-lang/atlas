@@ -1629,8 +1629,8 @@ impl Binder {
             "Option" => Some(1),
             "Result" => Some(2),
             "Array" => Some(1), // Array<T> is sugar for []T
-            "HashMap" => Some(2),
-            "HashSet" => Some(1),
+            "Map" => Some(2),
+            "Set" => Some(1),
             _ => None, // Unknown generic type
         }
     }

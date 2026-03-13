@@ -3056,8 +3056,8 @@ impl<'a> TypeChecker<'a> {
             "Option" => Some(1),
             "Result" => Some(2),
             "Array" => Some(1), // Array<T> is sugar for T[]
-            "HashMap" => Some(2),
-            "HashSet" => Some(1),
+            "Map" => Some(2),
+            "Set" => Some(1),
             _ => None, // Unknown generic type
         }
     }
@@ -3138,7 +3138,7 @@ impl<'a> TypeChecker<'a> {
                 let is_collection = match &recv_ty {
                     Type::Array(_) => true,
                     Type::Generic { name, .. } => {
-                        matches!(name.as_str(), "HashMap" | "HashSet" | "Queue" | "Stack")
+                        matches!(name.as_str(), "Map" | "Set" | "Queue" | "Stack")
                     }
                     _ => false,
                 };
@@ -3187,7 +3187,7 @@ impl<'a> TypeChecker<'a> {
     /// Extract element type E from HashSet<E>. Returns None for unrecognized types.
     pub(super) fn hashset_elem_type(&self, ty: &Type) -> Option<Type> {
         match ty.normalized() {
-            Type::Generic { name, type_args } if name == "HashSet" && type_args.len() == 1 => {
+            Type::Generic { name, type_args } if name == "Set" && type_args.len() == 1 => {
                 Some(type_args[0].clone())
             }
             _ => None,
@@ -3216,7 +3216,7 @@ impl<'a> TypeChecker<'a> {
 
     fn hashmap_type_args(&self, ty: &Type) -> Option<(Type, Type)> {
         match ty.normalized() {
-            Type::Generic { name, type_args } if name == "HashMap" && type_args.len() == 2 => {
+            Type::Generic { name, type_args } if name == "Map" && type_args.len() == 2 => {
                 Some((type_args[0].clone(), type_args[1].clone()))
             }
             _ => None,
@@ -3428,12 +3428,12 @@ impl<'a> TypeChecker<'a> {
                 "any" => Type::any_placeholder(),
                 "json" => Type::JsonValue,
                 "array" => Type::Array(Box::new(Type::any_placeholder())),
-                "HashMap" => Type::Generic {
-                    name: "HashMap".to_string(),
+                "Map" => Type::Generic {
+                    name: "Map".to_string(),
                     type_args: vec![Type::any_placeholder(), Type::any_placeholder()],
                 },
-                "HashSet" => Type::Generic {
-                    name: "HashSet".to_string(),
+                "Set" => Type::Generic {
+                    name: "Set".to_string(),
                     type_args: vec![Type::any_placeholder()],
                 },
                 "Comparable" | "Numeric" => Type::Number,

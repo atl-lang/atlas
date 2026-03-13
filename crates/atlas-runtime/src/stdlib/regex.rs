@@ -217,7 +217,7 @@ pub fn regex_find(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
             Value::Number(mat.end() as f64),
         );
 
-        let hashmap_value = Value::HashMap(crate::value::ValueHashMap::from_atlas(map));
+        let hashmap_value = Value::Map(crate::value::ValueHashMap::from_atlas(map));
         Ok(Value::Option(Some(Box::new(hashmap_value))))
     } else {
         Ok(Value::Option(None))
@@ -265,7 +265,7 @@ pub fn regex_find_all(args: &[Value], span: Span) -> Result<Value, RuntimeError>
             Value::Number(mat.end() as f64),
         );
 
-        matches.push(Value::HashMap(crate::value::ValueHashMap::from_atlas(map)));
+        matches.push(Value::Map(crate::value::ValueHashMap::from_atlas(map)));
     }
 
     Ok(Value::array(matches))
@@ -361,7 +361,7 @@ pub fn regex_captures_named(args: &[Value], span: Span) -> Result<Value, Runtime
             }
         }
 
-        let hashmap_value = Value::HashMap(crate::value::ValueHashMap::from_atlas(map));
+        let hashmap_value = Value::Map(crate::value::ValueHashMap::from_atlas(map));
         Ok(Value::Option(Some(Box::new(hashmap_value))))
     } else {
         Ok(Value::Option(None))

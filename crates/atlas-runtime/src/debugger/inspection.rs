@@ -290,8 +290,8 @@ fn format_value_recursive(value: &Value, depth: usize, max_depth: usize) -> Stri
                 format!("[{}]", items.join(", "))
             }
         }
-        Value::HashMap(m) => format!("{{HashMap, {} entries}}", m.len()),
-        Value::HashSet(s) => {
+        Value::Map(m) => format!("{{HashMap, {} entries}}", m.len()),
+        Value::Set(s) => {
             format!("{{HashSet, {} items}}", s.inner().len())
         }
         Value::Queue(q) => {

@@ -1215,7 +1215,7 @@ fn expect_hashmap<'a>(
     span: Span,
 ) -> Result<&'a crate::value::ValueHashMap, RuntimeError> {
     match value {
-        Value::HashMap(map) => Ok(map),
+        Value::Map(map) => Ok(map),
         _ => Err(RuntimeError::TypeError {
             msg: format!(
                 "expected hashmap for '{}', got {}",
@@ -1286,5 +1286,5 @@ fn create_duration_map(total_seconds: i64) -> Value {
         }),
     );
 
-    Value::HashMap(crate::value::ValueHashMap::from_atlas(map))
+    Value::Map(crate::value::ValueHashMap::from_atlas(map))
 }

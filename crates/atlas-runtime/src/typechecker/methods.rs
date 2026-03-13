@@ -69,7 +69,7 @@ impl MethodTable {
             Type::Generic {
                 ref name,
                 ref type_args,
-            } if name == "HashMap" => {
+            } if name == "Map" => {
                 return self.hashmap_method_signature(
                     method_name,
                     type_args.first().unwrap_or(&Type::Unknown),
@@ -79,7 +79,7 @@ impl MethodTable {
             Type::Generic {
                 ref name,
                 ref type_args,
-            } if name == "HashSet" => {
+            } if name == "Set" => {
                 return self.hashset_method_signature(
                     method_name,
                     type_args.first().unwrap_or(&Type::Unknown),
@@ -334,7 +334,7 @@ impl MethodTable {
 
         // H-231: HttpResponse instance methods
         let headers_ty = Type::Generic {
-            name: "HashMap".to_string(),
+            name: "Map".to_string(),
             type_args: vec![Type::String, Type::String],
         };
         self.register("HttpResponse", "status", vec![], Type::Number);
@@ -527,7 +527,7 @@ impl MethodTable {
         let k = key_type.clone();
         let v = val_type.clone();
         let hashmap_type = Type::Generic {
-            name: "HashMap".to_string(),
+            name: "Map".to_string(),
             type_args: vec![k.clone(), v.clone()],
         };
         let option_v = Type::Generic {
@@ -553,7 +553,7 @@ impl MethodTable {
             "map" => (
                 vec![Type::Unknown],
                 Type::Generic {
-                    name: "HashMap".to_string(),
+                    name: "Map".to_string(),
                     type_args: vec![k.clone(), Type::Unknown],
                 },
             ),
@@ -574,7 +574,7 @@ impl MethodTable {
     fn hashset_method_signature(&self, method_name: &str, elem: &Type) -> Option<MethodSignature> {
         let e = elem.clone();
         let set_type = Type::Generic {
-            name: "HashSet".to_string(),
+            name: "Set".to_string(),
             type_args: vec![e.clone()],
         };
         let (arg_types, return_type) = match method_name {

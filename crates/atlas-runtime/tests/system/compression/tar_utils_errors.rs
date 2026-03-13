@@ -26,7 +26,7 @@ fn test_tar_list_basic() {
 
             // Check that entries are HashMaps
             for val in arr_guard.iter() {
-                assert!(matches!(val, Value::HashMap(_)));
+                assert!(matches!(val, Value::Map(_)));
             }
         }
         _ => panic!("Expected array result"),

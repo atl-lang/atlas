@@ -107,7 +107,7 @@ fn extract_array_ref<'a>(
 
 fn extract_hashmap_ref(value: &Value, span: Span) -> Result<&ValueHashMap, RuntimeError> {
     match value {
-        Value::HashMap(map) => Ok(map),
+        Value::Map(map) => Ok(map),
         _ => Err(RuntimeError::TypeError {
             msg: format!("Expected HashMap, got {}", value.type_name()),
             span,
@@ -124,7 +124,7 @@ pub fn new_map(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
         return Err(stdlib_arity_error("HashMap.new", 0, args.len(), span));
     }
-    Ok(Value::HashMap(ValueHashMap::new()))
+    Ok(Value::Map(ValueHashMap::new()))
 }
 
 /// Create HashMap from array of [key, value] entries
@@ -157,7 +157,7 @@ pub fn from_entries(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         map.insert(key, value);
     }
 
-    Ok(Value::HashMap(ValueHashMap::from_atlas(map)))
+    Ok(Value::Map(ValueHashMap::from_atlas(map)))
 }
 
 /// Insert or update key-value pair. Returns updated map (CoW — write-back required).
@@ -171,7 +171,7 @@ pub fn put(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 
     let mut map = extract_hashmap_ref(&args[0], span)?.clone();
     map.insert(key, value);
-    Ok(Value::HashMap(map))
+    Ok(Value::Map(map))
 }
 
 /// Get value by key
@@ -205,7 +205,7 @@ pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Some(v) => Value::Option(Some(Box::new(v))),
         None => Value::Option(None),
     };
-    Ok(Value::array(vec![removed_opt, Value::HashMap(map)]))
+    Ok(Value::array(vec![removed_opt, Value::Map(map)]))
 }
 
 /// Check if key exists
@@ -248,7 +248,7 @@ pub fn clear(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 
     let mut map = extract_hashmap_ref(&args[0], span)?.clone();
     map.clear();
-    Ok(Value::HashMap(map))
+    Ok(Value::Map(map))
 }
 
 /// Get all keys as array
@@ -294,7 +294,5 @@ pub fn copy(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     let map = extract_hashmap_ref(&args[0], span)?;
-    Ok(Value::HashMap(ValueHashMap::from_atlas(
-        map.as_inner().clone(),
-    )))
+    Ok(Value::Map(ValueHashMap::from_atlas(map.as_inner().clone())))
 }

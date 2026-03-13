@@ -507,7 +507,7 @@ pub fn http_headers(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         );
     }
 
-    Ok(Value::HashMap(crate::value::ValueHashMap::from_atlas(
+    Ok(Value::Map(crate::value::ValueHashMap::from_atlas(
         atlas_map,
     )))
 }
@@ -1242,7 +1242,7 @@ fn apply_options_to_request(
     span: Span,
 ) -> Result<HttpRequest, RuntimeError> {
     let map = match options {
-        Value::HashMap(m) => m,
+        Value::Map(m) => m,
         _ => {
             return Err(RuntimeError::TypeError {
                 msg: format!("http options must be a map, got {}", options.type_name()),
@@ -1252,7 +1252,7 @@ fn apply_options_to_request(
     };
 
     // headers: map<str, str>
-    if let Some(Value::HashMap(hmap)) = map.get(&HashKey::String(Arc::new("headers".to_string()))) {
+    if let Some(Value::Map(hmap)) = map.get(&HashKey::String(Arc::new("headers".to_string()))) {
         for (k, v) in hmap.entries() {
             if let (HashKey::String(ks), Value::String(vs)) = (k, v) {
                 req = req.with_header(ks.as_ref().clone(), vs.as_ref().clone());
@@ -1261,7 +1261,7 @@ fn apply_options_to_request(
     }
 
     // query: map<str, str>
-    if let Some(Value::HashMap(qmap)) = map.get(&HashKey::String(Arc::new("query".to_string()))) {
+    if let Some(Value::Map(qmap)) = map.get(&HashKey::String(Arc::new("query".to_string()))) {
         for (k, v) in qmap.entries() {
             if let (HashKey::String(ks), Value::String(vs)) = (k, v) {
                 req = req.with_query_param(ks.as_ref().clone(), vs.as_ref().clone());
@@ -1355,7 +1355,7 @@ pub fn http_ns_post(
     // args[1] is body (str) or options (map) if only 2 args and it's a map
     let options_idx = if args.len() >= 2 {
         match &args[1] {
-            Value::HashMap(_) => {
+            Value::Map(_) => {
                 // No body, options is second arg
                 req = apply_options_to_request(req, &args[1], span)?;
                 None
@@ -1412,7 +1412,7 @@ pub fn http_ns_put(
     let mut req = HttpRequest::new("PUT".to_string(), url);
     let options_idx = if args.len() >= 2 {
         match &args[1] {
-            Value::HashMap(_) => {
+            Value::Map(_) => {
                 req = apply_options_to_request(req, &args[1], span)?;
                 None
             }
@@ -1497,7 +1497,7 @@ pub fn http_ns_patch(
     let mut req = HttpRequest::new("PATCH".to_string(), url);
     let options_idx = if args.len() >= 2 {
         match &args[1] {
-            Value::HashMap(_) => {
+            Value::Map(_) => {
                 req = apply_options_to_request(req, &args[1], span)?;
                 None
             }

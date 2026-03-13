@@ -905,24 +905,18 @@ impl<'a> TypeChecker<'a> {
                     .map(|tr| self.resolve_type_ref(tr))
                     .collect();
 
-                // Map surface type names (D-060 TypeScript style) to internal names
-                let internal_name = match type_name.name.as_str() {
-                    "Map" => "HashMap",
-                    "Set" => "HashSet",
-                    "Queue" => "Queue",
-                    "Stack" => "Stack",
-                    other => other,
-                };
+                // Surface type names match internal names (D-060 + H-373)
+                let type_name_str = type_name.name.as_str();
 
                 if resolved_args.is_empty() {
-                    // new Map() — no type args, return generic with Unknown params
+                    // new Map() — no type args, return generic with no type params
                     crate::types::Type::Generic {
-                        name: internal_name.to_string(),
+                        name: type_name_str.to_string(),
                         type_args: vec![],
                     }
                 } else {
                     crate::types::Type::Generic {
-                        name: internal_name.to_string(),
+                        name: type_name_str.to_string(),
                         type_args: resolved_args,
                     }
                 }
@@ -1747,7 +1741,7 @@ impl<'a> TypeChecker<'a> {
                         return Type::Unknown;
                     }
                     return Type::Generic {
-                        name: "HashMap".to_string(),
+                        name: "Map".to_string(),
                         type_args: vec![Type::any_placeholder(), Type::any_placeholder()],
                     };
                 }
@@ -2770,11 +2764,11 @@ impl<'a> TypeChecker<'a> {
             // H-260: primitive instance methods (D-021 TypeScript parity)
             Type::Number => Some(crate::method_dispatch::TypeTag::Number),
             Type::Bool => Some(crate::method_dispatch::TypeTag::Bool),
-            Type::Generic { ref name, .. } if name == "HashMap" => {
-                Some(crate::method_dispatch::TypeTag::HashMap)
+            Type::Generic { ref name, .. } if name == "Map" => {
+                Some(crate::method_dispatch::TypeTag::Map)
             }
-            Type::Generic { ref name, .. } if name == "HashSet" => {
-                Some(crate::method_dispatch::TypeTag::HashSet)
+            Type::Generic { ref name, .. } if name == "Set" => {
+                Some(crate::method_dispatch::TypeTag::Set)
             }
             Type::Generic { ref name, .. } if name == "Queue" => {
                 Some(crate::method_dispatch::TypeTag::Queue)
