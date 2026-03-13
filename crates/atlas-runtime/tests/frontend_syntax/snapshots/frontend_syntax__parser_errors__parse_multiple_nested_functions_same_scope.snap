@@ -11,6 +11,7 @@ items:
           start: 12
           end: 17
           file: "<input>"
+      visibility: Private
       attributes: []
       is_async: false
       type_params: []
@@ -32,6 +33,7 @@ items:
                   start: 45
                   end: 48
                   file: "<input>"
+              visibility: Private
               attributes: []
               is_async: false
               type_params: []
@@ -51,6 +53,8 @@ items:
                   ownership: Borrow
                   ownership_explicit: true
                   mutable: false
+                  default_value: ~
+                  is_rest: false
                   span:
                     start: 49
                     end: 65
@@ -70,6 +74,8 @@ items:
                   ownership: Borrow
                   ownership_explicit: true
                   mutable: false
+                  default_value: ~
+                  is_rest: false
                   span:
                     start: 67
                     end: 83
@@ -126,6 +132,7 @@ items:
                   start: 154
                   end: 162
                   file: "<input>"
+              visibility: Private
               attributes: []
               is_async: false
               type_params: []
@@ -145,6 +152,8 @@ items:
                   ownership: Borrow
                   ownership_explicit: true
                   mutable: false
+                  default_value: ~
+                  is_rest: false
                   span:
                     start: 163
                     end: 179
@@ -164,6 +173,8 @@ items:
                   ownership: Borrow
                   ownership_explicit: true
                   mutable: false
+                  default_value: ~
+                  is_rest: false
                   span:
                     start: 181
                     end: 197
@@ -248,10 +259,12 @@ items:
                               - start: 291
                                 end: 292
                                 file: "<input>"
+                        type_args: []
                         span:
                           start: 279
                           end: 293
                           file: "<input>"
+                  type_args: []
                   span:
                     start: 272
                     end: 294

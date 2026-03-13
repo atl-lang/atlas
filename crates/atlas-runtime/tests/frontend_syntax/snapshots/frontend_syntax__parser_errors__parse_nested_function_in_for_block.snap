@@ -11,6 +11,7 @@ items:
           start: 12
           end: 17
           file: "<input>"
+      visibility: Private
       attributes: []
       is_async: false
       type_params: []
@@ -73,6 +74,7 @@ items:
                           start: 86
                           end: 89
                           file: "<input>"
+                      visibility: Private
                       attributes: []
                       is_async: false
                       type_params: []
@@ -92,6 +94,8 @@ items:
                           ownership: Borrow
                           ownership_explicit: true
                           mutable: false
+                          default_value: ~
+                          is_rest: false
                           span:
                             start: 90
                             end: 106
@@ -138,10 +142,12 @@ items:
                                                 start: 152
                                                 end: 153
                                                 file: "<input>"
+                                        type_args: []
                                         span:
                                           start: 148
                                           end: 154
                                           file: "<input>"
+                                  type_args: []
                                   span:
                                     start: 136
                                     end: 155
@@ -176,6 +182,7 @@ items:
                                   start: 195
                                   end: 196
                                   file: "<input>"
+                          type_args: []
                           span:
                             start: 191
                             end: 197

@@ -1,5 +1,6 @@
 ---
 source: crates/atlas-runtime/tests/frontend_syntax/operator_precedence_keywords.rs
+assertion_line: 41
 expression: "program.items[0]"
 ---
 Statement:
@@ -20,6 +21,7 @@ Statement:
                       end: 3
                       file: "<input>"
                 args: []
+                type_args: []
                 span:
                   start: 0
                   end: 5
@@ -47,6 +49,7 @@ Statement:
                       end: 16
                       file: "<input>"
                 args: []
+                type_args: []
                 span:
                   start: 13
                   end: 18

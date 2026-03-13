@@ -11,6 +11,7 @@ items:
           start: 12
           end: 18
           file: "<input>"
+      visibility: Private
       attributes: []
       is_async: false
       type_params: []
@@ -32,6 +33,7 @@ items:
                   start: 46
                   end: 52
                   file: "<input>"
+              visibility: Private
               attributes: []
               is_async: false
               type_params: []
@@ -53,6 +55,7 @@ items:
                           start: 84
                           end: 90
                           file: "<input>"
+                      visibility: Private
                       attributes: []
                       is_async: false
                       type_params: []
@@ -98,6 +101,7 @@ items:
                                 end: 181
                                 file: "<input>"
                           args: []
+                          type_args: []
                           span:
                             start: 175
                             end: 183
@@ -126,6 +130,7 @@ items:
                         end: 224
                         file: "<input>"
                   args: []
+                  type_args: []
                   span:
                     start: 218
                     end: 226

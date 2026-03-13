@@ -1,5 +1,6 @@
 ---
 source: crates/atlas-runtime/tests/frontend_syntax/parser_basics.rs
+assertion_line: 201
 expression: program
 ---
 items:
@@ -27,6 +28,7 @@ items:
                     start: 11
                     end: 12
                     file: "<input>"
+            type_args: []
             span:
               start: 0
               end: 13

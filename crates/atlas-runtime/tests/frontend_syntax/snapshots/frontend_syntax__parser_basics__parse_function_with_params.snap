@@ -11,6 +11,7 @@ items:
           start: 3
           end: 6
           file: "<input>"
+      visibility: Private
       attributes: []
       is_async: false
       type_params: []
@@ -30,6 +31,8 @@ items:
           ownership: Borrow
           ownership_explicit: true
           mutable: false
+          default_value: ~
+          is_rest: false
           span:
             start: 7
             end: 23
@@ -49,6 +52,8 @@ items:
           ownership: Borrow
           ownership_explicit: true
           mutable: false
+          default_value: ~
+          is_rest: false
           span:
             start: 25
             end: 41
