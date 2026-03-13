@@ -944,6 +944,12 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("reflect_get_function_arity", |a, s, _, _| {
             reflect::get_function_arity_fn(a, s)
         });
+        // B40-P03: reflect namespace methods
+        m.insert("reflectTypeOf", |a, s, _, _| reflect::typeof_fn(a, s));
+        m.insert("reflectFields", |a, s, _, _| reflect::fields_fn(a, s));
+        m.insert("reflectHasMethod", |a, s, _, _| {
+            reflect::has_method_fn(a, s)
+        });
 
         // ====================================================================
         // HashMap functions
@@ -2542,6 +2548,10 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("wsReceive", "ws_receive"),
             ("wsPing", "ws_ping"),
             ("wsClose", "ws_close"),
+            // Reflect namespace (B40-P03)
+            ("reflectTypeOf", "reflect_type_of"),
+            ("reflectFields", "reflect_fields"),
+            ("reflectHasMethod", "reflect_has_method"),
         ];
         for &(camel, snake) in snake_case_aliases {
             if let Some(&func) = m.get(camel) {

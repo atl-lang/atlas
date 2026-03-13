@@ -114,6 +114,9 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("io", "readLinePrompt") => Some(vec![str.clone()]),
         // Console namespace — variadic, skip arity check
         ("console", "log" | "println" | "print" | "error" | "warn" | "debug") => None,
+        // Reflect namespace (B40-P03)
+        ("reflect", "typeOf" | "fields") => Some(vec![Type::any_placeholder()]),
+        ("reflect", "hasMethod") => Some(vec![Type::any_placeholder(), str.clone()]),
         // future namespace (B33)
         ("future", "resolve" | "reject") => Some(vec![Type::any_placeholder()]),
         ("future", "all" | "race" | "allSettled" | "any") => None, // array arg — skip arity check
@@ -332,6 +335,10 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         },
         // Console namespace — all methods return void (Null)
         ("console", "log" | "println" | "print" | "error" | "warn" | "debug") => Type::Null,
+        // Reflect namespace (B40-P03)
+        ("reflect", "typeOf") => Type::String,
+        ("reflect", "fields") => Type::Array(Box::new(Type::String)),
+        ("reflect", "hasMethod") => Type::Bool,
         // Gzip namespace
         ("gzip", "compress" | "decompress") => Type::Array(Box::new(Type::Number)),
         ("gzip", "decompressString") => Type::String,

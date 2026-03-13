@@ -274,3 +274,107 @@ pub fn get_function_arity_fn(args: &[Value], span: Span) -> Result<Value, Runtim
         }),
     }
 }
+
+// ============================================================================
+// reflect namespace methods (B40-P03)
+// ============================================================================
+
+/// Get field names of a struct or HashMap
+///
+/// Returns array of field/key names as strings.
+/// For structs: returns declared field names.
+/// For HashMaps: returns all keys.
+/// For other types: returns empty array.
+///
+/// # Atlas Usage
+/// ```atlas
+/// struct Foo { x: number, y: string }
+/// let f = Foo { x: 1, y: "hello" };
+/// console.log(reflect.fields(f));  // ["x", "y"]
+/// ```
+pub fn fields_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("reflect.fields", 1, args.len(), span));
+    }
+
+    let fields = match &args[0] {
+        Value::HashMap(m) => {
+            // Get keys from HashMap (struct instances are stored as HashMap)
+            use crate::stdlib::collections::hash::HashKey;
+            m.as_inner()
+                .keys()
+                .iter()
+                .map(|k| match k {
+                    HashKey::String(s) => Value::string(s.as_ref().clone()),
+                    HashKey::Number(n) => Value::string(n.to_string()),
+                    HashKey::Bool(b) => Value::string(b.to_string()),
+                    HashKey::Null => Value::string("null".to_string()),
+                })
+                .collect::<Vec<_>>()
+        }
+        Value::JsonValue(json) => {
+            use crate::json_value::JsonValue;
+            match json.as_ref() {
+                JsonValue::Object(obj) => obj
+                    .keys()
+                    .map(|k| Value::string(k.clone()))
+                    .collect::<Vec<_>>(),
+                _ => vec![],
+            }
+        }
+        _ => vec![],
+    };
+
+    Ok(Value::array(fields))
+}
+
+/// Check if a value has a method with the given name
+///
+/// # Atlas Usage
+/// ```atlas
+/// let arr = [1, 2, 3];
+/// console.log(reflect.hasMethod(arr, "push"));  // true
+/// console.log(reflect.hasMethod(arr, "foo"));   // false
+/// ```
+pub fn has_method_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("reflect.hasMethod", 2, args.len(), span));
+    }
+
+    let method_name = match &args[1] {
+        Value::String(s) => s.as_ref().clone(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "reflect.hasMethod: method name must be a string".to_string(),
+                span,
+            })
+        }
+    };
+
+    // Get the type tag for this value and check if the method exists
+    use crate::method_dispatch::{resolve_method, TypeTag};
+
+    let type_tag = match &args[0] {
+        Value::Array(_) => Some(TypeTag::Array),
+        Value::String(_) => Some(TypeTag::String),
+        Value::HashMap(_) => Some(TypeTag::HashMap),
+        Value::HashSet(_) => Some(TypeTag::HashSet),
+        Value::Queue(_) => Some(TypeTag::Queue),
+        Value::Stack(_) => Some(TypeTag::Stack),
+        Value::Option(_) => Some(TypeTag::Option),
+        Value::Result(_) => Some(TypeTag::Result),
+        Value::JsonValue(_) => Some(TypeTag::JsonValue),
+        Value::HttpResponse(_) => Some(TypeTag::HttpResponse),
+        Value::DateTime(_) => Some(TypeTag::DateTime),
+        Value::Regex(_) => Some(TypeTag::RegexValue),
+        Value::ProcessOutput(_) => Some(TypeTag::ProcessOutput),
+        _ => None,
+    };
+
+    let has_method = match type_tag {
+        Some(tag) => resolve_method(tag, &method_name).is_some(),
+        None => false,
+    };
+
+    Ok(Value::Bool(has_method))
+}

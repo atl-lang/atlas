@@ -977,6 +977,9 @@ impl VM {
                     {
                         // Builtin or intrinsic - return builtin value
                         Value::Builtin(std::sync::Arc::from(name.as_str()))
+                    } else if crate::method_dispatch::is_static_namespace(&name) {
+                        // Static namespace (Json, Math, console, reflect, etc.) - return as builtin
+                        Value::Builtin(std::sync::Arc::from(name.as_str()))
                     } else {
                         // B22: Math constants removed as bare identifiers. Use Math.PI, Math.E, etc.
                         return Err(RuntimeError::UndefinedVariable {
