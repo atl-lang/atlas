@@ -377,15 +377,28 @@ pub fn spawn_function_task(
             // which cannot happen in cooperative LocalSet scheduling.
             let exec_result = {
                 let security = crate::security::SecurityContext::default();
-                ctx.vm.borrow_mut().execute_task_function(
-                    &fn_task.callable,
-                    fn_task.args,
-                    &security,
-                )
+                // Use catch_unwind to surface panics as errors rather than silently
+                // closing the result channel (which shows up as "worker shut down").
+                let callable = &fn_task.callable;
+                let args = fn_task.args.clone();
+                let panic_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    ctx.vm
+                        .borrow_mut()
+                        .execute_task_function(callable, args, &security)
+                }));
+                match panic_result {
+                    Ok(r) => r,
+                    Err(payload) => {
+                        let msg = payload
+                            .downcast_ref::<String>()
+                            .cloned()
+                            .or_else(|| payload.downcast_ref::<&str>().map(|s| s.to_string()))
+                            .unwrap_or_else(|| "unknown panic in worker task".to_string());
+                        Err(msg)
+                    }
+                }
             };
             // Send result back to the TaskState bridge below.
-            // Ignore send error: if the receiver was dropped, the TaskHandle
-            // was discarded and we simply discard the result too.
             let _ = fn_task.result_tx.send(exec_result);
         })
     });

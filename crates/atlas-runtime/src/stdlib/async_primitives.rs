@@ -55,23 +55,27 @@ use std::time::Duration;
 /// - `Function` / `Closure` — creates a `FunctionTask` dispatched to a worker
 ///   (execution wired in B44-P05; currently settles the handle with an error).
 pub fn spawn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
-    if args.len() != 2 {
+    if args.is_empty() || args.len() > 2 {
         return Err(stdlib_arity_error("spawn", 2, args.len(), span));
     }
 
-    // Extract name (optional) — common to all callable kinds.
-    let name = match &args[1] {
-        Value::Null => None,
-        Value::String(s) => Some(s.as_ref().clone()),
-        _ => {
-            return Err(RuntimeError::TypeError {
-                msg: format!(
-                    "Expected string or null for name, got {}",
-                    args[1].type_name()
-                ),
-                span,
-            })
+    // Extract name (optional, defaults to null/None).
+    let name = if args.len() == 2 {
+        match &args[1] {
+            Value::Null => None,
+            Value::String(s) => Some(s.as_ref().clone()),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: format!(
+                        "Expected string or null for name, got {}",
+                        args[1].type_name()
+                    ),
+                    span,
+                })
+            }
         }
+    } else {
+        None
     };
 
     let handle = match &args[0] {
@@ -131,22 +135,26 @@ pub fn spawn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// submits the callable to Tokio's dedicated blocking thread pool so CPU-heavy
 /// or blocking-I/O work never starves cooperative async tasks.
 pub fn spawn_blocking(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
-    if args.len() != 2 {
+    if args.is_empty() || args.len() > 2 {
         return Err(stdlib_arity_error("spawnBlocking", 2, args.len(), span));
     }
 
-    let name = match &args[1] {
-        Value::Null => None,
-        Value::String(s) => Some(s.as_ref().clone()),
-        _ => {
-            return Err(RuntimeError::TypeError {
-                msg: format!(
-                    "Expected string or null for name, got {}",
-                    args[1].type_name()
-                ),
-                span,
-            })
+    let name = if args.len() == 2 {
+        match &args[1] {
+            Value::Null => None,
+            Value::String(s) => Some(s.as_ref().clone()),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: format!(
+                        "Expected string or null for name, got {}",
+                        args[1].type_name()
+                    ),
+                    span,
+                })
+            }
         }
+    } else {
+        None
     };
 
     let handle = match &args[0] {
