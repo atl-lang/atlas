@@ -1,58 +1,167 @@
-# Atlas Documentation
+# Atlas
 
-**Source of Truth:** The codebase. Docs may lag behind.
+**"TypeScript's module system and type annotations wrapped around Rust's runtime model."**
 
-## Quick Links
+Atlas is a systems-level language built for humans and AI agents. It uses TypeScript's surface syntax — so AI code generation works cold, with zero Atlas-specific training — and Rust's runtime model underneath: copy-on-write value semantics, `Result`/`Option` error handling, and explicit ownership at system boundaries.
 
-| Doc | What it covers |
-|-----|----------------|
-| [cli.md](cli.md) | All CLI commands and flags |
-| [testing.md](testing.md) | Test framework guide |
-| [language/syntax-quickref.md](language/syntax-quickref.md) | Syntax one-pager |
-| [stdlib/index.md](stdlib/index.md) | Stdlib namespace reference |
+- File extension: `.atl`
+- Single numeric type: `number` (no int/float split)
+- TypeScript-style arrays: `number[]`
+- Rust-style error handling: `Result<T, E>`, `Option<T>`, `?` operator
+- Copy-on-write collections — transparent, no annotation required
 
-## Documentation Principles
+---
 
-1. **Code is truth** - If docs disagree with code, docs are wrong
-2. **User-facing only** - No internal architecture docs (they go stale too fast)
-3. **Locked decisions only** - Only document what's decided via `pt decisions`
-4. **AI-friendly** - Small files, one concept each
+## Quick Start
 
-## Structure
+### Hello World
 
-```
-docs/
-├── cli.md                # CLI command reference
-├── testing.md            # Test framework guide
-├── language/
-│   └── syntax-quickref.md  # Syntax one-pager
-└── stdlib/
-    ├── index.md          # Namespace overview
-    └── test.md           # test.* assertions
+```atlas
+fn main(): void {
+    console.log("Hello, Atlas!");
+}
 ```
 
-## What We Document vs Don't
+```bash
+atlas run main.atl
+```
 
-| Document | Don't Document |
-|----------|----------------|
-| CLI commands (stable) | Compiler internals (churning) |
-| Stdlib namespaces (B35 locked) | Type system internals |
-| Basic syntax (locked) | Ownership model details |
-| Test framework (stable) | Architecture decisions |
-| Error codes (stable) | Implementation patterns |
+### Error Handling
 
-## Decisions
+```atlas
+fn divide(a: number, b: number): Result<number, string> {
+    if b == 0 {
+        return Err("division by zero");
+    }
+    return Ok(a / b);
+}
 
-All language decisions are tracked via `pt decisions all`. These are the source of truth for why something works a certain way. Key locked decisions:
+fn main(): void {
+    match divide(10, 2) {
+        Ok(v) => console.log(v.toString()),
+        Err(e) => console.log("Error: " + e),
+    }
+}
+```
 
-- D-021: TypeScript method model (namespace.method)
-- D-041: Array type syntax (prefix `[]T`)
-- D-042: Tuple syntax
-- D-046: Function return type uses colon
-- D-047: `.atl` file extension
-- D-049: Namespace casing convention
-- D-052: Single execution path (VM only)
+### Structs and Modules
 
-## Archived
+```atlas
+// geometry.atl
+export struct Point { x: number, y: number }
 
-Old docs in `/docs-archive/` - historical reference only.
+export impl Point {
+    fn distance(borrow self): number {
+        return Math.sqrt(self.x * self.x + self.y * self.y);
+    }
+}
+
+// main.atl
+import { Point } from "./geometry";
+
+fn main(): void {
+    let p = Point { x: 3, y: 4 };
+    console.log(p.distance().toString());  // 5
+}
+```
+
+---
+
+## Installing
+
+Build from source:
+
+```bash
+cargo build --release -p atlas-cli
+# Binary: target/release/atlas
+```
+
+Add `target/release` to your `PATH`.
+
+---
+
+## Core Commands
+
+| Command | Alias | Description |
+|---------|-------|-------------|
+| `atlas run <file>` | `r` | Compile and run |
+| `atlas run <file> --watch` | | Re-run on file changes |
+| `atlas build` | `b` | Build project from `atlas.toml` |
+| `atlas test` | `t` | Run all `*.test.atl` files |
+| `atlas fmt <files>` | `f` | Format source files |
+| `atlas repl` | | Interactive REPL |
+| `atlas new <name>` | `n` | Create a new project |
+| `atlas debug <file>` | `d` | Interactive debugger |
+| `atlas lsp` | | Language Server (stdio) |
+
+Full reference: [cli.md](cli.md)
+
+---
+
+## Language at a Glance
+
+```atlas
+// Variables
+let x = 42;
+let mut count = 0;
+const MAX = 1000;
+
+// Functions — borrow is the implicit default for parameters
+fn greet(name: string): string {
+    return "Hello, " + name + "!";
+}
+
+// Generics with trait bounds (D-039)
+fn print_it<T extends Printable>(item: T): string {
+    return item.to_str();
+}
+
+// Copy-on-write — transparent, no annotation
+let a = [1, 2, 3];
+let b = a;       // O(1) clone
+b.push(4);       // a is still [1, 2, 3]
+
+// Ownership — explicit only at system boundaries
+fn consume(own data: Buffer): void { }   // caller loses ownership
+fn cache(share conn: Connection): void { }  // shared reference
+```
+
+---
+
+## Project Structure
+
+```
+my-project/
+  atlas.toml        # project manifest
+  src/
+    main.atl        # entry point
+  tests/
+    math.test.atl   # discovered automatically by atlas test
+```
+
+```toml
+# atlas.toml
+[package]
+name = "my-project"
+version = "0.1.0"
+
+[[bin]]
+name = "my-project"
+path = "src/main.atl"
+```
+
+---
+
+## Documentation
+
+| Document | Contents |
+|----------|----------|
+| [cli.md](cli.md) | Every CLI command and flag |
+| [testing.md](testing.md) | Test framework, assertions, running tests |
+| [language/syntax-quickref.md](language/syntax-quickref.md) | Full syntax reference |
+| [language/ownership.md](language/ownership.md) | CoW, ownership annotations, move semantics |
+| [language/errors.md](language/errors.md) | Result/Option, `?` operator, propagation |
+| [language/generics.md](language/generics.md) | Generic functions, trait bounds |
+| [language/visibility.md](language/visibility.md) | pub/private/internal, module exports |
+| [language/build.md](language/build.md) | `atlas.toml`, build profiles, distribution |
+| [AI-DESIGN-PRINCIPLES.md](AI-DESIGN-PRINCIPLES.md) | Design philosophy — read before any syntax decision |
