@@ -45,6 +45,9 @@ libc = "0.2"
 # Bytecode checksum
 crc32fast = "1.4"
 
+# SQLite (bundled — no system dependency)
+rusqlite = { version = "0.31", features = ["bundled"] }
+
 # Crypto (systems-level stdlib — pure Rust, fast)
 sha2 = "0.10"
 hmac = "0.12"

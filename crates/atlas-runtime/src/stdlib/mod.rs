@@ -19,6 +19,7 @@ pub mod path;
 pub mod process;
 pub mod reflect;
 pub mod regex;
+pub mod sqlite;
 pub mod string;
 pub mod test;
 pub mod types;
@@ -952,6 +953,14 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("reflectHasMethod", |a, s, _, _| {
             reflect::has_method_fn(a, s)
         });
+
+        // ====================================================================
+        // SQLite functions (B40-P05)
+        // ====================================================================
+        m.insert("sqlite_open", |a, s, _, _| sqlite::open(a, s));
+        m.insert("sqlite_execute", |a, s, _, _| sqlite::execute(a, s));
+        m.insert("sqlite_query", |a, s, _, _| sqlite::query(a, s));
+        m.insert("sqlite_close", |a, s, _, _| sqlite::close(a, s));
 
         // ====================================================================
         // HashMap functions

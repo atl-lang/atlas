@@ -1183,6 +1183,10 @@ fn value_to_json(
             msg: "Cannot serialize ProcessOutput to JSON".to_string(),
             span,
         }),
+        Value::SqliteConnection(_) => Err(RuntimeError::TypeError {
+            msg: "Cannot serialize SqliteConnection to JSON".to_string(),
+            span,
+        }),
         Value::Future(_) => Err(RuntimeError::TypeError {
             msg: "Cannot serialize Future to JSON".to_string(),
             span,

@@ -639,6 +639,7 @@ impl Compiler {
                     | crate::method_dispatch::TypeTag::IoNs
                     | crate::method_dispatch::TypeTag::ConsoleNs
                     | crate::method_dispatch::TypeTag::ReflectNs
+                    | crate::method_dispatch::TypeTag::SqliteNs
                     | crate::method_dispatch::TypeTag::GzipNs
                     | crate::method_dispatch::TypeTag::TarNs
                     | crate::method_dispatch::TypeTag::ZipNs

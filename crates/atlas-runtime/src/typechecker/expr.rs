@@ -117,6 +117,8 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         // Reflect namespace (B40-P03)
         ("reflect", "typeOf" | "fields") => Some(vec![Type::any_placeholder()]),
         ("reflect", "hasMethod") => Some(vec![Type::any_placeholder(), str.clone()]),
+        // SQLite namespace (B40-P05)
+        ("sqlite", "open") => Some(vec![str.clone()]),
         // future namespace (B33)
         ("future", "resolve" | "reject") => Some(vec![Type::any_placeholder()]),
         ("future", "all" | "race" | "allSettled" | "any") => None, // array arg — skip arity check
@@ -339,6 +341,11 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         ("reflect", "typeOf") => Type::String,
         ("reflect", "fields") => Type::Array(Box::new(Type::String)),
         ("reflect", "hasMethod") => Type::Bool,
+        // SQLite namespace (B40-P05)
+        ("sqlite", "open") => Type::Generic {
+            name: "SqliteConnection".to_string(),
+            type_args: vec![],
+        },
         // Gzip namespace
         ("gzip", "compress" | "decompress") => Type::Array(Box::new(Type::Number)),
         ("gzip", "decompressString") => Type::String,
@@ -2606,6 +2613,9 @@ impl<'a> TypeChecker<'a> {
             }
             Type::Generic { ref name, .. } if name == "ProcessOutput" => {
                 Some(crate::method_dispatch::TypeTag::ProcessOutput)
+            }
+            Type::Generic { ref name, .. } if name == "SqliteConnection" => {
+                Some(crate::method_dispatch::TypeTag::SqliteConnection)
             }
             Type::Generic { ref name, .. } if name == "Future" => {
                 Some(crate::method_dispatch::TypeTag::FutureValue)

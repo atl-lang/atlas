@@ -215,6 +215,9 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
         Value::ProcessOutput(_) => {
             panic!("Cannot serialize ProcessOutput values in bytecode constants");
         }
+        Value::SqliteConnection(_) => {
+            panic!("Cannot serialize SqliteConnection values in bytecode constants");
+        }
         Value::Future(_) => {
             panic!("Cannot serialize Future values in bytecode constants");
         }

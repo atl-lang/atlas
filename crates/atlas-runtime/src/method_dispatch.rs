@@ -49,6 +49,10 @@ pub enum TypeTag {
     ConsoleNs,
     /// Static namespace: reflect.typeOf(), reflect.fields(), reflect.hasMethod(), etc.
     ReflectNs,
+    /// Static namespace: sqlite.open(), etc.
+    SqliteNs,
+    /// Instance methods on SqliteConnection values (execute, query, close)
+    SqliteConnection,
     /// Instance methods on DateTime values (year, month, day, format, etc.)
     DateTime,
     /// Instance methods on Regex values (test, find, findAll, replace, etc.)
@@ -118,6 +122,8 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::IoNs => resolve_io_ns_method(method_name),
         TypeTag::ConsoleNs => resolve_console_ns_method(method_name),
         TypeTag::ReflectNs => resolve_reflect_ns_method(method_name),
+        TypeTag::SqliteNs => resolve_sqlite_ns_method(method_name),
+        TypeTag::SqliteConnection => resolve_sqlite_connection_method(method_name),
         TypeTag::DateTime => resolve_datetime_instance_method(method_name),
         TypeTag::RegexValue => resolve_regex_instance_method(method_name),
         TypeTag::ProcessOutput => resolve_process_output_method(method_name),
@@ -196,6 +202,7 @@ pub fn is_static_namespace(name: &str) -> bool {
             | "io"
             | "console"
             | "reflect"
+            | "sqlite"
             | "gzip"
             | "tar"
             | "zip"
@@ -225,6 +232,7 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "io" => Some(TypeTag::IoNs),
         "console" => Some(TypeTag::ConsoleNs),
         "reflect" => Some(TypeTag::ReflectNs),
+        "sqlite" => Some(TypeTag::SqliteNs),
         "gzip" => Some(TypeTag::GzipNs),
         "tar" => Some(TypeTag::TarNs),
         "zip" => Some(TypeTag::ZipNs),
@@ -1024,6 +1032,26 @@ fn resolve_reflect_ns_method(method_name: &str) -> Option<String> {
         "typeOf" => "reflectTypeOf",
         "fields" => "reflectFields",
         "hasMethod" => "reflectHasMethod",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve sqlite.method() → stdlib function name.
+fn resolve_sqlite_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "open" => "sqlite_open",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve SqliteConnection instance method → stdlib function name.
+fn resolve_sqlite_connection_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "execute" => "sqlite_execute",
+        "query" => "sqlite_query",
+        "close" => "sqlite_close",
         _ => return None,
     };
     Some(func_name.to_string())

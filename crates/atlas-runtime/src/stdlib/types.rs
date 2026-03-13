@@ -239,6 +239,7 @@ fn type_of_impl(args: &[Value], span: Span, name: &str) -> Result<Value, Runtime
             Value::HttpRequest(_) => "record",
             Value::HttpResponse(_) => "record",
             Value::ProcessOutput(_) => "record",
+            Value::SqliteConnection(_) => "record",
             Value::TaskHandle(_) => "record",
             Value::ChannelSender(_) => "record",
             Value::ChannelReceiver(_) => "record",
@@ -517,8 +518,15 @@ pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::HttpRequest(req) => format!("<HttpRequest {} {}>", req.method(), req.url()),
         Value::HttpResponse(res) => format!("<HttpResponse {}>", res.status()),
         Value::ProcessOutput(out) => format!("<ProcessOutput exit={}>", out.exit_code),
+        Value::SqliteConnection(c) => {
+            let status = if c.is_closed() { "closed" } else { "open" };
+            format!("<SqliteConnection {}>", status)
+        }
         Value::Future(f) => f.to_string(),
-        Value::TaskHandle(h) => format!("[TaskHandle #{}]", h.lock().unwrap().id()),
+        Value::TaskHandle(h) => {
+            let id = h.lock().map(|h| h.id()).unwrap_or(0);
+            format!("[TaskHandle #{}]", id)
+        }
         Value::ChannelSender(_) => "[ChannelSender]".to_string(),
         Value::ChannelReceiver(_) => "[ChannelReceiver]".to_string(),
         Value::AsyncMutex(_) => "[AsyncMutex]".to_string(),
@@ -622,6 +630,7 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         | Value::HttpRequest(_)
         | Value::HttpResponse(_)
         | Value::ProcessOutput(_)
+        | Value::SqliteConnection(_)
         | Value::Future(_)
         | Value::TaskHandle(_)
         | Value::ChannelSender(_)
@@ -777,6 +786,7 @@ fn type_name(value: &Value) -> &str {
         Value::HttpRequest(_) => "HttpRequest",
         Value::HttpResponse(_) => "HttpResponse",
         Value::ProcessOutput(_) => "ProcessOutput",
+        Value::SqliteConnection(_) => "SqliteConnection",
         Value::Future(_) => "Future",
         Value::TaskHandle(_) => "TaskHandle",
         Value::ChannelSender(_) => "ChannelSender",
@@ -821,8 +831,15 @@ fn value_to_display_string(value: &Value) -> String {
         Value::HttpRequest(req) => format!("[HttpRequest {} {}]", req.method(), req.url()),
         Value::HttpResponse(res) => format!("[HttpResponse {}]", res.status()),
         Value::ProcessOutput(out) => format!("[ProcessOutput exit={}]", out.exit_code),
+        Value::SqliteConnection(c) => {
+            let status = if c.is_closed() { "closed" } else { "open" };
+            format!("[SqliteConnection {}]", status)
+        }
         Value::Future(f) => format!("[{}]", f.as_ref()),
-        Value::TaskHandle(h) => format!("[TaskHandle #{}]", h.lock().unwrap().id()),
+        Value::TaskHandle(h) => {
+            let id = h.lock().map(|h| h.id()).unwrap_or(0);
+            format!("[TaskHandle #{}]", id)
+        }
         Value::ChannelSender(_) => "[ChannelSender]".to_string(),
         Value::ChannelReceiver(_) => "[ChannelReceiver]".to_string(),
         Value::AsyncMutex(_) => "[AsyncMutex]".to_string(),

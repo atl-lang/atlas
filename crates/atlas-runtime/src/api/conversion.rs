@@ -112,6 +112,7 @@ fn type_name(value: &Value) -> &'static str {
         Value::HttpRequest(_) => "HttpRequest",
         Value::HttpResponse(_) => "HttpResponse",
         Value::ProcessOutput(_) => "ProcessOutput",
+        Value::SqliteConnection(_) => "SqliteConnection",
         Value::Future(_) => "Future",
         Value::TaskHandle(_) => "TaskHandle",
         Value::ChannelSender(_) => "ChannelSender",

@@ -518,6 +518,8 @@ pub enum Value {
     HttpResponse(Arc<crate::stdlib::http::HttpResponse>),
     /// Process output — result of exec()/shell() calls
     ProcessOutput(Arc<crate::stdlib::process::ProcessOutput>),
+    /// SQLite database connection
+    SqliteConnection(Arc<crate::stdlib::sqlite::SqliteConnection>),
     /// Future value (async computation)
     Future(Arc<crate::async_runtime::AtlasFuture>),
     /// Task handle (spawned async task)
@@ -626,6 +628,7 @@ impl Value {
             #[cfg(feature = "http")]
             Value::HttpResponse(_) => "HttpResponse",
             Value::ProcessOutput(_) => "ProcessOutput",
+            Value::SqliteConnection(_) => "SqliteConnection",
             Value::Future(_) => "Future",
             Value::TaskHandle(_) => "TaskHandle",
             Value::ChannelSender(_) => "ChannelSender",
@@ -731,6 +734,7 @@ impl PartialEq for Value {
             (Value::ChannelReceiver(a), Value::ChannelReceiver(b)) => Arc::ptr_eq(a, b),
             (Value::AsyncMutex(a), Value::AsyncMutex(b)) => Arc::ptr_eq(a, b),
             (Value::Watcher(a), Value::Watcher(b)) => Arc::ptr_eq(a, b),
+            (Value::SqliteConnection(a), Value::SqliteConnection(b)) => Arc::ptr_eq(a, b),
             // Different variants are never equal
             _ => false,
         }
@@ -802,8 +806,15 @@ impl fmt::Display for Value {
             Value::ProcessOutput(out) => {
                 write!(f, "<ProcessOutput exit={}>", out.exit_code)
             }
+            Value::SqliteConnection(conn) => {
+                let status = if conn.is_closed() { "closed" } else { "open" };
+                write!(f, "<SqliteConnection {}>", status)
+            }
             Value::Future(_) => write!(f, "<Future>"),
-            Value::TaskHandle(handle) => write!(f, "<TaskHandle #{}>", handle.lock().unwrap().id()),
+            Value::TaskHandle(handle) => {
+                let id = handle.lock().map(|h| h.id()).unwrap_or(0);
+                write!(f, "<TaskHandle #{}>", id)
+            }
             Value::ChannelSender(_) => write!(f, "<ChannelSender>"),
             Value::ChannelReceiver(_) => write!(f, "<ChannelReceiver>"),
             Value::AsyncMutex(_) => write!(f, "<AsyncMutex>"),
@@ -870,8 +881,18 @@ impl fmt::Debug for Value {
             Value::ProcessOutput(out) => {
                 write!(f, "ProcessOutput(exit={})", out.exit_code)
             }
+            Value::SqliteConnection(conn) => {
+                write!(
+                    f,
+                    "SqliteConnection({})",
+                    if conn.is_closed() { "closed" } else { "open" }
+                )
+            }
             Value::Future(_) => write!(f, "Future"),
-            Value::TaskHandle(handle) => write!(f, "TaskHandle(#{})", handle.lock().unwrap().id()),
+            Value::TaskHandle(handle) => {
+                let id = handle.lock().map(|h| h.id()).unwrap_or(0);
+                write!(f, "TaskHandle(#{})", id)
+            }
             Value::ChannelSender(_) => write!(f, "ChannelSender"),
             Value::ChannelReceiver(_) => write!(f, "ChannelReceiver"),
             Value::AsyncMutex(_) => write!(f, "AsyncMutex"),

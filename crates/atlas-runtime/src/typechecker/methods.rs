@@ -128,6 +128,8 @@ impl MethodTable {
             Type::Generic { ref name, .. } if name == "HttpResponse" => "HttpResponse",
             // B18: ProcessOutput instance methods
             Type::Generic { ref name, .. } if name == "ProcessOutput" => "ProcessOutput",
+            // B40-P05: SqliteConnection instance methods
+            Type::Generic { ref name, .. } if name == "SqliteConnection" => "SqliteConnection",
             // B33: Future instance methods
             Type::Generic { ref name, .. } if name == "Future" => "Future",
             _ => return None,
@@ -355,6 +357,36 @@ impl MethodTable {
         self.register("ProcessOutput", "stderr", vec![], Type::String);
         self.register("ProcessOutput", "exitCode", vec![], Type::Number);
         self.register("ProcessOutput", "success", vec![], Type::Bool);
+
+        // B40-P05: SqliteConnection instance methods
+        let result_num_str = Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::Number, Type::String],
+        };
+        let result_arr_str = Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::Array(Box::new(Type::JsonValue)), Type::String],
+        };
+        let result_null_str = Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::Null, Type::String],
+        };
+        // execute(sql, params?) -> Result<number, string>
+        self.register(
+            "SqliteConnection",
+            "execute",
+            vec![Type::String, Type::Array(Box::new(Type::any_placeholder()))],
+            result_num_str,
+        );
+        // query(sql, params?) -> Result<JsonValue[], string>
+        self.register(
+            "SqliteConnection",
+            "query",
+            vec![Type::String, Type::Array(Box::new(Type::any_placeholder()))],
+            result_arr_str,
+        );
+        // close() -> Result<null, string>
+        self.register("SqliteConnection", "close", vec![], result_null_str);
 
         // B33: Future instance methods
         let future_type = Type::Generic {
