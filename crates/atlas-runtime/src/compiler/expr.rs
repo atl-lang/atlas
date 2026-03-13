@@ -955,7 +955,16 @@ impl Compiler {
     }
 
     /// Compile an object literal: `record { key: value, key2: value2 }`
+    ///
+    /// H-375: `record {}` is an anonymous struct literal, NOT a map. Emits Opcode::Struct
+    /// with name "<anonymous>" so the VM registers it as a struct and `typeof` returns "record".
+    /// Maps always come from `new Map<K,V>()` which emits Opcode::HashMap.
     fn compile_object_literal(&mut self, obj: &ObjectLiteral) -> Result<(), Vec<Diagnostic>> {
+        // Push struct name constant first (required by Opcode::Struct: [name_idx u16, field_count u16])
+        let name_idx = self
+            .bytecode
+            .add_constant(Value::string("<anonymous>".to_string()));
+
         // Push key-value pairs onto stack (interleaved: key1, val1, key2, val2, ...)
         for entry in &obj.entries {
             // Push key as string constant
@@ -969,8 +978,9 @@ impl Compiler {
             self.compile_expr(&entry.value)?;
         }
 
-        // Emit HashMap instruction with entry count
-        self.bytecode.emit(Opcode::HashMap, obj.span);
+        // Emit Struct instruction: creates a struct-registered map (typeof → "record")
+        self.bytecode.emit(Opcode::Struct, obj.span);
+        self.bytecode.emit_u16(name_idx);
         self.bytecode.emit_u16(obj.entries.len() as u16);
 
         Ok(())
