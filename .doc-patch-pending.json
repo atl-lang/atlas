@@ -1,38 +1,15 @@
 {
-  "committed_at": "2026-03-13T04:20:52Z",
-  "commit": "3cb3102",
+  "committed_at": "2026-03-13T13:46:27Z",
+  "commit": "33343c25",
   "changed_files": [
-  "crates/atlas-formatter/src/visitor.rs",
-  "crates/atlas-lsp/src/index.rs",
-  "crates/atlas-lsp/src/navigation.rs",
-  "crates/atlas-lsp/src/refactor/extract.rs",
-  "crates/atlas-lsp/src/refactor/mod.rs",
-  "crates/atlas-lsp/src/semantic_tokens.rs",
-  "crates/atlas-runtime/src/ast.rs",
-  "crates/atlas-runtime/src/binder.rs",
-  "crates/atlas-runtime/src/bytecode/disasm.rs",
-  "crates/atlas-runtime/src/bytecode/opcode.rs",
-  "crates/atlas-runtime/src/bytecode/validator.rs",
-  "crates/atlas-runtime/src/compiler/stmt.rs",
-  "crates/atlas-runtime/src/parser/stmt.rs",
-  "crates/atlas-runtime/src/token.rs",
-  "crates/atlas-runtime/src/typechecker/mod.rs",
-  "crates/atlas-runtime/src/vm/dispatch.rs",
-  "crates/atlas-runtime/src/vm/mod.rs"
+  "crates/atlas-runtime/src/vm/mod.rs",
+  "crates/atlas-runtime/tests/advanced_features.rs"
 ],
   "domains": [
-  "ast",
-  "compiler",
-  "parser",
-  "typechecker",
   "vm"
 ],
   "relevant_docs": [
-  "crates/atlas-runtime/src/CLAUDE.md",
-  "docs/known-issues.md",
-  "docs/language/control-flow.md",
-  "docs/language/grammar.md",
-  "docs/language/types.md"
+  "docs/known-issues.md"
 ],
   "status": "pending"
 }

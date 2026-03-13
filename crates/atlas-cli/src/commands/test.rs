@@ -44,8 +44,17 @@ pub fn run(args: TestArgs) -> Result<()> {
         println!("{}", "Discovering tests...".bold());
     }
 
-    // Discover tests
-    let mut suite = TestSuite::discover(&args.dir);
+    // If pattern looks like a file path (.atl extension or existing file), run that file directly.
+    let (mut suite, name_pattern) = if let Some(ref p) = args.pattern {
+        let candidate = std::path::Path::new(p.as_str());
+        if candidate.is_file() || p.ends_with(".atl") {
+            (TestSuite::discover_file(candidate), None)
+        } else {
+            (TestSuite::discover(&args.dir), args.pattern.clone())
+        }
+    } else {
+        (TestSuite::discover(&args.dir), args.pattern.clone())
+    };
 
     // Report parse errors
     if !suite.parse_errors.is_empty() && !args.json {
@@ -59,7 +68,7 @@ pub fn run(args: TestArgs) -> Result<()> {
     }
 
     // Apply filter if provided
-    if let Some(pattern) = &args.pattern {
+    if let Some(pattern) = &name_pattern {
         suite = suite.filter(pattern);
     }
 

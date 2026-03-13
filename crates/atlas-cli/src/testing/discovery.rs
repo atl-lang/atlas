@@ -29,6 +29,16 @@ pub struct TestSuite {
 }
 
 impl TestSuite {
+    /// Discover test functions in a single file
+    pub fn discover_file(path: &Path) -> Self {
+        let mut suite = TestSuite::default();
+        match discover_tests_in_file(path) {
+            Ok(tests) => suite.tests.extend(tests),
+            Err(e) => suite.parse_errors.push((path.to_path_buf(), e)),
+        }
+        suite
+    }
+
     /// Discover all test functions in a directory tree
     pub fn discover(root: &Path) -> Self {
         let mut suite = TestSuite::default();

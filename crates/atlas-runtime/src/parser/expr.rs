@@ -1010,7 +1010,7 @@ impl Parser {
         // Unit type () — either `() -> T` (function) or `()` (unit tuple)
         if self.check(TokenKind::RightParen) {
             let end_span = self.consume(TokenKind::RightParen, "Expected ')'")?.span;
-            if self.match_token(TokenKind::Arrow) {
+            if self.match_token(TokenKind::FatArrow) {
                 let return_type = self.parse_type_ref()?;
                 let full_span = start_span.merge(return_type.span());
                 return Ok(TypeRef::Function {
@@ -1027,6 +1027,9 @@ impl Parser {
         }
 
         let mut params = Vec::new();
+        // TypeScript allows named params in function types: (x: number) => void
+        // Detect `ident :` and skip the name — only the type matters for TypeRef::Function.
+        self.skip_fn_type_param_name();
         params.push(self.parse_type_ref()?);
 
         while self.match_token(TokenKind::Comma) {
@@ -1034,6 +1037,7 @@ impl Parser {
             if self.check(TokenKind::RightParen) {
                 break;
             }
+            self.skip_fn_type_param_name();
             params.push(self.parse_type_ref()?);
         }
 
@@ -1041,7 +1045,7 @@ impl Parser {
             .consume(TokenKind::RightParen, "Expected ')' after type list")?
             .span;
 
-        if self.match_token(TokenKind::Arrow) {
+        if self.match_token(TokenKind::FatArrow) {
             let return_type = self.parse_type_ref()?;
             let full_span = start_span.merge(return_type.span());
             return Ok(TypeRef::Function {
@@ -1064,6 +1068,28 @@ impl Parser {
             elements: params,
             span: full_span,
         })
+    }
+
+    /// Skip optional `name:` or `name?:` prefix in a function type parameter position.
+    ///
+    /// TypeScript allows named params: `(x: number) => void`.
+    /// Atlas only uses the type — the name is discarded. We peek two tokens ahead
+    /// to avoid consuming tokens that are actually part of a type expression.
+    fn skip_fn_type_param_name(&mut self) {
+        let is_ident = self.peek().kind == TokenKind::Identifier
+            || TokenKind::is_keyword(self.peek().lexeme.as_str()).is_some();
+        if !is_ident {
+            return;
+        }
+        // Peek at next non-trivia token — if it's `:` then this is `name: Type`
+        let next_is_colon = self
+            .peek_nth_nontrivia(1)
+            .map(|t| t.kind == TokenKind::Colon)
+            .unwrap_or(false);
+        if next_is_colon {
+            self.advance(); // consume name
+            self.advance(); // consume `:`
+        }
     }
 
     /// Parse generic type: Type<T1, T2, ...>
