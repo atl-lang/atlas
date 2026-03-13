@@ -1,1 +1,1 @@
-Runtime error: Type error: Cannot assign to immutable variable 'obj'
+Parse error: Cannot assign to immutable variable 'obj' — declared with 'let'

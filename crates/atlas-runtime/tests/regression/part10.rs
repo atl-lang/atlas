@@ -87,14 +87,14 @@ fn struct_expr_empty() {
 }
 
 // ============================================================================
-// Object Literals (compile to HashMap at runtime)
+// Object Literals (H-375: record {} is an anonymous struct — use dot-access)
 // ============================================================================
 
 #[test]
 fn object_literal_basic() {
     let code = r#"
         let obj = record { name: "Bob", count: 42 };
-        unwrap(hash_map_get(obj, "name"))
+        obj.name
     "#;
     assert_eval_string(code, "Bob");
 }
@@ -104,7 +104,7 @@ fn object_literal_field_assignment() {
     let code = r#"
         let mut obj = record { name: "Bob", count: 1 };
         obj.count = 5;
-        unwrap(hash_map_get(obj, "count"))
+        obj.count
     "#;
     assert_eval_number(code, 5.0);
 }
@@ -114,7 +114,7 @@ fn object_literal_field_compound_assignment() {
     let code = r#"
         let mut obj = record { count: 2 };
         obj.count += 3;
-        unwrap(hash_map_get(obj, "count"))
+        obj.count
     "#;
     assert_eval_number(code, 5.0);
 }
@@ -123,7 +123,7 @@ fn object_literal_field_compound_assignment() {
 fn object_literal_number_value() {
     let code = r#"
         let obj = record { x: 10, y: 20 };
-        unwrap(hash_map_get(obj, "x"))
+        obj.x
     "#;
     assert_eval_number(code, 10.0);
 }
@@ -132,18 +132,18 @@ fn object_literal_number_value() {
 fn object_literal_trailing_comma() {
     let code = r#"
         let obj = record { a: 1, b: 2, };
-        hash_map_size(obj)
+        obj.a + obj.b
     "#;
-    assert_eval_number(code, 2.0);
+    assert_eval_number(code, 3.0);
 }
 
 #[test]
 fn object_literal_empty() {
     let code = r#"
         let obj = record {};
-        hash_map_size(obj)
+        typeof(obj)
     "#;
-    assert_eval_number(code, 0.0);
+    assert_eval_string(code, "record");
 }
 
 // ============================================================================

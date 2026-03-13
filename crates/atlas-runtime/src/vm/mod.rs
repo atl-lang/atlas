@@ -2502,21 +2502,28 @@ impl VM {
                     args.reverse();
                     self.pop(); // Pop function value
 
-                    let security = self.current_security.as_ref().ok_or_else(|| {
-                        RuntimeError::InternalError {
-                            msg: "Security context not set".to_string(),
-                            span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
-                        }
-                    })?;
-                    let result = crate::stdlib::call_builtin(
-                        name,
-                        &args,
-                        self.current_span().unwrap_or_else(crate::span::Span::dummy),
-                        security,
-                        &self.output_writer,
-                    )?;
+                    // H-375: typeof/type_of are VM intrinsics — they need access to
+                    // struct_type_names to distinguish `record {}` (struct) from `new Map()`.
+                    if name.as_ref() == "typeof" || name.as_ref() == "type_of" {
+                        let result = self.vm_intrinsic_typeof(&args)?;
+                        self.push(result);
+                    } else {
+                        let security = self.current_security.as_ref().ok_or_else(|| {
+                            RuntimeError::InternalError {
+                                msg: "Security context not set".to_string(),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            }
+                        })?;
+                        let result = crate::stdlib::call_builtin(
+                            name,
+                            &args,
+                            self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            security,
+                            &self.output_writer,
+                        )?;
 
-                    self.push(result);
+                        self.push(result);
+                    }
                 }
             }
             Value::Function(func) => {
@@ -2943,6 +2950,45 @@ impl VM {
         }
 
         Ok(())
+    }
+
+    // ========================================================================
+    // VM Intrinsics — builtins that require VM context (struct registry, etc.)
+    // ========================================================================
+
+    /// H-375: typeof/type_of as VM intrinsic.
+    ///
+    /// `record { ... }` compiles to Opcode::Struct("<anonymous>"), which registers
+    /// the resulting Value::Map in struct_type_names. `new Map()` compiles to
+    /// Opcode::HashMap, which does NOT register in struct_type_names.
+    ///
+    /// This intrinsic checks struct_type_names to distinguish the two:
+    /// - struct-registered Map → "record"
+    /// - plain Map              → "map"
+    fn vm_intrinsic_typeof(&self, args: &[Value]) -> Result<Value, RuntimeError> {
+        let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+        if args.len() != 1 {
+            return Err(RuntimeError::TypeError {
+                msg: format!("typeof expects 1 argument, got {}", args.len()),
+                span,
+            });
+        }
+        let type_name = match &args[0] {
+            Value::Map(map) => {
+                // Check if this Map was created via Opcode::Struct (record {} or named struct)
+                let key = Arc::as_ptr(map.arc()) as usize;
+                if self.struct_type_names.contains_key(&key) {
+                    "record"
+                } else {
+                    "map"
+                }
+            }
+            // Delegate everything else to the stdlib implementation (single source of truth)
+            other => {
+                return crate::stdlib::types::typeof_fn(std::slice::from_ref(other), span);
+            }
+        };
+        Ok(Value::string(type_name.to_string()))
     }
 
     // ========================================================================
