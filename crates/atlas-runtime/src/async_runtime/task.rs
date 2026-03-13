@@ -27,11 +27,12 @@
 //! with a clear diagnostic rather than silently spawning an OS thread.
 
 use crate::async_runtime::AtlasFuture;
-use crate::value::Value;
+use crate::value::{ClosureRef, FunctionRef, Value};
 use futures_util::FutureExt;
 use std::fmt;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
+use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 
 /// Global task ID counter.
@@ -197,6 +198,42 @@ impl fmt::Display for TaskHandle {
     }
 }
 
+// ── FunctionTask ─────────────────────────────────────────────────────────────
+
+/// A pending Atlas function call destined to run on a worker's `VMContext`.
+///
+/// Created by `spawn()` when the caller passes a `Function` or `Closure`
+/// value instead of a `Future`.  The worker receives this through the task
+/// queue and (in P05) drives it through its isolated `VMContext`.
+///
+/// ## Lifecycle
+///
+/// 1. `spawn_function_task` wraps this in a `WorkerTask` and submits it.
+/// 2. The worker's event loop receives the `WorkerTask` and calls it with
+///    `Arc<WorkerContext>`.
+/// 3. (P05) The worker extracts the `FunctionTask` from the closure and
+///    executes `func` with `args` on `ctx.vm_ctx`, sending the result on
+///    `result_tx`.
+/// 4. The `TaskHandle` holder receives the result via the shared `TaskState`.
+pub struct FunctionTask {
+    /// The function to call.  Either a bare function or a closure with
+    /// captured upvalues — both resolved by the VM in P05.
+    pub callable: FunctionCallable,
+    /// Positional arguments to pass to the function.
+    pub args: Vec<Value>,
+    /// One-shot channel to deliver the result back to the task's `TaskState`.
+    /// Dropped without sending if the worker shuts down before executing.
+    pub result_tx: oneshot::Sender<Result<Value, String>>,
+}
+
+/// Which kind of callable is held in a `FunctionTask`.
+pub enum FunctionCallable {
+    /// A compiled Atlas function (no captures).
+    Function(FunctionRef),
+    /// A compiled Atlas closure (with upvalue environment).
+    Closure(ClosureRef),
+}
+
 // ── spawn_task ───────────────────────────────────────────────────────────────
 
 /// Spawn a new async task on the worker pool.
@@ -287,6 +324,114 @@ where
         None => {
             // Pool not yet initialised.  This is a programming error —
             // init_worker_pool() must be called before spawn_task().
+            let mut status = state.status.lock().unwrap_or_else(|e| e.into_inner());
+            if *status == TaskStatus::Running {
+                *status = TaskStatus::Failed;
+                *state.result.lock().unwrap_or_else(|e| e.into_inner()) = Some(Err(
+                    "worker pool not initialised — call init_worker_pool() at startup".to_string(),
+                ));
+            }
+        }
+    }
+
+    handle
+}
+
+// ── spawn_function_task ───────────────────────────────────────────────────────
+
+/// Spawn an Atlas `Function` or `Closure` as a concurrent task.
+///
+/// Builds a [`FunctionTask`] and submits it to the worker pool.  The worker
+/// receives the task and (in P05) executes the function on its isolated
+/// `VMContext`.  Until P05 lands the result channel is sent an error so the
+/// `TaskHandle` transitions to `Failed` rather than staying `Running` forever.
+///
+/// Returns a `TaskHandle` that reflects the outcome when the function finishes.
+pub fn spawn_function_task(
+    callable: FunctionCallable,
+    args: Vec<Value>,
+    name: Option<String>,
+) -> TaskHandle {
+    let handle = TaskHandle::new(name);
+    let state = handle.state_ref();
+
+    let (result_tx, mut result_rx) = oneshot::channel::<Result<Value, String>>();
+
+    let fn_task = FunctionTask {
+        callable,
+        args,
+        result_tx,
+    };
+
+    // Wrap FunctionTask in a WorkerTask.  The worker calls this closure with
+    // its WorkerContext; P05 will use ctx.vm_ctx to execute the function.
+    // For now we send a pending-implementation marker so the handle settles.
+    let task: crate::async_runtime::WorkerTask = Box::new(move |_ctx| {
+        // Move fn_task into the async block so the result_tx is dropped on
+        // the worker thread (not the submitting thread).
+        let _fn_task = fn_task; // P05 will use this; for now it's a no-op placeholder.
+        Box::pin(async move {
+            // B44-P05 will replace this with actual VM function execution via ctx.
+            // Dropping _fn_task here closes result_tx, which is caught below.
+        })
+    });
+
+    // Drive the result_rx → TaskState bridge on a background task so the
+    // handle settles once the worker either executes (P05) or drops the tx.
+    let state_bridge = Arc::clone(&state);
+    std::thread::spawn(move || {
+        // Block until the worker sends a result or drops the sender.
+        let result =
+            crate::async_runtime::runtime().block_on(async move { result_rx.try_recv().ok() });
+
+        let mut status = state_bridge
+            .status
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        if *status == TaskStatus::Running {
+            match result {
+                Some(Ok(value)) => {
+                    *status = TaskStatus::Completed;
+                    *state_bridge
+                        .result
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner()) = Some(Ok(value));
+                }
+                Some(Err(msg)) => {
+                    *status = TaskStatus::Failed;
+                    *state_bridge
+                        .result
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner()) = Some(Err(msg));
+                }
+                None => {
+                    // Sender was dropped without sending (P05 not yet implemented).
+                    *status = TaskStatus::Failed;
+                    *state_bridge
+                        .result
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner()) = Some(Err(
+                        "function task execution not yet implemented (B44-P05)".to_string(),
+                    ));
+                }
+            }
+        }
+    });
+
+    // Submit to pool or fail immediately if pool unavailable.
+    match crate::async_runtime::worker_pool() {
+        Some(pool) => {
+            if pool.submit(task).is_err() {
+                let mut status = state.status.lock().unwrap_or_else(|e| e.into_inner());
+                if *status == TaskStatus::Running {
+                    *status = TaskStatus::Failed;
+                    *state.result.lock().unwrap_or_else(|e| e.into_inner()) = Some(Err(
+                        "worker pool channel full — function task dropped".to_string(),
+                    ));
+                }
+            }
+        }
+        None => {
             let mut status = state.status.lock().unwrap_or_else(|e| e.into_inner());
             if *status == TaskStatus::Running {
                 *status = TaskStatus::Failed;
