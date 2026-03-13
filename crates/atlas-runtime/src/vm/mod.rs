@@ -930,15 +930,12 @@ impl VM {
                         });
                     }
 
-                    // Extend stack if needed (for local variables not yet initialized)
+                    // Extend stack if needed (for local variables not yet initialized).
+                    // The outer `index >= local_count` guard above already ensures
+                    // absolute_index < base + local_count, so extension is always
+                    // within the declared local area.
                     if absolute_index >= self.stack.len() {
-                        // Bounded extension: only up to the declared local_count
                         let needed = absolute_index - self.stack.len() + 1;
-                        if base + local_count > self.stack.len() + needed {
-                            return Err(RuntimeError::StackUnderflow {
-                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
-                            });
-                        }
                         for _ in 0..needed {
                             self.push(Value::Null);
                         }
