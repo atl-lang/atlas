@@ -110,6 +110,29 @@ impl VMContext {
         }
     }
 
+    /// Reset this context to a clean worker state (empty stack, no frames,
+    /// all scratch buffers cleared).
+    ///
+    /// Used by [`crate::async_runtime::worker::Worker`] after cloning the
+    /// base context.  Workers start with an empty execution state; the
+    /// compiler/VM will push a proper main frame when a task is dispatched.
+    pub(crate) fn reset_for_worker(&mut self) {
+        self.stack.clear();
+        self.frames.clear();
+        self.ip = 0;
+        self.defer_stacks.clear();
+        self.string_buffer.clear();
+        self.struct_type_names.clear();
+        self.debug_pause_pending = false;
+        self.runtime_warnings.clear();
+        #[cfg(debug_assertions)]
+        {
+            self.value_origins.clear();
+            self.consumed_slots.clear();
+            self.consumed_globals.clear();
+        }
+    }
+
     /// Reset this context to a clean state suitable for a new top-level
     /// execution (empty stack, single main frame, cleared warnings).
     // Used in B44-P02 worker thread setup; suppress dead_code during scaffolding.

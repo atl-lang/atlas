@@ -14,6 +14,7 @@ pub mod channel;
 pub mod future;
 pub mod primitives;
 pub mod task;
+pub mod worker;
 
 pub use channel::{
     channel_bounded, channel_select, channel_unbounded, ChannelReceiver, ChannelSender,
@@ -21,6 +22,7 @@ pub use channel::{
 pub use future::{future_all, future_race, AtlasFuture, FutureState};
 pub use primitives::{interval, retry_with_timeout, sleep, timeout, timer, AsyncMutex};
 pub use task::{join_all, spawn_and_await, spawn_task, TaskHandle, TaskStatus};
+pub use worker::{init_worker_pool, worker_pool, Worker, WorkerPool, WorkerTask};
 
 use std::sync::OnceLock;
 use tokio::runtime::Runtime;

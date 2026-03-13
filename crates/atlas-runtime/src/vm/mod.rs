@@ -7,7 +7,7 @@
 
 #![cfg_attr(not(test), deny(clippy::unwrap_used))]
 
-mod context;
+pub(crate) mod context;
 mod debugger;
 pub mod dispatch;
 mod frame;
