@@ -418,6 +418,10 @@ impl Runtime {
             }
         }
 
+        // Load extern function declarations (FFI bindings)
+        vm.load_extern_declarations(&ast)
+            .map_err(EvalError::RuntimeError)?;
+
         let result = match vm.run(&self.security) {
             Ok(Some(value)) => Ok(value),
             Ok(None) => Ok(Value::Null),
@@ -524,6 +528,12 @@ impl Runtime {
             // Step 3: Create VM and run combined bytecode
             let mut vm = VM::new(combined_bytecode);
             vm.set_output_writer(self.output.clone());
+
+            // Load extern function declarations from all modules (FFI bindings)
+            for module in &modules {
+                vm.load_extern_declarations(&module.ast)
+                    .map_err(EvalError::RuntimeError)?;
+            }
 
             // Step 4: Execute via VM
             match vm.run(&self.security) {
@@ -685,6 +695,12 @@ impl Runtime {
             for (name, (value, _mutable)) in globals.iter() {
                 vm.set_global(name.clone(), value.clone());
             }
+        }
+
+        // Load extern function declarations from all modules (FFI bindings)
+        for module in &modules {
+            vm.load_extern_declarations(&module.ast)
+                .map_err(EvalError::RuntimeError)?;
         }
 
         // Step 5: Execute the loaded code

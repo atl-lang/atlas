@@ -324,6 +324,18 @@ impl ReplCore {
         // Set IP to start of new code
         vm.set_ip(new_code_start);
 
+        // Load extern function declarations (FFI bindings)
+        if let Err(e) = vm.load_extern_declarations(&ast) {
+            let diag = crate::runtime::runtime_error_to_diagnostic(e, Vec::new(), None);
+            return ReplResult {
+                value: None,
+                diagnostics: vec![diag],
+                stdout: String::new(),
+                expr_type,
+                bindings: self.collect_bindings(&declared_vars),
+            };
+        }
+
         let eval_result = vm.run(&self.security);
 
         // Capture stdout

@@ -195,6 +195,9 @@ impl Atlas {
         let result = if vm_ref.is_none() {
             // First eval: create VM with this bytecode
             let mut vm = VM::new(bytecode);
+            // Load extern function declarations (FFI bindings)
+            vm.load_extern_declarations(&ast)
+                .map_err(|e| vec![runtime_error_to_diagnostic(e, vec![], None)])?;
             let run_result = vm.run(&self.security);
             *vm_ref = Some(vm);
             run_result
@@ -202,6 +205,9 @@ impl Atlas {
             // Subsequent eval: load new module into existing VM (preserves globals)
             let vm = vm_ref.as_mut().expect("VM should exist");
             vm.load_module(bytecode);
+            // Load extern function declarations (FFI bindings)
+            vm.load_extern_declarations(&ast)
+                .map_err(|e| vec![runtime_error_to_diagnostic(e, vec![], None)])?;
             vm.run(&self.security)
         };
 
@@ -378,6 +384,13 @@ impl Atlas {
 
         // Create VM and run combined bytecode
         let mut vm = VM::new(combined_bytecode);
+
+        // Load extern function declarations from all modules (FFI bindings)
+        for module in &modules {
+            vm.load_extern_declarations(&module.ast)
+                .map_err(|e| vec![runtime_error_to_diagnostic(e, Vec::new(), None)])?;
+        }
+
         match vm.run(&self.security) {
             Ok(Some(value)) => Ok(value),
             Ok(None) => Ok(Value::Null),

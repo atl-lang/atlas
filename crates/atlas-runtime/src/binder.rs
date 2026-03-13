@@ -75,6 +75,8 @@ impl Binder {
         for item in &program.items {
             if let Item::Function(func) = item {
                 self.hoist_function(func);
+            } else if let Item::Extern(extern_decl) = item {
+                self.hoist_extern(extern_decl);
             } else if let Item::Export(export_decl) = item {
                 // Also hoist exported functions
                 if let ExportItem::Function(func) = &export_decl.item {
@@ -172,6 +174,8 @@ impl Binder {
         for item in &program.items {
             if let Item::Function(func) = item {
                 self.hoist_function(func);
+            } else if let Item::Extern(extern_decl) = item {
+                self.hoist_extern(extern_decl);
             } else if let Item::Export(export_decl) = item {
                 // Also hoist exported functions
                 if let ExportItem::Function(func) = &export_decl.item {
@@ -329,6 +333,61 @@ impl Binder {
             }
 
             self.diagnostics.push(diag);
+        }
+    }
+
+    /// Hoist an extern function declaration (FFI)
+    ///
+    /// Extern functions are registered in the symbol table with their C ABI signature
+    /// converted to Atlas types.
+    fn hoist_extern(&mut self, extern_decl: &ExternDecl) {
+        // Convert extern type annotations to Atlas types
+        let param_types: Vec<Type> = extern_decl
+            .params
+            .iter()
+            .map(|(_, ty)| self.extern_type_to_atlas(ty))
+            .collect();
+
+        let return_type = self.extern_type_to_atlas(&extern_decl.return_type);
+
+        let symbol = Symbol {
+            name: extern_decl.name.clone(),
+            ty: Type::Function {
+                type_params: vec![], // Extern functions have no generics
+                params: param_types,
+                return_type: Box::new(return_type),
+            },
+            mutable: false,
+            kind: SymbolKind::Function,
+            span: extern_decl.span,
+            exported: false,
+            visibility: Visibility::Private, // Extern functions default to private
+        };
+
+        if let Err(err) = self.symbol_table.define_function(symbol) {
+            let (msg, _) = *err;
+            let diag = error_codes::DUPLICATE_DECLARATION
+                .emit(extern_decl.span)
+                .arg("detail", &msg)
+                .build()
+                .with_label("redeclaration of extern function")
+                .with_help(format!(
+                    "rename or remove one of the '{}' declarations",
+                    extern_decl.name
+                ));
+            self.diagnostics.push(diag);
+        }
+    }
+
+    /// Convert an extern type annotation to an Atlas type
+    fn extern_type_to_atlas(&self, ty: &ExternTypeAnnotation) -> Type {
+        match ty {
+            ExternTypeAnnotation::CInt => Type::Number,
+            ExternTypeAnnotation::CLong => Type::Number,
+            ExternTypeAnnotation::CDouble => Type::Number,
+            ExternTypeAnnotation::CCharPtr => Type::String,
+            ExternTypeAnnotation::CVoid => Type::Null,
+            ExternTypeAnnotation::CBool => Type::Bool,
         }
     }
 
