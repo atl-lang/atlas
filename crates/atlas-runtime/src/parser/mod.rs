@@ -1086,10 +1086,20 @@ impl Parser {
             .consume(TokenKind::Fn, "Expected 'fn' in impl body")?
             .span;
 
-        let name_tok = self.consume_identifier("a method name")?;
-        let name = Identifier {
-            name: name_tok.lexeme.clone(),
-            span: name_tok.span,
+        // `new` is a keyword but is valid as a method name in impl blocks
+        // (used for constructor sugar: `static fn new(...)` → `TypeName(args)`)
+        let name = if self.check(TokenKind::New) {
+            let tok = self.advance();
+            Identifier {
+                name: tok.lexeme.clone(),
+                span: tok.span,
+            }
+        } else {
+            let name_tok = self.consume_identifier("a method name")?;
+            Identifier {
+                name: name_tok.lexeme.clone(),
+                span: name_tok.span,
+            }
         };
 
         let type_params = self.parse_type_params()?;
