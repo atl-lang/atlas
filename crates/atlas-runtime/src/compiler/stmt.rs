@@ -92,11 +92,13 @@ impl Compiler {
         // --- Phase 4: Definition site (after jump target) ---
         let n_upvalues = upvalues.len();
 
-        // Calculate required_arity and defaults (B39-P05)
+        // Calculate required_arity and defaults (B39-P05 + B41-P04)
         let nested_arity = func.params.len();
+        let nested_has_rest = func.params.last().is_some_and(|p| p.is_rest);
         let nested_required_arity = func
             .params
             .iter()
+            .filter(|p| !p.is_rest)
             .take_while(|p| p.default_value.is_none())
             .count();
         let nested_defaults: Vec<Option<crate::value::Value>> = func
@@ -121,6 +123,7 @@ impl Compiler {
             defaults: nested_defaults,
             return_ownership: func.return_ownership.clone(),
             is_async: func.is_async,
+            has_rest_param: nested_has_rest,
         };
         let const_idx = self
             .bytecode

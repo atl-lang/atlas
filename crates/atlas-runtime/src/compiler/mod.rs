@@ -441,6 +441,7 @@ impl Compiler {
         let required_arity = func
             .params
             .iter()
+            .filter(|p| !p.is_rest)
             .take_while(|p| p.default_value.is_none())
             .count();
         let defaults: Vec<Option<crate::value::Value>> = func
@@ -464,6 +465,7 @@ impl Compiler {
             defaults: defaults.clone(),
             return_ownership: None,
             is_async: func.is_async,
+            has_rest_param: func.params.last().is_some_and(|p| p.is_rest),
         };
         let placeholder_value = crate::value::Value::Function(placeholder_ref);
 
@@ -596,6 +598,7 @@ impl Compiler {
             defaults: defaults.clone(),
             return_ownership: func.return_ownership.clone(),
             is_async: func.is_async,
+            has_rest_param: func.params.last().is_some_and(|p| p.is_rest),
         };
         self.bytecode.constants[const_idx as usize] = crate::value::Value::Function(updated_ref);
 
@@ -670,6 +673,7 @@ impl Compiler {
         let method_required_arity = method
             .params
             .iter()
+            .filter(|p| !p.is_rest)
             .take_while(|p| p.default_value.is_none())
             .count();
         let method_defaults: Vec<Option<crate::value::Value>> = method
@@ -693,6 +697,7 @@ impl Compiler {
             defaults: method_defaults.clone(),
             return_ownership: None,
             is_async: false,
+            has_rest_param: method.params.last().is_some_and(|p| p.is_rest),
         };
         let placeholder_value = crate::value::Value::Function(placeholder_ref);
 
@@ -762,6 +767,7 @@ impl Compiler {
             defaults: method_defaults,
             return_ownership: None,
             is_async: false,
+            has_rest_param: method.params.last().is_some_and(|p| p.is_rest),
         };
         self.bytecode.constants[const_idx as usize] = crate::value::Value::Function(updated_ref);
 

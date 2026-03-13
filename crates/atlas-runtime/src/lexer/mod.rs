@@ -293,7 +293,10 @@ impl Lexer {
             // Dot (member access) or range operator
             '.' => {
                 if self.match_char('.') {
-                    if self.match_char('=') {
+                    if self.peek() == '.' {
+                        self.advance();
+                        self.make_token(TokenKind::DotDotDot, "...")
+                    } else if self.match_char('=') {
                         self.make_token(TokenKind::RangeInclusive, "..=")
                     } else {
                         self.make_token(TokenKind::Range, "..")

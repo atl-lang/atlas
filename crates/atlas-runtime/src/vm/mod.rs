@@ -522,6 +522,7 @@ impl VM {
                     defaults: vec![None; arity],
                     return_ownership: None,
                     is_async: false,
+                    has_rest_param: false,
                 });
                 self.globals.insert(extern_decl.name.clone(), func_value);
             }
@@ -2591,6 +2592,24 @@ impl VM {
                         }
                     }
 
+                    // B41-P04: If function has a rest param, collect extra args into an array.
+                    // The rest param occupies the last slot (index arity-1).
+                    // All args from index (arity-1) onward are collected into one Array value.
+                    let arg_count = if func.has_rest_param && arg_count >= func.required_arity {
+                        let fixed_count = func.arity.saturating_sub(1); // params before rest
+                        let rest_count = arg_count.saturating_sub(fixed_count);
+                        // Collect rest args from top of stack (they're in order, rest_count items)
+                        let stack_top = self.stack.len();
+                        let rest_start = stack_top - rest_count;
+                        let rest_args: Vec<Value> = self.stack.drain(rest_start..).collect();
+                        let rest_array = Value::Array(crate::value::ValueArray::from(rest_args));
+                        self.stack.push(rest_array);
+                        // arg_count is now fixed_count + 1 (the array)
+                        fixed_count + 1
+                    } else {
+                        arg_count
+                    };
+
                     // Create a new call frame
                     let frame = CallFrame {
                         function_name: func.name.clone(),
@@ -2600,8 +2619,13 @@ impl VM {
                         upvalues: std::sync::Arc::new(Vec::new()),
                     };
 
-                    // Verify argument count matches (B39-P05: support default params)
-                    if arg_count < func.required_arity || arg_count > func.arity {
+                    // Verify argument count matches (B39-P05: default params; B41-P04: rest params)
+                    let arity_ok = if func.has_rest_param {
+                        arg_count >= func.required_arity
+                    } else {
+                        arg_count >= func.required_arity && arg_count <= func.arity
+                    };
+                    if !arity_ok {
                         let expected = if func.required_arity == func.arity {
                             format!("{}", func.arity)
                         } else {
@@ -2739,8 +2763,27 @@ impl VM {
                     });
                 }
 
-                // Verify argument count matches (B39-P05: support default params)
-                if arg_count < func.required_arity || arg_count > func.arity {
+                // B41-P04: Collect rest args into array for variadic closures
+                let arg_count = if func.has_rest_param && arg_count >= func.required_arity {
+                    let fixed_count = func.arity.saturating_sub(1);
+                    let rest_count = arg_count.saturating_sub(fixed_count);
+                    let stack_top = self.stack.len();
+                    let rest_start = stack_top - rest_count;
+                    let rest_args: Vec<Value> = self.stack.drain(rest_start..).collect();
+                    let rest_array = Value::Array(crate::value::ValueArray::from(rest_args));
+                    self.stack.push(rest_array);
+                    fixed_count + 1
+                } else {
+                    arg_count
+                };
+
+                // Verify argument count matches (B39-P05: default params; B41-P04: rest params)
+                let arity_ok = if func.has_rest_param {
+                    arg_count >= func.required_arity
+                } else {
+                    arg_count >= func.required_arity && arg_count <= func.arity
+                };
+                if !arity_ok {
                     let expected = if func.required_arity == func.arity {
                         format!("{}", func.arity)
                     } else {

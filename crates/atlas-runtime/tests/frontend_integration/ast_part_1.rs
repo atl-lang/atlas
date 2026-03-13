@@ -31,6 +31,7 @@ fn test_complete_program_construction() {
                         ownership_explicit: false,
                         mutable: false,
                         default_value: None,
+                        is_rest: false,
                         span: Span::new(9, 18),
                     },
                     Param {
@@ -43,6 +44,7 @@ fn test_complete_program_construction() {
                         ownership_explicit: false,
                         mutable: false,
                         default_value: None,
+                        is_rest: false,
                         span: Span::new(20, 29),
                     },
                 ],

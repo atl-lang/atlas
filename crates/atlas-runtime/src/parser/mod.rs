@@ -759,6 +759,10 @@ impl Parser {
             // Optional mutability keyword: `mut`
             let mutable = self.match_token(TokenKind::Mut);
 
+            // Rest parameter prefix `...` (variadic, B41-P04): `...args: T[]`
+            // Must be last parameter; no ownership annotation or default value allowed.
+            let is_rest = self.match_token(TokenKind::DotDotDot);
+
             // Optional ownership annotation: own | borrow | share (D-040: borrow is implicit)
             // Exception: bare `self` in impl methods has no annotation.
             let ownership_from_source = if self.match_token(TokenKind::Own) {
@@ -851,8 +855,30 @@ impl Parser {
                 ownership_explicit,
                 mutable,
                 default_value,
+                is_rest,
                 span: param_span_start.merge(param_span_end),
             });
+
+            // Rest param must be last — stop parsing further params.
+            if is_rest {
+                // Consume trailing comma if present, then stop.
+                let _ = self.match_token(TokenKind::Comma);
+                if !self.check(TokenKind::RightParen) {
+                    let span = self.peek().span;
+                    self.emit_descriptor(
+                        SYNTAX_ERROR
+                            .emit(span)
+                            .arg(
+                                "detail",
+                                "rest parameter `...name` must be the last parameter",
+                            )
+                            .with_help("move the rest parameter to the end of the parameter list")
+                            .with_note("only one rest parameter is allowed and it must come last"),
+                    );
+                    return Err(());
+                }
+                break;
+            }
 
             if !self.match_token(TokenKind::Comma) {
                 break;

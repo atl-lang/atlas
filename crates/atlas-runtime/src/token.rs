@@ -211,6 +211,8 @@ pub enum TokenKind {
     Range,
     /// `..=` (inclusive range operator)
     RangeInclusive,
+    /// `...` (rest/spread operator for variadic parameters)
+    DotDotDot,
     /// `:` (colon)
     Colon,
     /// `::` (double colon for enum variant paths)
@@ -370,6 +372,7 @@ impl TokenKind {
             TokenKind::Dot => ".",
             TokenKind::Range => "..",
             TokenKind::RangeInclusive => "..=",
+            TokenKind::DotDotDot => "...",
             TokenKind::Colon => ":",
             TokenKind::ColonColon => "::",
             TokenKind::Arrow => "->",

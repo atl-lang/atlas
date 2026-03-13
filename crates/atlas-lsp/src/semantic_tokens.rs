@@ -255,7 +255,8 @@ fn classify_token(
         | TokenKind::Question
         | TokenKind::ColonColon
         | TokenKind::Range
-        | TokenKind::RangeInclusive => (token_type_idx::OPERATOR, 0),
+        | TokenKind::RangeInclusive
+        | TokenKind::DotDotDot => (token_type_idx::OPERATOR, 0),
 
         // Identifiers - need context to classify
         TokenKind::Identifier => {

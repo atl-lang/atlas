@@ -486,6 +486,7 @@ pub(super) fn deserialize_value(bytes: &[u8]) -> Result<(Value, usize), String> 
                     defaults: vec![None; arity], // No defaults for deserialized functions
                     return_ownership,
                     is_async: false,
+                    has_rest_param: false,
                 }),
                 1 + cursor,
             ))

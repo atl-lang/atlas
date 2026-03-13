@@ -1,5 +1,67 @@
 use super::*;
 
+// B41-P04: Variadic (rest) parameters
+
+#[test]
+fn test_variadic_sum_basic() {
+    let source = r#"
+        fn sum(...nums: number[]): number {
+            let mut t = 0;
+            for n in nums {
+                t = t + n;
+            }
+            return t;
+        }
+        sum(1, 2, 3, 4);
+    "#;
+    assert_eval_number(source, 10.0);
+}
+
+#[test]
+fn test_variadic_zero_args() {
+    let source = r#"
+        fn sum(...nums: number[]): number {
+            let mut t = 0;
+            for n in nums {
+                t = t + n;
+            }
+            return t;
+        }
+        sum();
+    "#;
+    assert_eval_number(source, 0.0);
+}
+
+#[test]
+fn test_variadic_with_fixed_params() {
+    let source = r#"
+        fn greet(prefix: string, ...names: string[]): string {
+            let mut result = prefix;
+            for name in names {
+                result = result + " " + name;
+            }
+            return result;
+        }
+        greet("Hello", "Alice", "Bob");
+    "#;
+    assert_eval_string(source, "Hello Alice Bob");
+}
+
+#[test]
+fn test_variadic_fixed_only_no_rest() {
+    let source = r#"
+        fn greet(prefix: string, ...names: string[]): string {
+            let mut result = prefix;
+            for name in names {
+                result = result + " " + name;
+            }
+            return result;
+        }
+        greet("Hi");
+    "#;
+    assert_eval_string(source, "Hi");
+}
+
 #[test]
 fn test_function_in_loop() {
     let source = r#"

@@ -580,6 +580,9 @@ pub struct FunctionRef {
     pub return_ownership: Option<crate::ast::OwnershipAnnotation>,
     /// Whether this function was declared with `async fn`.
     pub is_async: bool,
+    /// Whether the last parameter is a rest (variadic) parameter (`...args: T[]`).
+    /// When true, extra args beyond `arity - 1` are collected into an array at the rest slot.
+    pub has_rest_param: bool,
 }
 
 /// Closure reference — a function with a captured upvalue environment

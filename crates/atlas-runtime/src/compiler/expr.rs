@@ -2044,6 +2044,7 @@ impl Compiler {
             defaults: anon_defaults,
             return_ownership: None,
             is_async: false,
+            has_rest_param: params.last().is_some_and(|p| p.is_rest),
         };
         let const_idx = self
             .bytecode

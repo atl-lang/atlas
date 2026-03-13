@@ -396,6 +396,9 @@ pub struct TypeChecker<'a> {
     /// Required arity for functions (function_name -> required_arity). (B39-P05)
     /// Used by call-site checking to support default parameters.
     pub fn_required_arity: HashMap<String, usize>,
+    /// Functions that have a rest (variadic) parameter (B41-P04).
+    /// Maps function name -> element type of the rest param array (e.g., `number` for `...nums: number[]`).
+    pub fn_rest_param: HashMap<String, Type>,
 }
 
 /// Convert a `Type` to a string key used for impl registry lookups.
@@ -481,6 +484,7 @@ impl<'a> TypeChecker<'a> {
             enum_decls: HashMap::new(),
             current_fn_allow_unused: false,
             fn_required_arity: HashMap::new(),
+            fn_rest_param: HashMap::new(),
         }
     }
 
@@ -1640,13 +1644,30 @@ impl<'a> TypeChecker<'a> {
 
     fn check_function(&mut self, func: &FunctionDecl) {
         // Track required arity for call-site checking (B39-P05)
+        // Rest params don't contribute to required arity — they collect zero or more extra args.
         let required_arity = func
             .params
             .iter()
+            .filter(|p| !p.is_rest)
             .take_while(|p| p.default_value.is_none())
             .count();
         self.fn_required_arity
             .insert(func.name.name.clone(), required_arity);
+
+        // Register rest param element type for variadic call-site checking (B41-P04).
+        if let Some(rest_param) = func.params.last().filter(|p| p.is_rest) {
+            let elem_type = match self.resolve_type_ref(&rest_param.type_ref) {
+                Type::Array(elem) => *elem,
+                Type::Generic {
+                    name,
+                    mut type_args,
+                } if name == "Array" && type_args.len() == 1 => type_args.remove(0),
+                other => other, // fallback: use as-is
+            };
+            self.fn_rest_param.insert(func.name.name.clone(), elem_type);
+        } else {
+            self.fn_rest_param.remove(&func.name.name);
+        }
 
         // AT4006: async fn main() is forbidden
         if func.is_async && func.name.name == "main" {

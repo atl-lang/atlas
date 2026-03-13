@@ -1227,6 +1227,7 @@ impl Parser {
                 ownership_explicit,
                 mutable: false,
                 default_value,
+                is_rest: false,
                 span: param_span_start.merge(param_span_end),
             });
 

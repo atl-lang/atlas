@@ -1024,10 +1024,23 @@ impl<'a> TypeChecker<'a> {
             .and_then(|name| self.fn_required_arity.get(name).copied())
             .unwrap_or(params.len());
 
-        // Check argument count (B39-P05: support default params)
+        // Look up rest param element type (B41-P04: variadic params)
+        let rest_elem_type = callee_name
+            .as_ref()
+            .and_then(|name| self.fn_rest_param.get(name).cloned());
+        let is_variadic = rest_elem_type.is_some();
+
+        // Check argument count (B39-P05: default params; B41-P04: variadic params)
         let arg_count = call.args.len();
-        if arg_count < required_arity || arg_count > params.len() {
-            let expected = if required_arity == params.len() {
+        let arity_ok = if is_variadic {
+            arg_count >= required_arity
+        } else {
+            arg_count >= required_arity && arg_count <= params.len()
+        };
+        if !arity_ok {
+            let expected = if is_variadic {
+                format!("{}+", required_arity)
+            } else if required_arity == params.len() {
                 format!("{}", params.len())
             } else {
                 format!("{}-{}", required_arity, params.len())
@@ -1038,7 +1051,12 @@ impl<'a> TypeChecker<'a> {
                     .arg("name", callee_type.display_name())
                     .arg("expected", expected.clone())
                     .arg("found", format!("{}", arg_count))
-                    .with_help(if required_arity < params.len() {
+                    .with_help(if is_variadic {
+                        format!(
+                            "variadic function requires at least {} argument(s); you provided {}",
+                            required_arity, arg_count
+                        )
+                    } else if required_arity < params.len() {
                         format!(
                             "function accepts {} to {} arguments; you provided {}",
                             required_arity,
@@ -1058,9 +1076,42 @@ impl<'a> TypeChecker<'a> {
             return self.check_call_with_inference(type_params, params, return_type, call);
         }
 
-        // Non-generic function - check argument types normally.
-        // Use pre-evaluated types when available to avoid double-evaluation.
-        self.check_arg_types(call, params, pre_evaluated);
+        // Non-generic function - check argument types.
+        if is_variadic {
+            // Check fixed args (all params except the rest param slot which is last)
+            let fixed_param_count = params.len().saturating_sub(1);
+            self.check_arg_types(call, &params[..fixed_param_count], pre_evaluated);
+            // Check each variadic arg against the rest param element type
+            if let Some(elem_ty) = rest_elem_type {
+                for i in fixed_param_count..call.args.len() {
+                    let arg_type = if let Some(t) = pre_evaluated.get(i) {
+                        t.clone()
+                    } else {
+                        self.check_expr(&call.args[i])
+                    };
+                    if arg_type.normalized() != Type::Unknown
+                        && elem_ty.normalized() != Type::Unknown
+                        && !self.is_assignable_with_traits(&arg_type, &elem_ty)
+                    {
+                        self.diagnostics.push(
+                            error_codes::TYPE_MISMATCH
+                                .emit(call.args[i].span())
+                                .arg("expected", elem_ty.display_name())
+                                .arg("found", arg_type.display_name())
+                                .with_help(format!(
+                                    "rest argument {} must be of type {}",
+                                    i + 1,
+                                    elem_ty.display_name()
+                                ))
+                                .build()
+                                .with_label("wrong type for rest argument"),
+                        );
+                    }
+                }
+            }
+        } else {
+            self.check_arg_types(call, params, pre_evaluated);
+        }
 
         return_type.clone()
     }

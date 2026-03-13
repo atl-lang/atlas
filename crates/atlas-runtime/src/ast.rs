@@ -486,6 +486,8 @@ pub struct Param {
     /// Default value for optional parameters (B39-P05).
     /// If present, this parameter can be omitted at call sites.
     pub default_value: Option<Box<Expr>>,
+    /// Rest parameter (`...args: T[]`) — must be last param. Collects remaining call args into an array.
+    pub is_rest: bool,
     pub span: Span,
 }
 
