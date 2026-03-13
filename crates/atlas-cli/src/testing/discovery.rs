@@ -107,7 +107,7 @@ fn discover_tests_in_file(path: &Path) -> Result<Vec<TestFunction>, String> {
     let source = fs::read_to_string(path)
         .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
 
-    let mut lexer = Lexer::new(source).with_file(path.display().to_string());
+    let mut lexer = Lexer::new(source.clone()).with_file(path.display().to_string());
     let (tokens, lex_diags) = lexer.tokenize();
 
     // Check for lexer errors
@@ -136,6 +136,14 @@ fn discover_tests_in_file(path: &Path) -> Result<Vec<TestFunction>, String> {
         return Err(format!("Parse errors: {}", errors.join("; ")));
     }
 
+    // Build a byte-offset → line number lookup for this file.
+    // span.start is a byte offset; count newlines before it to get 1-based line.
+    let source_bytes = source.as_bytes();
+    let byte_to_line = |offset: usize| -> usize {
+        let end = offset.min(source_bytes.len());
+        source_bytes[..end].iter().filter(|&&b| b == b'\n').count() + 1
+    };
+
     let mut tests = Vec::new();
 
     // Walk AST finding functions starting with "test_"
@@ -153,9 +161,7 @@ fn discover_tests_in_file(path: &Path) -> Result<Vec<TestFunction>, String> {
                     continue;
                 }
 
-                // Use span start as approximate location
-                // (calculating exact line requires source scanning)
-                let line = func.span.start;
+                let line = byte_to_line(func.span.start);
 
                 tests.push(TestFunction {
                     name: name.clone(),

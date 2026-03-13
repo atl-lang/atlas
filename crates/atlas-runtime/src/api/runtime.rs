@@ -73,18 +73,12 @@ impl std::fmt::Display for EvalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             EvalError::ParseError(diagnostics) => {
-                write!(f, "Parse error: ")?;
-                for diag in diagnostics {
-                    write!(f, "{}", diag.message)?;
-                }
-                Ok(())
+                let msgs: Vec<_> = diagnostics.iter().map(|d| d.message.as_str()).collect();
+                write!(f, "Parse error: {}", msgs.join("\n  "))
             }
             EvalError::TypeError(diagnostics) => {
-                write!(f, "Type error: ")?;
-                for diag in diagnostics {
-                    write!(f, "{}", diag.message)?;
-                }
-                Ok(())
+                let msgs: Vec<_> = diagnostics.iter().map(|d| d.message.as_str()).collect();
+                write!(f, "Type error: {}", msgs.join("\n  "))
             }
             EvalError::RuntimeError(err) => write!(f, "Runtime error: {}", err),
         }
