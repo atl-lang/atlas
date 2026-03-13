@@ -5,6 +5,7 @@ pub mod array_pure;
 pub mod math_basic;
 pub mod math_trig;
 pub mod math_utils_constants;
+pub mod option_result_chaining;
 use atlas_runtime::runtime::Atlas;
 use atlas_runtime::value::Value;
 

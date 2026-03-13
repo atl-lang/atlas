@@ -662,12 +662,23 @@ impl MethodTable {
             "unwrapOr" => (vec![t.clone()], t.clone()),
             "expect" => (vec![Type::String], t.clone()), // H-268
             "isSome" | "isNone" => (vec![], Type::Bool),
-            "map" => (
-                vec![Type::Unknown], // closure: T -> U (we can't express U here)
+            "map" | "andThen" => (
+                vec![Type::Unknown], // closure: T -> U (or T -> Option<U>)
                 Type::Generic {
                     name: "Option".to_string(),
                     type_args: vec![Type::Unknown],
                 },
+            ),
+            "orElse" => (
+                vec![Type::Unknown], // closure: () -> Option<T>
+                Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![t.clone()],
+                },
+            ),
+            "unwrapOrElse" => (
+                vec![Type::Unknown], // closure: () -> T
+                t.clone(),
             ),
             _ => return None,
         };
@@ -692,15 +703,15 @@ impl MethodTable {
             "unwrapOr" => (vec![t.clone()], t.clone()),
             "expect" => (vec![Type::String], t.clone()), // H-268
             "isOk" | "isErr" => (vec![], Type::Bool),
-            "map" => (
-                vec![Type::Unknown], // closure: T -> U
+            "map" | "andThen" => (
+                vec![Type::Unknown], // closure: T -> U (or T -> Result<U,E>)
                 Type::Generic {
                     name: "Result".to_string(),
                     type_args: vec![Type::Unknown, e.clone()],
                 },
             ),
-            "mapErr" => (
-                vec![Type::Unknown], // closure: E -> F
+            "mapErr" | "orElse" => (
+                vec![Type::Unknown], // closure: E -> F (or E -> Result<T,F>)
                 Type::Generic {
                     name: "Result".to_string(),
                     type_args: vec![t.clone(), Type::Unknown],

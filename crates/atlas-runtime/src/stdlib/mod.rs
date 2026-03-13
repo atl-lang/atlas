@@ -2634,6 +2634,11 @@ pub fn is_array_intrinsic(name: &str) -> bool {
             | "every"
             | "sort"
             | "sortBy" | "sort_by"
+            // Option intrinsics (callback-based, H-328)
+            | "option_map"
+            | "option_and_then"
+            | "option_or_else"
+            | "option_unwrap_or_else"
             // Result intrinsics (callback-based)
             | "result_map"
             | "result_map_err"
