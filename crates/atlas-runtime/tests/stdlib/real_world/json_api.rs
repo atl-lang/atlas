@@ -116,7 +116,7 @@ fn test_json_null_check() {
         let jsonStr: string = "{\"value\": null}";
         let data: json = unwrap(Json.parse(jsonStr));
         let value: json = data["value"];
-        json_is_null(value)
+        jsonIsNull(value)
     "#;
     assert_eval_bool_with_io(code, true);
 }
@@ -127,7 +127,7 @@ fn test_json_missing_key_returns_null() {
         let jsonStr: string = "{\"name\": \"Test\"}";
         let data: json = unwrap(Json.parse(jsonStr));
         let missing: json = data["nonexistent"];
-        json_is_null(missing)
+        jsonIsNull(missing)
     "#;
     assert_eval_bool_with_io(code, true);
 }
@@ -180,7 +180,7 @@ fn test_json_empty_object() {
         let jsonStr: string = "{}";
         let data: json = unwrap(Json.parse(jsonStr));
         let missing: json = data["anything"];
-        json_is_null(missing)
+        jsonIsNull(missing)
     "#;
     assert_eval_bool_with_io(code, true);
 }
@@ -191,7 +191,7 @@ fn test_json_empty_array() {
         let jsonStr: string = "[]";
         let arr: json = unwrap(Json.parse(jsonStr));
         let missing: json = arr[0];
-        json_is_null(missing)
+        jsonIsNull(missing)
     "#;
     assert_eval_bool_with_io(code, true);
 }

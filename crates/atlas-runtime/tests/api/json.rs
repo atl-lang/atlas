@@ -122,16 +122,16 @@ fn test_json_type_checking_methods() {
     let arr_val = JsonValue::array(vec![]);
     let obj_val = JsonValue::object(HashMap::new());
 
-    assert!(null_val.is_null());
-    assert!(!null_val.is_bool());
+    assert!(null_val.isNull());
+    assert!(!null_val.isBool());
 
-    assert!(bool_val.is_bool());
+    assert!(bool_val.isBool());
     assert_eq!(bool_val.as_bool(), Some(true));
 
     assert!(num_val.is_number());
     assert_eq!(num_val.as_number(), Some(42.0));
 
-    assert!(str_val.is_string());
+    assert!(str_val.isString());
     assert_eq!(str_val.as_string(), Some("hello"));
 
     assert!(arr_val.is_array());

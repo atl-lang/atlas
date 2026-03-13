@@ -24,7 +24,7 @@ use super::*;
 fn test_split_map_join_pipeline() {
     let code = r#"
         fn toUpper(borrow s: string): string {
-            return to_upper_case(s);
+            return toUpperCase(s);
         }
 
         let words: string[] = split("hello,world,atlas", ",");
@@ -93,7 +93,7 @@ fn test_substring_map_concat() {
 fn test_index_of_filter_slice() {
     let code = r#"
         fn hasA(borrow s: string): bool {
-            return is_some(index_of(s, "a"));
+            return is_some(indexOf(s, "a"));
         }
 
         let words: string[] = ["apple", "banana", "cherry", "date", "avocado"];
@@ -531,7 +531,7 @@ fn test_data_normalization_pipeline() {
     let code = r#"
         fn normalize(borrow s: string): string {
             let trimmed: string = trim(s);
-            let lower: string = to_lower_case(trimmed);
+            let lower: string = toLowerCase(trimmed);
             return lower;
         }
 
@@ -550,7 +550,7 @@ fn test_validation_and_transformation() {
         }
 
         fn extractDomain(borrow email: string): string {
-            let atIdx = index_of(email, "@");
+            let atIdx = indexOf(email, "@");
             if (is_none(atIdx)) {
                 return "";
             }
@@ -602,9 +602,9 @@ fn test_text_formatting_pipeline() {
             if (len(word) == 0) {
                 return word;
             }
-            let first: string = unwrap(char_at(word, 0));
+            let first: string = unwrap(charAt(word, 0));
             let rest: string = substring(word, 1, len(word));
-            return to_upper_case(first) + to_lower_case(rest);
+            return toUpperCase(first) + toLowerCase(rest);
         }
 
         let text: string = "hello world from ATLAS";
@@ -654,11 +654,11 @@ fn test_url_parsing_pipeline() {
         let url: string = "https://api.example.com/v1/users?page=2&limit=10";
 
         // Extract protocol
-        let protocolEnd: number = unwrap(index_of(url, "://"));
+        let protocolEnd: number = unwrap(indexOf(url, "://"));
         let protocol: string = substring(url, 0, protocolEnd);
 
         // Extract query string
-        let queryStart: number = unwrap(index_of(url, "?"));
+        let queryStart: number = unwrap(indexOf(url, "?"));
         let query: string = substring(url, queryStart + 1, len(url));
 
         // Parse query params
@@ -836,7 +836,7 @@ fn test_trim_all_in_array() {
 fn test_char_at_map() {
     let code = r#"
         fn firstChar(borrow s: string): string {
-            return unwrap(char_at(s, 0));
+            return unwrap(charAt(s, 0));
         }
 
         let words: string[] = ["apple", "banana", "cherry"];
@@ -850,10 +850,10 @@ fn test_char_at_map() {
 fn test_to_upper_to_lower_pipeline() {
     let code = r#"
         fn upper(borrow s: string): string {
-            return to_upper_case(s);
+            return toUpperCase(s);
         }
         fn lower(borrow s: string): string {
-            return to_lower_case(s);
+            return toLowerCase(s);
         }
 
         let words: string[] = ["Hello", "WORLD"];
@@ -882,7 +882,7 @@ fn test_ends_with_filter() {
 fn test_index_of_map_to_numbers() {
     let code = r#"
         fn findComma(borrow s: string): number {
-            return unwrap_or(index_of(s, ","), -1);
+            return unwrap_or(indexOf(s, ","), -1);
         }
 
         let strings: string[] = ["a,b", "x,y,z", "no comma"];
@@ -1340,7 +1340,7 @@ fn test_type_check_numbers_only() {
 fn test_type_check_strings_only() {
     let code = r#"
         fn isStr(borrow val: string): bool {
-            return is_string(val);
+            return isString(val);
         }
 
         let strings: string[] = ["two", "four"];
@@ -1404,7 +1404,7 @@ fn test_to_string_numbers() {
 fn test_to_number_parse_strings() {
     let code = r#"
         fn toNum(borrow s: string): number {
-            return to_number(s)?;
+            return toNumber(s)?;
         }
 
         let strings: string[] = ["1", "2", "3"];
@@ -1417,8 +1417,8 @@ fn test_to_number_parse_strings() {
 #[test]
 fn test_parse_int_parse_float_comparison() {
     let code = r#"
-        let intVal: number = to_number("42")?;
-        let floatVal: number = to_number("42.7")?;
+        let intVal: number = toNumber("42")?;
+        let floatVal: number = toNumber("42.7")?;
         intVal + floatVal
     "#;
     assert_eval_number(code, 84.7);
@@ -1427,9 +1427,9 @@ fn test_parse_int_parse_float_comparison() {
 #[test]
 fn test_to_bool_numbers() {
     let code = r#"
-        let b1: bool = to_bool(0);
-        let b2: bool = to_bool(1);
-        let b3: bool = to_bool(42);
+        let b1: bool = toBool(0);
+        let b2: bool = toBool(1);
+        let b3: bool = toBool(42);
         !b1 && b2 && b3
     "#;
     assert_eval_bool(code, true); // 0 is falsy, 1 and 42 are truthy
@@ -1463,7 +1463,7 @@ fn test_is_bool_check() {
         let b1: bool = true;
         let b2: bool = false;
         let n: number = 1;
-        is_bool(b1) && is_bool(b2) && !is_bool(n)
+        isBool(b1) && isBool(b2) && !isBool(n)
     "#;
     assert_eval_bool(code, true);
 }
@@ -1473,7 +1473,7 @@ fn test_is_null_check() {
     let code = r#"
         let n = null;
         let num: number = 42;
-        is_null(n) && !is_null(num)
+        isNull(n) && !isNull(num)
     "#;
     assert_eval_bool(code, true);
 }
@@ -1506,8 +1506,8 @@ fn test_type_checking_pipeline() {
     let code = r#"
         let val: any = 42;
         let isNum: bool = is_number(val);
-        let isStr: bool = is_string(val);
-        let isB: bool = is_bool(val);
+        let isStr: bool = isString(val);
+        let isB: bool = isBool(val);
         isNum && !isStr && !isB
     "#;
     assert_eval_bool(code, true);
@@ -1638,7 +1638,7 @@ fn test_json_array_to_file_lines() {
     let code = format!(
         r#"
         fn toNum(borrow s: string): number {{
-            return to_number(s)?;
+            return toNumber(s)?;
         }}
 
         let numbers: number[] = [10, 20, 30];
@@ -1841,7 +1841,7 @@ fn test_json_file_type_conversion() {
         let content: string = read_file("{path}");
         let obj: json = Json.parse(content)?;
         let countStr: string = obj["count"].as_string();
-        let countNum: number = to_number(countStr)?;
+        let countNum: number = toNumber(countStr)?;
         countNum * 2
     "##
     );
@@ -1872,7 +1872,7 @@ fn test_json_null_in_file() {
         let content: string = read_file("{path}");
         let obj: json = Json.parse(content)?;
         let val: json = obj["value"];
-        val.is_null()
+        val.isNull()
     "##
     );
     assert_eval_bool_with_io(&code, true);

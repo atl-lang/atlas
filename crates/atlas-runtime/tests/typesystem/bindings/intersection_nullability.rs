@@ -136,9 +136,9 @@ fn test_valid_null_usage(#[case] source: &str) {
 // ========== Null Assignment Errors ==========
 
 #[rstest]
-#[case::to_number("let x: number = null;")]
+#[case::toNumber("let x: number = null;")]
 #[case::to_string(r#"let x: string = null;"#)]
-#[case::to_bool("let x: bool = null;")]
+#[case::toBool("let x: bool = null;")]
 #[case::in_number_array("let x = [1, 2, null];")]
 #[case::in_string_array(r#"let x = ["a", "b", null];"#)]
 fn test_null_assignment_errors(#[case] source: &str) {

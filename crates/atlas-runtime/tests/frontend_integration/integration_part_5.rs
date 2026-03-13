@@ -16,7 +16,7 @@ fn test_end_to_end_error_pipeline() {
         .with_line(1)
         .with_snippet(source)
         .with_label("expected number, found string")
-        .with_help("Use to_number() to convert");
+        .with_help("Use toNumber() to convert");
 
     // Step 3: Format the diagnostic
     let formatter = DiagnosticFormatter::plain();

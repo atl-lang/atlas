@@ -98,18 +98,18 @@ fn test_json_as_bool_error() {
     assert!(result.unwrap_err().contains("Cannot extract bool"));
 }
 
-// JSON is_null() Tests
+// JSON isNull() Tests
 #[rstest]
 #[case(
-    r#"let data: json = unwrap(Json.parse("{\"value\":null}")); data["value"].is_null();"#,
+    r#"let data: json = unwrap(Json.parse("{\"value\":null}")); data["value"].isNull();"#,
     "Bool(true)"
 )]
 #[case(
-    r#"let data: json = unwrap(Json.parse("{\"value\":\"text\"}")); data["value"].is_null();"#,
+    r#"let data: json = unwrap(Json.parse("{\"value\":\"text\"}")); data["value"].isNull();"#,
     "Bool(false)"
 )]
 #[case(
-    r#"let data: json = unwrap(Json.parse("{\"value\":42}")); data["value"].is_null();"#,
+    r#"let data: json = unwrap(Json.parse("{\"value\":42}")); data["value"].isNull();"#,
     "Bool(false)"
 )]
 fn test_json_is_null(#[case] source: &str, #[case] expected: &str) {

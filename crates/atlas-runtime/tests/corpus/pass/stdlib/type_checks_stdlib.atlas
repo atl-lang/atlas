@@ -1,10 +1,10 @@
 console.log(is_number(42));
 console.log(is_number("hello"));
-console.log(is_string("hello"));
-console.log(is_string(42));
-console.log(is_bool(true));
-console.log(is_bool(1));
-console.log(is_null(null));
-console.log(is_null(0));
+console.log(isString("hello"));
+console.log(isString(42));
+console.log(isBool(true));
+console.log(isBool(1));
+console.log(isNull(null));
+console.log(isNull(0));
 console.log(is_array([1, 2, 3]));
 console.log(is_array(42));

@@ -183,7 +183,7 @@ fn test_csv_case_insensitive_filter() {
         r#"
         fn isFruit(borrow row: string): bool {{
             let fields: string[] = split(row, ",");
-            let kind: string = to_lower_case(fields[1]);
+            let kind: string = toLowerCase(fields[1]);
             return kind == "fruit";
         }}
 

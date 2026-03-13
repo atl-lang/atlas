@@ -121,7 +121,7 @@ fn test_diagnostic_json_full_roundtrip() {
         .with_snippet("let x: number = \"hello\";")
         .with_label("expected number")
         .with_note("string is not assignable to number")
-        .with_help("convert with to_number()");
+        .with_help("convert with toNumber()");
 
     let json = original.to_json_string().unwrap();
     let deserialized: Diagnostic = serde_json::from_str(&json).unwrap();

@@ -59,17 +59,17 @@ fn docs_typeof_array() {
 
 #[test]
 fn docs_to_number_string() {
-    assert_eval_result_ok_number(r#"to_number("42")"#, 42.0);
+    assert_eval_result_ok_number(r#"toNumber("42")"#, 42.0);
 }
 
 #[test]
 fn docs_to_bool_zero() {
-    assert_eval_bool(r#"to_bool(0)"#, false);
+    assert_eval_bool(r#"toBool(0)"#, false);
 }
 
 #[test]
 fn docs_to_bool_nonzero() {
-    assert_eval_bool(r#"to_bool(1)"#, true);
+    assert_eval_bool(r#"toBool(1)"#, true);
 }
 
 // --- String functions ---
@@ -107,12 +107,12 @@ fn docs_trim_end() {
 
 #[test]
 fn docs_to_upper_case() {
-    assert_eval_string(r#"to_upper_case("hello")"#, "HELLO");
+    assert_eval_string(r#"toUpperCase("hello")"#, "HELLO");
 }
 
 #[test]
 fn docs_to_lower_case() {
-    assert_eval_string(r#"to_lower_case("WORLD")"#, "world");
+    assert_eval_string(r#"toLowerCase("WORLD")"#, "world");
 }
 
 #[test]
@@ -142,12 +142,12 @@ fn docs_includes_false() {
 
 #[test]
 fn docs_index_of_found() {
-    assert_eval_option_some_number(r#"index_of("hello", "ll")"#, 2.0);
+    assert_eval_option_some_number(r#"indexOf("hello", "ll")"#, 2.0);
 }
 
 #[test]
 fn docs_index_of_not_found() {
-    assert_eval_option_none(r#"index_of("hello", "xyz")"#);
+    assert_eval_option_none(r#"indexOf("hello", "xyz")"#);
 }
 
 #[test]
@@ -172,7 +172,7 @@ fn docs_substring() {
 
 #[test]
 fn docs_char_at() {
-    assert_eval_option_some_string(r#"char_at("hello", 0)"#, "h");
+    assert_eval_option_some_string(r#"charAt("hello", 0)"#, "h");
 }
 
 #[test]
@@ -306,12 +306,12 @@ fn docs_sign_positive() {
 
 #[test]
 fn docs_is_string_true() {
-    assert_eval_bool(r#"is_string("hello")"#, true);
+    assert_eval_bool(r#"isString("hello")"#, true);
 }
 
 #[test]
 fn docs_is_string_false() {
-    assert_eval_bool(r#"is_string(42)"#, false);
+    assert_eval_bool(r#"isString(42)"#, false);
 }
 
 #[test]
@@ -321,12 +321,12 @@ fn docs_is_number_true() {
 
 #[test]
 fn docs_is_bool() {
-    assert_eval_bool(r#"is_bool(true)"#, true);
+    assert_eval_bool(r#"isBool(true)"#, true);
 }
 
 #[test]
 fn docs_is_null() {
-    assert_eval_bool(r#"is_null(null)"#, true);
+    assert_eval_bool(r#"isNull(null)"#, true);
 }
 
 #[test]
@@ -356,7 +356,7 @@ fn docs_parse_json_object() {
 
 #[test]
 fn docs_to_json() {
-    assert_eval_bool(r#"is_string(Json.stringify([1, 2, 3]))"#, true);
+    assert_eval_bool(r#"isString(Json.stringify([1, 2, 3]))"#, true);
 }
 
 #[test]
@@ -376,7 +376,7 @@ fn docs_json_as_number() {
 
 #[test]
 fn docs_json_is_null() {
-    assert_eval_bool(r#"json_is_null(Json.parse("null")?)"#, true);
+    assert_eval_bool(r#"jsonIsNull(Json.parse("null")?)"#, true);
 }
 
 // --- Result / Option functions ---

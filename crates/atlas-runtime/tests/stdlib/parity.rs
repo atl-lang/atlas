@@ -33,10 +33,10 @@ use pretty_assertions::assert_eq;
 #[case::concat_empty("\"\" + \"test\"", "test")]
 #[case::substring("substring(\"hello\", 1, 4)", "ell")]
 #[case::substring_full("substring(\"hello\", 0, 5)", "hello")]
-#[case::charat("char_at(\"hello\", 1)", "Some(e)")]
-#[case::charat_first("char_at(\"hello\", 0)", "Some(h)")]
-#[case::indexof("index_of(\"hello\", \"l\")", "Some(2)")]
-#[case::indexof_not_found("index_of(\"hello\", \"x\")", "None")]
+#[case::charat("charAt(\"hello\", 1)", "Some(e)")]
+#[case::charat_first("charAt(\"hello\", 0)", "Some(h)")]
+#[case::indexof("indexOf(\"hello\", \"l\")", "Some(2)")]
+#[case::indexof_not_found("indexOf(\"hello\", \"x\")", "None")]
 #[case::split("join(split(\"a,b,c\", \",\"), \"|\")", "a|b|c")]
 #[case::split_empty("len(split(\"\", \",\"))", "1")] // Empty string splits to [""]
 #[case::join("join([\"a\", \"b\", \"c\"], \",\")", "a,b,c")]
@@ -45,10 +45,10 @@ use pretty_assertions::assert_eq;
 #[case::replace_first("replace(\"aaa\", \"a\", \"b\")", "baa")] // replace() only replaces first occurrence
 #[case::trim("trim(\"  hello  \")", "hello")]
 #[case::trim_no_space("trim(\"hello\")", "hello")]
-#[case::to_upper("to_upper_case(\"hello\")", "HELLO")]
-#[case::to_upper_mixed("to_upper_case(\"HeLLo\")", "HELLO")]
-#[case::to_lower("to_lower_case(\"HELLO\")", "hello")]
-#[case::to_lower_mixed("to_lower_case(\"HeLLo\")", "hello")]
+#[case::to_upper("toUpperCase(\"hello\")", "HELLO")]
+#[case::to_upper_mixed("toUpperCase(\"HeLLo\")", "HELLO")]
+#[case::to_lower("toLowerCase(\"HELLO\")", "hello")]
+#[case::to_lower_mixed("toLowerCase(\"HeLLo\")", "hello")]
 #[case::startswith("starts_with(\"hello\", \"he\")", "true")]
 #[case::startswith_false("starts_with(\"hello\", \"wo\")", "false")]
 #[case::endswith("ends_with(\"hello\", \"lo\")", "true")]
@@ -286,14 +286,14 @@ fn test_math_parity(#[case] code: &str, #[case] expected: &str) {
 #[case::parse_number("let j = Json.parse(\"42\"); j?.as_number()", "42")]
 #[case::parse_string("let j = Json.parse(\"\\\"hello\\\"\"); j?.as_string()", "hello")]
 #[case::parse_bool("let j = Json.parse(\"true\"); j?.as_bool()", "true")]
-#[case::parse_null("let j = Json.parse(\"null\"); j?.is_null()", "true")]
+#[case::parse_null("let j = Json.parse(\"null\"); j?.isNull()", "true")]
 #[case::stringify_object("Json.stringify(Json.parse(\"{\\\"a\\\": 1}\")?)", "{\"a\":1}")]
 #[case::stringify_array("Json.stringify(Json.parse(\"[1,2,3]\")?)", "[1,2,3]")]
 #[case::as_string("Json.parse(\"\\\"test\\\"\")?.as_string()", "test")]
 #[case::as_number("Json.parse(\"123\")?.as_number()", "123")]
 #[case::as_bool("Json.parse(\"true\")?.as_bool()", "true")]
-#[case::is_null_true("Json.parse(\"null\")?.is_null()", "true")]
-#[case::is_null_false("Json.parse(\"123\")?.is_null()", "false")]
+#[case::is_null_true("Json.parse(\"null\")?.isNull()", "true")]
+#[case::is_null_false("Json.parse(\"123\")?.isNull()", "false")]
 // Note: JSON type checking methods not yet implemented
 // #[case::is_array_true("Json.parse(\"[1,2]\")?.is_array()", "true")]
 // #[case::is_array_false("Json.parse(\"123\")?.is_array()", "false")]
@@ -553,14 +553,14 @@ fn test_file_create_remove_directory_parity() {
 // ============================================================================
 
 #[rstest]
-#[case::is_string_true("is_string(\"hello\")", "true")]
-#[case::is_string_false("is_string(123)", "false")]
+#[case::is_string_true("isString(\"hello\")", "true")]
+#[case::is_string_false("isString(123)", "false")]
 #[case::is_number_true("is_number(123)", "true")]
 #[case::is_number_false("is_number(\"123\")", "false")]
-#[case::is_bool_true("is_bool(true)", "true")]
-#[case::is_bool_false("is_bool(1)", "false")]
-#[case::is_null_true("is_null(null)", "true")]
-#[case::is_null_false("is_null(0)", "false")]
+#[case::is_bool_true("isBool(true)", "true")]
+#[case::is_bool_false("isBool(1)", "false")]
+#[case::is_null_true("isNull(null)", "true")]
+#[case::is_null_false("isNull(0)", "false")]
 #[case::is_array_true("is_array([1, 2, 3])", "true")]
 #[case::is_array_false("is_array(\"[1,2,3]\")", "false")]
 #[case::is_function_true("fn test(): void {} is_function(test)", "true")]
@@ -594,7 +594,7 @@ fn test_type_checking_parity(#[case] code: &str, #[case] expected: &str) {
 #[case::empty_array_operations("len(reverse([]))", "0")]
 #[case::divide_by_zero("1 / 0 > 999999999999999", "true")] // inf
 #[case::negative_sqrt("sqrt(-1)", "NaN")] // NaN as string
-#[case::parse_invalid_json_safety("let j = Json.parse(\"invalid\"); j.is_null()", "false")] // Returns error, not crash
+#[case::parse_invalid_json_safety("let j = Json.parse(\"invalid\"); j.isNull()", "false")] // Returns error, not crash
 fn test_edge_cases_parity(#[case] code: &str, #[case] _expected: &str) {
     let runtime_interp = Atlas::new();
     let interp_result = runtime_interp.eval(code);

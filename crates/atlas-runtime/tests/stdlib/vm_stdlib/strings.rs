@@ -114,25 +114,25 @@ fn eval_vm(code: &str) -> Value {
 
 #[test]
 fn test_index_of_found() {
-    let code = r#"index_of("hello", "ll")"#;
+    let code = r#"indexOf("hello", "ll")"#;
     assert_eval_option_some_number(code, 2.0);
 }
 
 #[test]
 fn test_index_of_not_found() {
-    let code = r#"index_of("hello", "x")"#;
+    let code = r#"indexOf("hello", "x")"#;
     assert_eval_option_none(code);
 }
 
 #[test]
 fn test_index_of_empty_needle() {
-    let code = r#"index_of("hello", "")"#;
+    let code = r#"indexOf("hello", "")"#;
     assert_eval_option_some_number(code, 0.0);
 }
 
 #[test]
 fn test_index_of_unicode_offset_vm() {
-    let value = eval_vm(r#"index_of("éa😊", "😊");"#);
+    let value = eval_vm(r#"indexOf("éa😊", "😊");"#);
     match value {
         Value::Option(Some(val)) => match *val {
             Value::Number(n) => assert!((n - 2.0).abs() < f64::EPSILON),
@@ -184,25 +184,25 @@ fn test_includes_not_found() {
 
 #[test]
 fn test_to_upper_case() {
-    let code = r#"to_upper_case("hello")"#;
+    let code = r#"toUpperCase("hello")"#;
     assert_eval_string(code, "HELLO");
 }
 
 #[test]
 fn test_to_upper_case_unicode() {
-    let code = r#"to_upper_case("café")"#;
+    let code = r#"toUpperCase("café")"#;
     assert_eval_string(code, "CAFÉ");
 }
 
 #[test]
 fn test_to_lower_case() {
-    let code = r#"to_lower_case("HELLO")"#;
+    let code = r#"toLowerCase("HELLO")"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_to_lower_case_unicode() {
-    let code = r#"to_lower_case("CAFÉ")"#;
+    let code = r#"toLowerCase("CAFÉ")"#;
     assert_eval_string(code, "café");
 }
 
@@ -226,19 +226,19 @@ fn test_substring_out_of_bounds() {
 
 #[test]
 fn test_char_at_basic() {
-    let code = r#"char_at("hello", 0)"#;
+    let code = r#"charAt("hello", 0)"#;
     assert_eval_option_some_string(code, "h");
 }
 
 #[test]
 fn test_char_at_unicode() {
-    let code = r#"char_at("🎉🔥✨", 1)"#;
+    let code = r#"charAt("🎉🔥✨", 1)"#;
     assert_eval_option_some_string(code, "🔥");
 }
 
 #[test]
 fn test_char_at_out_of_bounds() {
-    let code = r#"char_at("hello", 10)"#;
+    let code = r#"charAt("hello", 10)"#;
     assert_eval_option_none(code);
 }
 

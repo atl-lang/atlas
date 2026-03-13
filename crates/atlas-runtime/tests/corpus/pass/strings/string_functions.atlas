@@ -1,6 +1,6 @@
 let s: string = "Hello, World!";
-console.log(to_upper_case(s));
-console.log(to_lower_case(s));
+console.log(toUpperCase(s));
+console.log(toLowerCase(s));
 console.log(trim("  hello  "));
 console.log(includes(s, "World"));
 console.log(starts_with(s, "Hello"));

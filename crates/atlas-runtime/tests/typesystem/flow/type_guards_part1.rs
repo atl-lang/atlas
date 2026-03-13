@@ -16,7 +16,7 @@ pub(super) fn eval(code: &str) -> Value {
 #[rstest]
 #[case(
     r#"
-    fn isStr(borrow x: number | string): bool is x: string { return is_string(x); }
+    fn isStr(borrow x: number | string): bool is x: string { return isString(x); }
     fn test(borrow x: number | string): number {
         if (isStr(x)) { let _y: string = x; return 1; }
         else { let _y: number = x; return 2; }
@@ -34,7 +34,7 @@ pub(super) fn eval(code: &str) -> Value {
 )]
 #[case(
     r#"
-    fn is_boolish(borrow x: bool | null): bool is x: bool { return is_bool(x); }
+    fn is_boolish(borrow x: bool | null): bool is x: bool { return isBool(x); }
     fn test(borrow x: bool | null): bool {
         if (is_boolish(x)) { let _y: bool = x; return _y; }
         else { return false; }
@@ -76,7 +76,7 @@ pub(super) fn eval(code: &str) -> Value {
 )]
 #[case(
     r#"
-    fn is_nullish(borrow x: null | string): bool is x: null { return is_null(x); }
+    fn is_nullish(borrow x: null | string): bool is x: null { return isNull(x); }
     fn test(borrow x: null | string): number {
         if (is_nullish(x)) { let _y: null = x; return 1; }
         else { let _y: string = x; return 2; }
@@ -183,7 +183,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        if (is_string(x)) { let _y: string = x; return 1; }
+        if (isString(x)) { let _y: string = x; return 1; }
         else { let _y: number = x; return 2; }
     }
     "#
@@ -199,7 +199,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(borrow x: bool | null): number {
-        if (is_bool(x)) { let _y: bool = x; return 1; }
+        if (isBool(x)) { let _y: bool = x; return 1; }
         else { let _y: null = x; return 2; }
     }
     "#
@@ -207,7 +207,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(borrow x: null | string): number {
-        if (is_null(x)) { let _y: null = x; return 1; }
+        if (isNull(x)) { let _y: null = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -240,7 +240,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        if (!is_string(x)) { let _y: number = x; return 1; }
+        if (!isString(x)) { let _y: number = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -248,7 +248,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        if (is_string(x) || is_number(x)) { let _y: number | string = x; return 1; }
+        if (isString(x) || is_number(x)) { let _y: number | string = x; return 1; }
         return 2;
     }
     "#
@@ -256,7 +256,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(borrow x: number | string): number {
-        if (is_string(x) && is_type(x, "string")) { let _y: string = x; return 1; }
+        if (isString(x) && is_type(x, "string")) { let _y: string = x; return 1; }
         return 2;
     }
     "#
@@ -281,7 +281,7 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
 #[rstest]
 #[case(
     r#"
-    fn isText(borrow x: number | string): bool is x: string { return is_string(x); }
+    fn isText(borrow x: number | string): bool is x: string { return isString(x); }
     fn test(borrow x: number | string): number {
         if (isText(x)) { let _y: string = x; return 1; }
         else { let _y: number = x; return 2; }
@@ -330,7 +330,7 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn is_nullish(borrow x: null | string): bool is x: null { return is_null(x); }
+    fn is_nullish(borrow x: null | string): bool is x: null { return isNull(x); }
     fn test(borrow x: null | string): number {
         if (is_nullish(x)) { let _y: null = x; return 1; }
         else { let _y: string = x; return 2; }

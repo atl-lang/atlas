@@ -40,7 +40,7 @@ fn test_text_average_word_length() {
 #[test]
 fn test_text_uppercase_words() {
     let code = r#"
-        fn toUpper(borrow s: string): string { return to_upper_case(s); }
+        fn toUpper(borrow s: string): string { return toUpperCase(s); }
 
         let text: string = "hello world";
         let words: string[] = split(text, " ");
@@ -54,10 +54,10 @@ fn test_text_uppercase_words() {
 fn test_text_titlecase() {
     let code = r#"
         fn titleCase(borrow word: string): string {
-            let first: string = unwrap(char_at(word, 0.0));
+            let first: string = unwrap(charAt(word, 0.0));
             let rest: string = substring(word, 1.0, len(word));
-            let firstUpper: string = to_upper_case(first);
-            let restLower: string = to_lower_case(rest);
+            let firstUpper: string = toUpperCase(first);
+            let restLower: string = toLowerCase(rest);
             return firstUpper + restLower;
         }
 
@@ -144,7 +144,7 @@ fn test_text_reverse_words() {
 fn test_text_acronym() {
     let code = r#"
         fn firstChar(borrow s: string): string {
-            return unwrap(char_at(s, 0.0));
+            return unwrap(charAt(s, 0.0));
         }
 
         let text: string = "Portable Network Graphics";

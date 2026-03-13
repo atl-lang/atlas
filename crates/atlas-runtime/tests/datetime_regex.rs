@@ -1268,7 +1268,7 @@ fn test_callback_return_value_used_as_replacement() {
     let code = r#"
         fn doubler(borrow m: HashMap): string {
             let num = unwrap(hashMapGet(m, "text"));
-            return toString(unwrap(to_number(num)) * 2);
+            return toString(unwrap(toNumber(num)) * 2);
         }
         let pattern = unwrap(regex_new("\\d+"));
         regex_replace_with(pattern, "value:42", doubler)

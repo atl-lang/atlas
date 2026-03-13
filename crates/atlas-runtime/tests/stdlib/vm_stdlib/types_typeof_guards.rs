@@ -138,19 +138,19 @@ fn test_type_of_function() {
 
 #[test]
 fn test_is_string_true() {
-    let code = r#"is_string("hello")"#;
+    let code = r#"isString("hello")"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_is_string_false_number() {
-    let code = r#"is_string(42)"#;
+    let code = r#"isString(42)"#;
     assert_eval_bool(code, false);
 }
 
 #[test]
 fn test_is_string_false_null() {
-    let code = r#"is_string(null)"#;
+    let code = r#"isString(null)"#;
     assert_eval_bool(code, false);
 }
 
@@ -176,31 +176,31 @@ fn test_is_number_false_string() {
 
 #[test]
 fn test_is_bool_true() {
-    let code = r#"is_bool(true)"#;
+    let code = r#"isBool(true)"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_is_bool_false() {
-    let code = r#"is_bool(false)"#;
+    let code = r#"isBool(false)"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_is_bool_false_number() {
-    let code = r#"is_bool(1)"#;
+    let code = r#"isBool(1)"#;
     assert_eval_bool(code, false);
 }
 
 #[test]
 fn test_is_null_true() {
-    let code = r#"is_null(null)"#;
+    let code = r#"isNull(null)"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_is_null_false() {
-    let code = r#"is_null(0)"#;
+    let code = r#"isNull(0)"#;
     assert_eval_bool(code, false);
 }
 
@@ -305,154 +305,154 @@ fn test_to_string_json() {
 }
 
 // ============================================================================
-// to_number Tests
+// toNumber Tests
 // ============================================================================
 
 #[test]
 fn test_to_number_number_identity() {
-    let code = r#"to_number(42)"#;
+    let code = r#"toNumber(42)"#;
     assert_eval_result_ok_number(code, 42.0);
 }
 
 #[test]
 fn test_to_number_bool_true() {
-    let code = r#"to_number(true)"#;
+    let code = r#"toNumber(true)"#;
     assert_eval_result_ok_number(code, 1.0);
 }
 
 #[test]
 fn test_to_number_bool_false() {
-    let code = r#"to_number(false)"#;
+    let code = r#"toNumber(false)"#;
     assert_eval_result_ok_number(code, 0.0);
 }
 
 #[test]
 fn test_to_number_string_int() {
-    let code = r#"to_number("42")"#;
+    let code = r#"toNumber("42")"#;
     assert_eval_result_ok_number(code, 42.0);
 }
 
 #[test]
 fn test_to_number_string_float() {
-    let code = r#"to_number("3.5")"#;
+    let code = r#"toNumber("3.5")"#;
     assert_eval_result_ok_number(code, 3.5);
 }
 
 #[test]
 fn test_to_number_string_negative() {
-    let code = r#"to_number("-10")"#;
+    let code = r#"toNumber("-10")"#;
     assert_eval_result_ok_number(code, -10.0);
 }
 
 #[test]
 fn test_to_number_string_whitespace() {
-    let code = r#"to_number("  42  ")"#;
+    let code = r#"toNumber("  42  ")"#;
     assert_eval_result_ok_number(code, 42.0);
 }
 
 #[test]
 fn test_to_number_string_scientific() {
-    let code = r#"to_number("1e10")"#;
+    let code = r#"toNumber("1e10")"#;
     assert_eval_result_ok_number(code, 1e10);
 }
 
 #[test]
 fn test_to_number_string_empty_error() {
-    let code = r#"to_number("")"#;
+    let code = r#"toNumber("")"#;
     assert_eval_result_err(code);
 }
 
 #[test]
 fn test_to_number_string_invalid_error() {
-    let code = r#"to_number("hello")"#;
+    let code = r#"toNumber("hello")"#;
     assert_eval_result_err(code);
 }
 
 #[test]
 fn test_to_number_null_error() {
-    let code = r#"to_number(null)"#;
+    let code = r#"toNumber(null)"#;
     assert_eval_result_err(code);
 }
 
 #[test]
 fn test_to_number_array_error() {
-    let code = r#"to_number([1,2,3])"#;
+    let code = r#"toNumber([1,2,3])"#;
     assert_eval_result_err(code);
 }
 
 // ============================================================================
-// to_bool Tests
+// toBool Tests
 // ============================================================================
 
 #[test]
 fn test_to_bool_bool_identity_true() {
-    let code = r#"to_bool(true)"#;
+    let code = r#"toBool(true)"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_to_bool_bool_identity_false() {
-    let code = r#"to_bool(false)"#;
+    let code = r#"toBool(false)"#;
     assert_eval_bool(code, false);
 }
 
 #[test]
 fn test_to_bool_number_zero_false() {
-    let code = r#"to_bool(0)"#;
+    let code = r#"toBool(0)"#;
     assert_eval_bool(code, false);
 }
 
-// NaN to_bool test removed: division by zero is error
+// NaN toBool test removed: division by zero is error
 
 #[test]
 fn test_to_bool_number_positive_true() {
-    let code = r#"to_bool(42)"#;
+    let code = r#"toBool(42)"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_to_bool_number_negative_true() {
-    let code = r#"to_bool(-10)"#;
+    let code = r#"toBool(-10)"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_to_bool_string_empty_false() {
-    let code = r#"to_bool("")"#;
+    let code = r#"toBool("")"#;
     assert_eval_bool(code, false);
 }
 
 #[test]
 fn test_to_bool_string_nonempty_true() {
-    let code = r#"to_bool("hello")"#;
+    let code = r#"toBool("hello")"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_to_bool_string_space_true() {
-    let code = r#"to_bool(" ")"#;
+    let code = r#"toBool(" ")"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_to_bool_null_false() {
-    let code = r#"to_bool(null)"#;
+    let code = r#"toBool(null)"#;
     assert_eval_bool(code, false);
 }
 
 #[test]
 fn test_to_bool_array_true() {
-    let code = r#"to_bool([1,2,3])"#;
+    let code = r#"toBool([1,2,3])"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_to_bool_array_empty_true() {
-    let code = r#"to_bool([])"#;
+    let code = r#"toBool([])"#;
     assert_eval_bool(code, true);
 }
 
-// Function to_bool test removed: not yet fully supported
+// Function toBool test removed: not yet fully supported
 
 // ============================================================================
 // parse_int Tests

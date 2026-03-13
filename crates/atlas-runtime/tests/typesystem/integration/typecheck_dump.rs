@@ -214,11 +214,11 @@ fn test_symbol_info_has_required_fields() {
         let json = serde_json::to_string(symbol).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
 
-        assert!(parsed["name"].is_string(), "Symbol must have name");
-        assert!(parsed["kind"].is_string(), "Symbol must have kind");
+        assert!(parsed["name"].isString(), "Symbol must have name");
+        assert!(parsed["kind"].isString(), "Symbol must have kind");
         assert!(parsed["start"].is_number(), "Symbol must have start");
         assert!(parsed["end"].is_number(), "Symbol must have end");
-        assert!(parsed["type"].is_string(), "Symbol must have type");
+        assert!(parsed["type"].isString(), "Symbol must have type");
         assert!(parsed["mutable"].is_boolean(), "Symbol must have mutable");
     }
 }
@@ -232,8 +232,8 @@ fn test_type_info_has_required_fields() {
         let json = serde_json::to_string(type_info).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
 
-        assert!(parsed["name"].is_string(), "Type must have name");
-        assert!(parsed["kind"].is_string(), "Type must have kind");
+        assert!(parsed["name"].isString(), "Type must have name");
+        assert!(parsed["kind"].isString(), "Type must have kind");
         // details is optional, so we don't assert its presence
     }
 }

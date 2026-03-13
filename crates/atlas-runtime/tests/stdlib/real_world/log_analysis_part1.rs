@@ -249,7 +249,7 @@ fn test_log_case_insensitive_search() {
     let code = format!(
         r#"
         fn hasError(borrow line: string): bool {{
-            let lower: string = to_lower_case(line);
+            let lower: string = toLowerCase(line);
             return includes(lower, "error");
         }}
 

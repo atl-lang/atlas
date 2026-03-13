@@ -163,7 +163,7 @@ fn test_union_assignments(#[case] source: &str) {
 
 #[rstest]
 #[case(
-    "let x: number | string = 1; if (is_string(x)) { let _y: string = x; } else { let _z: number = x; }"
+    "let x: number | string = 1; if (isString(x)) { let _y: string = x; } else { let _z: number = x; }"
 )]
 #[case(
     "let x: number | string = \"hi\"; if (is_number(x)) { let _y: number = x; } else { let _z: string = x; }"

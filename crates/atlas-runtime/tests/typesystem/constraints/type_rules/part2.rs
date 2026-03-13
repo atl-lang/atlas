@@ -23,7 +23,7 @@ fn test_operators_in_context(#[case] source: &str) {
     r#"let data: json = unwrap(Json.parse("{\"age\":30}")); let age: number = data["age"].as_number();"#
 )]
 #[case::json_as_bool(r#"let data: json = unwrap(Json.parse("{\"active\":true}")); let active: bool = data["active"].as_bool();"#)]
-#[case::json_is_null(r#"let data: json = unwrap(Json.parse("{\"value\":null}")); let null_check: bool = data["value"].is_null();"#)]
+#[case::jsonIsNull(r#"let data: json = unwrap(Json.parse("{\"value\":null}")); let null_check: bool = data["value"].isNull();"#)]
 #[case::chained_json_access(r#"let data: json = unwrap(Json.parse("{\"user\":{\"name\":\"Bob\"}}")); let name: string = data["user"]["name"].as_string();"#)]
 #[case::method_in_expression(r#"let data: json = unwrap(Json.parse("{\"count\":5}")); let x: number = data["count"].as_number() + 10;"#)]
 #[case::method_as_arg(
@@ -49,7 +49,7 @@ fn test_invalid_method_calls(#[case] source: &str, #[case] error_code: &str) {
 
 #[rstest]
 #[case::too_many_args(r#"let data: json = Json.parse("{}"); data.as_string(42);"#, "AT3005")]
-#[case::too_many_multiple(r#"let data: json = Json.parse("{}"); data.is_null(1, 2);"#, "AT3005")]
+#[case::too_many_multiple(r#"let data: json = Json.parse("{}"); data.isNull(1, 2);"#, "AT3005")]
 fn test_method_argument_count_errors(#[case] source: &str, #[case] error_code: &str) {
     let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, error_code);
