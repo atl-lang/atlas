@@ -517,6 +517,154 @@ pub fn remove_dir(
     }
 }
 
+/// Rename/move a file or directory
+///
+/// Checks write permission on both source and destination.
+/// Works across directories on the same filesystem.
+pub fn rename_file(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("file.rename", 2, args.len(), span));
+    }
+
+    let src_str = match &args[0] {
+        Value::String(s) => s.as_ref(),
+        _ => return Err(stdlib_arg_error("file.rename", "string", &args[0], span)),
+    };
+
+    let dst_str = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => return Err(stdlib_arg_error("file.rename", "string", &args[1], span)),
+    };
+
+    let src_path = PathBuf::from(src_str);
+    let dst_path = PathBuf::from(dst_str);
+
+    // Source must exist
+    let abs_src = match src_path.canonicalize() {
+        Ok(p) => p,
+        Err(e) => {
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "file.rename: source '{}' not found: {}",
+                src_str, e
+            ))))));
+        }
+    };
+
+    // Check write permission on source
+    if security.check_filesystem_write(&abs_src).is_err() {
+        return Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "file.rename: permission denied for source '{}'",
+            abs_src.display()
+        ))))));
+    }
+
+    // Check write permission on destination parent
+    let dst_parent = dst_path.parent().unwrap_or_else(|| Path::new("."));
+    let abs_dst_parent = match dst_parent.canonicalize() {
+        Ok(p) => p,
+        Err(e) => {
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "file.rename: destination parent not found: {}",
+                e
+            ))))));
+        }
+    };
+
+    if security.check_filesystem_write(&abs_dst_parent).is_err() {
+        return Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "file.rename: permission denied for destination '{}'",
+            abs_dst_parent.display()
+        ))))));
+    }
+
+    // Perform rename
+    match fs::rename(&src_path, &dst_path) {
+        Ok(()) => Ok(Value::Result(Ok(Box::new(Value::Null)))),
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "file.rename: failed to rename '{}' to '{}': {}",
+            src_str, dst_str, e
+        )))))),
+    }
+}
+
+/// Copy a file
+///
+/// Checks read permission on source, write permission on destination.
+/// Copies file contents and permissions. Does not copy directories.
+pub fn copy_file(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("file.copy", 2, args.len(), span));
+    }
+
+    let src_str = match &args[0] {
+        Value::String(s) => s.as_ref(),
+        _ => return Err(stdlib_arg_error("file.copy", "string", &args[0], span)),
+    };
+
+    let dst_str = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => return Err(stdlib_arg_error("file.copy", "string", &args[1], span)),
+    };
+
+    let src_path = PathBuf::from(src_str);
+    let dst_path = PathBuf::from(dst_str);
+
+    // Source must exist
+    let abs_src = match src_path.canonicalize() {
+        Ok(p) => p,
+        Err(e) => {
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "file.copy: source '{}' not found: {}",
+                src_str, e
+            ))))));
+        }
+    };
+
+    // Check read permission on source
+    if security.check_filesystem_read(&abs_src).is_err() {
+        return Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "file.copy: permission denied for source '{}'",
+            abs_src.display()
+        ))))));
+    }
+
+    // Check write permission on destination parent
+    let dst_parent = dst_path.parent().unwrap_or_else(|| Path::new("."));
+    let abs_dst_parent = match dst_parent.canonicalize() {
+        Ok(p) => p,
+        Err(e) => {
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "file.copy: destination parent not found: {}",
+                e
+            ))))));
+        }
+    };
+
+    if security.check_filesystem_write(&abs_dst_parent).is_err() {
+        return Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "file.copy: permission denied for destination '{}'",
+            abs_dst_parent.display()
+        ))))));
+    }
+
+    // Perform copy
+    match fs::copy(&src_path, &dst_path) {
+        Ok(_) => Ok(Value::Result(Ok(Box::new(Value::Null)))),
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "file.copy: failed to copy '{}' to '{}': {}",
+            src_str, dst_str, e
+        )))))),
+    }
+}
+
 /// Get file metadata (size, modified time, is_file, is_dir)
 ///
 /// Checks read permission. Returns object with metadata fields.

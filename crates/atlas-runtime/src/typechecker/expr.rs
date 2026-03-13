@@ -182,8 +182,8 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         },
         (
             "file",
-            "write" | "append" | "remove" | "createDir" | "removeDir" | "mkdir" | "mkdirp"
-            | "rmdir" | "rmdirRecursive" | "symlink",
+            "write" | "append" | "remove" | "rename" | "copy" | "createDir" | "removeDir" | "mkdir"
+            | "mkdirp" | "rmdir" | "rmdirRecursive" | "symlink",
         ) => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::Null, Type::String],

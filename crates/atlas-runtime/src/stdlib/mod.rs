@@ -901,6 +901,8 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("fileNsAppend", |a, s, sc, _| io::append_file(a, s, sc));
         m.insert("fileNsExists", |a, s, sc, _| io::file_exists(a, s, sc));
         m.insert("fileNsRemove", |a, s, sc, _| io::remove_file(a, s, sc));
+        m.insert("fileNsRename", |a, s, sc, _| io::rename_file(a, s, sc));
+        m.insert("fileNsCopy", |a, s, sc, _| io::copy_file(a, s, sc));
         m.insert("fileNsCreateDir", |a, s, sc, _| io::create_dir(a, s, sc));
         m.insert("fileNsRemoveDir", |a, s, sc, _| io::remove_dir(a, s, sc));
         m.insert("fileInfo", |a, s, sc, _| io::file_info(a, s, sc));
@@ -2194,6 +2196,8 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("fileNsAppend", "file_ns_append"),
             ("fileNsExists", "file_ns_exists"),
             ("fileNsRemove", "file_ns_remove"),
+            ("fileNsRename", "file_ns_rename"),
+            ("fileNsCopy", "file_ns_copy"),
             ("fileNsCreateDir", "file_ns_create_dir"),
             ("fileNsRemoveDir", "file_ns_remove_dir"),
             ("fileInfo", "file_info"),

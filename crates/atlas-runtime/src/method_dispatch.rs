@@ -496,6 +496,8 @@ fn resolve_file_ns_method(method_name: &str) -> Option<String> {
         "append" => "fileNsAppend",
         "exists" => "fileNsExists",
         "remove" => "fileNsRemove",
+        "rename" => "fileNsRename",
+        "copy" => "fileNsCopy",
         // Directory operations
         "createDir" => "fileNsCreateDir",
         "removeDir" => "fileNsRemoveDir",
