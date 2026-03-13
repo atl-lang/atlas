@@ -953,6 +953,33 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("reflectHasMethod", |a, s, _, _| {
             reflect::has_method_fn(a, s)
         });
+        m.insert("reflectIsCallable", |a, s, _, _| {
+            reflect::is_callable_fn(a, s)
+        });
+        m.insert("reflectIsPrimitive", |a, s, _, _| {
+            reflect::is_primitive_fn(a, s)
+        });
+        m.insert("reflectSameType", |a, s, _, _| reflect::same_type_fn(a, s));
+        m.insert("reflectGetLength", |a, s, _, _| {
+            reflect::get_length_fn(a, s)
+        });
+        m.insert("reflectIsEmpty", |a, s, _, _| reflect::is_empty_fn(a, s));
+        m.insert("reflectTypeDescribe", |a, s, _, _| {
+            reflect::type_describe_fn(a, s)
+        });
+        m.insert("reflectClone", |a, s, _, _| reflect::clone_fn(a, s));
+        m.insert("reflectValueToString", |a, s, _, _| {
+            reflect::value_to_string_fn(a, s)
+        });
+        m.insert("reflectDeepEquals", |a, s, _, _| {
+            reflect::deep_equals_fn(a, s)
+        });
+        m.insert("reflectGetFunctionName", |a, s, _, _| {
+            reflect::get_function_name_fn(a, s)
+        });
+        m.insert("reflectGetFunctionArity", |a, s, _, _| {
+            reflect::get_function_arity_fn(a, s)
+        });
 
         // ====================================================================
         // SQLite functions (B40-P05)

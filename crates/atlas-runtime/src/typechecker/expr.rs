@@ -115,8 +115,14 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         // Console namespace — variadic, skip arity check
         ("console", "log" | "println" | "print" | "error" | "warn" | "debug") => None,
         // Reflect namespace (B40-P03)
-        ("reflect", "typeOf" | "fields") => Some(vec![Type::any_placeholder()]),
-        ("reflect", "hasMethod") => Some(vec![Type::any_placeholder(), str.clone()]),
+        (
+            "reflect",
+            "typeOf" | "fields" | "isCallable" | "isPrimitive" | "getLength" | "isEmpty"
+            | "typeDescribe" | "clone" | "valueToString" | "getFunctionName" | "getFunctionArity",
+        ) => Some(vec![Type::any_placeholder()]),
+        ("reflect", "hasMethod" | "sameType" | "deepEquals") => {
+            Some(vec![Type::any_placeholder(), Type::any_placeholder()])
+        }
         // SQLite namespace (B40-P05)
         ("sqlite", "open") => Some(vec![str.clone()]),
         // future namespace (B33)
@@ -341,6 +347,17 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         ("reflect", "typeOf") => Type::String,
         ("reflect", "fields") => Type::Array(Box::new(Type::String)),
         ("reflect", "hasMethod") => Type::Bool,
+        ("reflect", "isCallable") => Type::Bool,
+        ("reflect", "isPrimitive") => Type::Bool,
+        ("reflect", "sameType") => Type::Bool,
+        ("reflect", "getLength") => Type::Number,
+        ("reflect", "isEmpty") => Type::Bool,
+        ("reflect", "typeDescribe") => Type::String,
+        ("reflect", "clone") => Type::any_placeholder(),
+        ("reflect", "valueToString") => Type::String,
+        ("reflect", "deepEquals") => Type::Bool,
+        ("reflect", "getFunctionName") => Type::String,
+        ("reflect", "getFunctionArity") => Type::Number,
         // SQLite namespace (B40-P05)
         ("sqlite", "open") => Type::Generic {
             name: "SqliteConnection".to_string(),

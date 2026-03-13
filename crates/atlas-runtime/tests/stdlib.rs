@@ -57,6 +57,16 @@ fn assert_eval_string_with_io(source: &str, expected: &str) {
 }
 
 // Domain submodules (files live in tests/stdlib/)
+#[path = "stdlib/b40_file_ops.rs"]
+mod b40_file_ops;
+#[path = "stdlib/b40_json_typed.rs"]
+mod b40_json_typed;
+#[path = "stdlib/b40_path_ops.rs"]
+mod b40_path_ops;
+#[path = "stdlib/b40_reflect.rs"]
+mod b40_reflect;
+#[path = "stdlib/b40_sqlite.rs"]
+mod b40_sqlite;
 #[path = "stdlib/collections.rs"]
 mod collections;
 #[path = "stdlib/docs_verification.rs"]

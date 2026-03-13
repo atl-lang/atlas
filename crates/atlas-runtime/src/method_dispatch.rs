@@ -1032,6 +1032,17 @@ fn resolve_reflect_ns_method(method_name: &str) -> Option<String> {
         "typeOf" => "reflectTypeOf",
         "fields" => "reflectFields",
         "hasMethod" => "reflectHasMethod",
+        "isCallable" => "reflectIsCallable",
+        "isPrimitive" => "reflectIsPrimitive",
+        "sameType" => "reflectSameType",
+        "getLength" => "reflectGetLength",
+        "isEmpty" => "reflectIsEmpty",
+        "typeDescribe" => "reflectTypeDescribe",
+        "clone" => "reflectClone",
+        "valueToString" => "reflectValueToString",
+        "deepEquals" => "reflectDeepEquals",
+        "getFunctionName" => "reflectGetFunctionName",
+        "getFunctionArity" => "reflectGetFunctionArity",
         _ => return None,
     };
     Some(func_name.to_string())

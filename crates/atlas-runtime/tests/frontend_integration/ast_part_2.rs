@@ -40,6 +40,7 @@ fn test_all_expression_types() {
                 span: Span::new(0, 4),
             })),
             args: vec![],
+            type_args: vec![],
             span: Span::new(0, 6),
         }),
         // Index expression
