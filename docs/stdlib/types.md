@@ -240,14 +240,14 @@ let r = Err("raw error").mapErr(fn(borrow e: string): string {
 Chains Result operations (flat-map). If `Ok`, applies `fn`. If `Err`, returns `Err` unchanged. This is a VM intrinsic.
 
 ```atlas
-fn parseInt(borrow s: string): Result<number, string> {
-    return toNumber(s);
+fn parseNum(borrow s: string): Result<number, string> {
+    return s.toNumber();
 }
 
-let r = Ok("42").andThen(parseInt);
+let r = Ok("42").andThen(parseNum);
 // r == Ok(42)
 
-let r2 = Err("skip").andThen(parseInt);
+let r2 = Err("skip").andThen(parseNum);
 // r2 == Err("skip")
 ```
 
@@ -404,37 +404,31 @@ let b2 = toBool("hi");   // true
 let b3 = toBool([]);     // true  (array is always truthy)
 ```
 
-### `parseInt(str: string, radix?: number) -> Result<number, string>`
+### String-to-number parsing
 
-Parses a string as an integer in the given radix (default 10). Radix must be between 2 and 36. Accepts optional leading `+` or `-`.
+Use method syntax on strings (D-045 — no bare global `parseInt`/`parseFloat`):
+
+- **`.toInt(radix?: number) -> Result<number, string>`** — parse integer, default radix 10
+- **`.toNumber() -> Result<number, string>`** — parse float
 
 ```atlas
-let r = parseInt("42");
+let r = "42".toInt();
 // r == Ok(42)
 
-let r2 = parseInt("FF", 16);
+let r2 = "FF".toInt(16);
 // r2 == Ok(255)
 
-let r3 = parseInt("1010", 2);
+let r3 = "1010".toInt(2);
 // r3 == Ok(10)
 
-let r4 = parseInt("xyz");
-// r4 == Err("Invalid integer 'xyz' for radix 10")
-```
+let r4 = "xyz".toInt();
+// r4 == Err("...")
 
-### `parseFloat(str: string) -> Result<number, string>`
+let rf = "3.14".toNumber();
+// rf == Ok(3.14)
 
-Parses a string as a floating-point number. Supports decimal notation and scientific notation (`1.5e-3`). Trims whitespace before parsing.
-
-```atlas
-let r = parseFloat("3.14");
-// r == Ok(3.14)
-
-let r2 = parseFloat("1.5e-3");
-// r2 == Ok(0.0015)
-
-let r3 = parseFloat("abc");
-// r3 == Err("Cannot parse 'abc' as float")
+let rf2 = "abc".toNumber();
+// rf2 == Err("...")
 ```
 
 ---
