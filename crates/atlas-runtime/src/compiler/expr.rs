@@ -1141,17 +1141,19 @@ impl Compiler {
             // For non-last arms: +1 for the Dup'd scrutinee copy that stays at slot pre_match_locals.
             // For the last arm: +1 if the pattern did NOT consume the scrutinee from the stack.
             // Wildcard (Pop) and Literal (Equal) consume it; all other patterns leave a ghost.
-            let scrutinee_consumed = is_last_arm
-                && matches!(
-                    &arm.pattern,
-                    crate::ast::Pattern::Wildcard(_) | crate::ast::Pattern::Literal(_, _)
-                );
-            let extras = pattern_var_count
-                + if !is_last_arm || !scrutinee_consumed {
-                    1
-                } else {
-                    0
-                };
+            // For non-last arms: +1 for the Dup'd scrutinee copy that stays on the stack.
+            // For the last arm:
+            //   - pattern_var_count == 0 (Wildcard, Literal, None, unit EnumVariant, etc.):
+            //     scrutinee is always consumed and no TupleGet ghosts exist → extras = 0.
+            //   - pattern_var_count > 0 (Variable, Some(v), Tuple((x,y)), Struct{f}, etc.):
+            //     the first element-extraction op (SetLocal/ExtractOption/TupleGet) occupies
+            //     the scrutinee slot AND SetLocal extends the stack by 1 per var → +1 ghost.
+            //     extras = pattern_var_count + 1.
+            let extras = if is_last_arm && pattern_var_count == 0 {
+                0
+            } else {
+                pattern_var_count + 1
+            };
 
             if extras > 0 {
                 // Save result to temp global (SetGlobal peeks, value stays)
@@ -1183,12 +1185,11 @@ impl Compiler {
                 // This mirrors the `extras` formula used in the success path, ensuring the stack
                 // is restored to the base scrutinee level for the next arm.
                 let pattern_var_count_guard = self.locals.len() - locals_before;
-                let guard_cleanup_count = pattern_var_count_guard
-                    + if !is_last_arm || !scrutinee_consumed {
-                        1
-                    } else {
-                        0
-                    };
+                let guard_cleanup_count = if is_last_arm && pattern_var_count_guard == 0 {
+                    0
+                } else {
+                    pattern_var_count_guard + 1
+                };
                 for _ in 0..guard_cleanup_count {
                     self.bytecode.emit(Opcode::Pop, arm.span);
                 }
