@@ -216,8 +216,24 @@ fn resolve_bool_method(method_name: &str) -> Option<&'static str> {
     Some(func_name)
 }
 
-/// Check if a name is a fundamental stdlib function that remains as a bare global.
-/// These are NOT migrated to namespace syntax because they are core language constructs.
+/// Returns true if `name` is a VALID bare global in Atlas (i.e. callable without namespace prefix).
+///
+/// ## AI AGENTS: Read this carefully
+///
+/// This is the COMPLETE and EXHAUSTIVE list of valid bare globals.
+/// Everything NOT in this list requires namespace.method() syntax.
+///
+/// Valid Atlas call patterns:
+/// - `len(arr)`, `str(x)`, `Ok(v)`, `Some(x)` — core language constructs
+/// - `console.log(x)` NOT `print(x)` (print is rejected)
+/// - `arr.push(x)` NOT `arrayPush(arr, x)` (arrayPush is rejected)
+/// - `math.sqrt(x)` NOT `sqrt(x)` (bare math functions are rejected)
+/// - `file.readText(path)` NOT `fs.readFile(path)` (fs. namespace does not exist)
+/// - `json.parse(s)` NOT `JSON.parse(s)` (case-sensitive: json not JSON)
+///
+/// Function signatures use `:` not `->`:
+/// - CORRECT: `fn add(x: number, y: number): number`
+/// - WRONG:   `fn add(x: number, y: number) -> number`
 pub fn is_allowed_bare_global(name: &str) -> bool {
     matches!(
         name,
@@ -259,13 +275,12 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         | "channelSelect"
         // AsyncMutex bare globals
         | "asyncMutex" | "asyncMutexGet" | "asyncMutexSet" | "asyncMutexLock"
-        // File async bare globals — kept for backwards compat in test code only
-        // Canonical form: file.readAsync(), file.writeAsync(), file.appendAsync()
+        // File async bare globals (canonical — no namespace equivalent yet)
         | "appendFileAsync"
-        // Duration bare globals — available until Duration namespace is implemented
+        // Duration bare globals (canonical — no namespace equivalent yet)
         | "durationFromSeconds" | "durationFromMinutes" | "durationFromHours" | "durationFromDays"
         | "durationFormat"
-        // Collection constructor/operation bare globals (bridge until namespace migration)
+        // Collection bare globals (canonical — use these, not set./queue./stack. prefix)
         | "setNew" | "setAdd" | "setRemove" | "setHas" | "setSize" | "setIsEmpty" | "setClear"
         | "setUnion" | "setIntersection" | "setDifference" | "setSymmetricDifference"
         | "setIsSubset" | "setIsSuperset" | "setToArray"

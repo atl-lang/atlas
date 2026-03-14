@@ -110,7 +110,7 @@ test.approx(calculatePi(), 3.14159265, 0.0001);
 ### test.throws
 
 ```atlas
-test.throws(fn: () -> any, message?: string): void
+test.throws(fn: (): any, message?: string): void
 ```
 
 Assert function throws (returns Err or panics).
@@ -122,7 +122,7 @@ test.throws(fn(): void { panic("boom"); });
 ### test.noThrow
 
 ```atlas
-test.noThrow(fn: () -> any, message?: string): void
+test.noThrow(fn: (): any, message?: string): void
 ```
 
 Assert function does not throw.

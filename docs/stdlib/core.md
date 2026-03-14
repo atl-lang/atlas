@@ -10,7 +10,7 @@ The `console` namespace provides output functions. `log` and `println` write to 
 
 All `console` functions accept any number of arguments of any type. Multiple arguments are joined with a space.
 
-### `console.log(...args: any) -> void`
+### `console.log(...args: any): void`
 
 Prints arguments to stdout followed by a newline.
 
@@ -21,7 +21,7 @@ console.log("x =", 42, "done");
 // stdout: x = 42 done
 ```
 
-### `console.println(...args: any) -> void`
+### `console.println(...args: any): void`
 
 Alias for `console.log`. Identical behavior.
 
@@ -29,7 +29,7 @@ Alias for `console.log`. Identical behavior.
 console.println("Same as log");
 ```
 
-### `console.print(...args: any) -> void`
+### `console.print(...args: any): void`
 
 Prints arguments to stdout **without** a trailing newline.
 
@@ -37,7 +37,7 @@ Prints arguments to stdout **without** a trailing newline.
 console.print("Enter name: ");
 ```
 
-### `console.error(...args: any) -> void`
+### `console.error(...args: any): void`
 
 Prints arguments to stderr followed by a newline.
 
@@ -45,7 +45,7 @@ Prints arguments to stderr followed by a newline.
 console.error("Something went wrong:", errMsg);
 ```
 
-### `console.warn(...args: any) -> void`
+### `console.warn(...args: any): void`
 
 Prints arguments to stderr with a `WARN: ` prefix.
 
@@ -54,7 +54,7 @@ console.warn("Deprecated function used");
 // stderr: WARN: Deprecated function used
 ```
 
-### `console.debug(...args: any) -> void`
+### `console.debug(...args: any): void`
 
 Prints arguments to stderr with a `DEBUG: ` prefix.
 
@@ -67,7 +67,7 @@ console.debug("state =", value);
 
 ## Type Conversion
 
-### `str(value: any) -> string`
+### `str(value: any): string`
 
 Converts any value to its string representation.
 
@@ -95,7 +95,7 @@ let s3 = str(None);
 // s3 == "None"
 ```
 
-### `num(value: string) -> number`
+### `num(value: string): number`
 
 Parses a string as a number. Trims whitespace before parsing. Panics if the string is not a valid number.
 
@@ -109,7 +109,7 @@ let f = num("3.14");
 // f == 3.14
 ```
 
-### `bool(value: any) -> bool`
+### `bool(value: any): bool`
 
 Converts a value to boolean using JavaScript-like truthiness:
 
@@ -131,7 +131,7 @@ let b3 = bool(null);
 
 ## Length
 
-### `len(value: string | any[]) -> number`
+### `len(value: string | any[]): number`
 
 Returns the length of a string (number of Unicode characters) or an array (number of elements).
 
@@ -147,7 +147,7 @@ let n2 = len([1, 2, 3]);
 
 ## Type Introspection
 
-### `type(value: any) -> string`
+### `type(value: any): string`
 
 Returns the runtime type name of `value` as a string.
 
@@ -176,7 +176,7 @@ let t2 = type([1, 2, 3]);
 
 ## Error Handling
 
-### `panic(message: string) -> void`
+### `panic(message: string): void`
 
 Terminates the program immediately with an error message. Use for unrecoverable errors that indicate a programming bug.
 
@@ -189,7 +189,7 @@ fn divide(borrow a: number, borrow b: number): number {
 }
 ```
 
-### `assertEq(actual: any, expected: any) -> void`
+### `assertEq(actual: any, expected: any): void`
 
 Asserts that `actual` equals `expected`. Panics with a descriptive message if they differ.
 
@@ -204,7 +204,7 @@ assertEq("hello".length(), 5);
 
 The `test` namespace is used for writing test assertions.
 
-### `test.assert(condition: bool, message?: string) -> void`
+### `test.assert(condition: bool, message?: string): void`
 
 Asserts that `condition` is `true`. Panics with `message` (or a default message) if `false`.
 
@@ -213,7 +213,7 @@ test.assert(1 + 1 == 2, "basic arithmetic");
 test.assert("hello".length() == 5);
 ```
 
-### `test.assertEq(actual: any, expected: any) -> void`
+### `test.assertEq(actual: any, expected: any): void`
 
 Asserts that `actual` equals `expected`. Panics with a message showing both values if they differ.
 

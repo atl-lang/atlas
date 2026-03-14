@@ -6,7 +6,7 @@ String methods are available as instance methods on any `string` value using dot
 
 ## Instance Methods
 
-### `.length() -> number`
+### `.length(): number`
 
 Returns the number of Unicode characters in the string. Call as a method.
 
@@ -20,7 +20,7 @@ let n2 = "".length();
 
 ---
 
-### `.split(separator: string) -> string[]`
+### `.split(separator: string): string[]`
 
 Splits the string by `separator`. If `separator` is empty, returns an array of individual characters.
 
@@ -34,7 +34,7 @@ let chars = "hi".split("");
 
 ---
 
-### `.trim() -> string`
+### `.trim(): string`
 
 Removes leading and trailing whitespace (Unicode-aware).
 
@@ -45,7 +45,7 @@ let s = "  hello  ".trim();
 
 ---
 
-### `.trimStart() -> string`
+### `.trimStart(): string`
 
 Removes only leading whitespace.
 
@@ -56,7 +56,7 @@ let s = "  hello  ".trimStart();
 
 ---
 
-### `.trimEnd() -> string`
+### `.trimEnd(): string`
 
 Removes only trailing whitespace.
 
@@ -67,7 +67,7 @@ let s = "  hello  ".trimEnd();
 
 ---
 
-### `.toUpperCase() -> string`
+### `.toUpperCase(): string`
 
 Converts the string to uppercase (Unicode-aware).
 
@@ -78,7 +78,7 @@ let s = "hello".toUpperCase();
 
 ---
 
-### `.toLowerCase() -> string`
+### `.toLowerCase(): string`
 
 Converts the string to lowercase (Unicode-aware).
 
@@ -89,7 +89,7 @@ let s = "HELLO".toLowerCase();
 
 ---
 
-### `.indexOf(needle: string) -> Option<number>`
+### `.indexOf(needle: string): Option<number>`
 
 Returns `Some(index)` of the first occurrence of `needle`, or `None` if not found. An empty `needle` always returns `Some(0)`.
 
@@ -103,7 +103,7 @@ let missing = "hello".indexOf("xyz");
 
 ---
 
-### `.lastIndexOf(needle: string) -> Option<number>`
+### `.lastIndexOf(needle: string): Option<number>`
 
 Returns `Some(index)` of the last occurrence of `needle`, or `None` if not found. An empty `needle` returns `Some(length)`.
 
@@ -114,7 +114,7 @@ let idx = "abcabc".lastIndexOf("a");
 
 ---
 
-### `.includes(needle: string) -> bool`
+### `.includes(needle: string): bool`
 
 Returns `true` if the string contains `needle`.
 
@@ -125,7 +125,7 @@ let found = "hello world".includes("world");
 
 ---
 
-### `.startsWith(prefix: string) -> bool`
+### `.startsWith(prefix: string): bool`
 
 Returns `true` if the string starts with `prefix`.
 
@@ -136,7 +136,7 @@ let ok = "hello".startsWith("hel");
 
 ---
 
-### `.endsWith(suffix: string) -> bool`
+### `.endsWith(suffix: string): bool`
 
 Returns `true` if the string ends with `suffix`.
 
@@ -147,7 +147,7 @@ let ok = "hello".endsWith("llo");
 
 ---
 
-### `.substring(start: number, end: number) -> string`
+### `.substring(start: number, end: number): string`
 
 Returns the substring from `start` (inclusive) to `end` (exclusive). Indices must be integers on UTF-8 character boundaries. Errors if `start > end` or indices are out of bounds.
 
@@ -158,7 +158,7 @@ let sub = "hello world".substring(6, 11);
 
 ---
 
-### `.charAt(index: number) -> Option<string>`
+### `.charAt(index: number): Option<string>`
 
 Returns `Some(character)` at the given index (Unicode character, not byte), or `None` if out of bounds. Index must be an integer.
 
@@ -172,7 +172,7 @@ let ch2 = "hello".charAt(99);
 
 ---
 
-### `.repeat(count: number) -> string`
+### `.repeat(count: number): string`
 
 Returns the string repeated `count` times. `count` must be a non-negative integer. Maximum count is 1,000,000.
 
@@ -186,7 +186,7 @@ let s2 = "x".repeat(0);
 
 ---
 
-### `.replace(search: string, replacement: string) -> string`
+### `.replace(search: string, replacement: string): string`
 
 Replaces the **first** occurrence of `search` with `replacement`. If `search` is empty, the original string is returned unchanged.
 
@@ -197,7 +197,7 @@ let s = "foo foo foo".replace("foo", "bar");
 
 ---
 
-### `.replaceAll(search: string, replacement: string) -> string`
+### `.replaceAll(search: string, replacement: string): string`
 
 Replaces **all** occurrences of `search` with `replacement`. If `search` is empty, the original string is returned unchanged.
 
@@ -208,7 +208,7 @@ let s = "foo foo foo".replaceAll("foo", "bar");
 
 ---
 
-### `.padStart(length: number, fill: string) -> string`
+### `.padStart(length: number, fill: string): string`
 
 Pads the start of the string with `fill` until the total length is `length`. If the string is already at or beyond `length`, it is returned unchanged. The fill string is cycled as needed.
 
@@ -222,7 +222,7 @@ let s2 = "hello".padStart(3, "x");
 
 ---
 
-### `.padEnd(length: number, fill: string) -> string`
+### `.padEnd(length: number, fill: string): string`
 
 Pads the end of the string with `fill` until the total length is `length`.
 
@@ -237,7 +237,7 @@ let s = "hi".padEnd(5, ".");
 
 These are available without any import.
 
-### `charCodeAt(str: string, index: number) -> number`
+### `charCodeAt(str: string, index: number): number`
 
 Returns the Unicode code point of the character at `index`. Errors if index is out of bounds.
 
@@ -246,7 +246,7 @@ let code = charCodeAt("A", 0);
 // code == 65
 ```
 
-### `fromCharCode(...codes: number) -> string`
+### `fromCharCode(...codes: number): string`
 
 Converts one or more Unicode code points to a string.
 
@@ -255,7 +255,7 @@ let s = fromCharCode(72, 101, 108, 108, 111);
 // s == "Hello"
 ```
 
-### `split(str: string, sep: string) -> string[]`
+### `split(str: string, sep: string): string[]`
 
 Global form of `.split()`.
 
@@ -264,7 +264,7 @@ let parts = split("a-b-c", "-");
 // parts == ["a", "b", "c"]
 ```
 
-### `join(arr: string[], sep: string) -> string`
+### `join(arr: string[], sep: string): string`
 
 Joins an array of strings with `sep`. All elements must be strings.
 
@@ -273,62 +273,62 @@ let s = join(["x", "y", "z"], " | ");
 // s == "x | y | z"
 ```
 
-### `trim(str: string) -> string`
+### `trim(str: string): string`
 
 Global form of `.trim()`.
 
-### `trimStart(str: string) -> string`
+### `trimStart(str: string): string`
 
 Global form of `.trimStart()`.
 
-### `trimEnd(str: string) -> string`
+### `trimEnd(str: string): string`
 
 Global form of `.trimEnd()`.
 
-### `indexOf(str: string, sub: string) -> Option<number>`
+### `indexOf(str: string, sub: string): Option<number>`
 
 Global form of `.indexOf()`.
 
-### `lastIndexOf(str: string, sub: string) -> Option<number>`
+### `lastIndexOf(str: string, sub: string): Option<number>`
 
 Global form of `.lastIndexOf()`.
 
-### `includes(str: string, sub: string) -> bool`
+### `includes(str: string, sub: string): bool`
 
 Global form of `.includes()`.
 
-### `startsWith(str: string, prefix: string) -> bool`
+### `startsWith(str: string, prefix: string): bool`
 
 Global form of `.startsWith()`.
 
-### `endsWith(str: string, suffix: string) -> bool`
+### `endsWith(str: string, suffix: string): bool`
 
 Global form of `.endsWith()`.
 
-### `toUpperCase(str: string) -> string`
+### `toUpperCase(str: string): string`
 
 Global form of `.toUpperCase()`.
 
-### `toLowerCase(str: string) -> string`
+### `toLowerCase(str: string): string`
 
 Global form of `.toLowerCase()`.
 
-### `substring(str: string, start: number, end: number) -> string`
+### `substring(str: string, start: number, end: number): string`
 
 Global form of `.substring()`.
 
-### `repeat(str: string, count: number) -> string`
+### `repeat(str: string, count: number): string`
 
 Global form of `.repeat()`.
 
-### `replace(str: string, old: string, new: string) -> string`
+### `replace(str: string, old: string, new: string): string`
 
 Global form of `.replace()` (first occurrence only).
 
-### `padStart(str: string, len: number, pad: string) -> string`
+### `padStart(str: string, len: number, pad: string): string`
 
 Global form of `.padStart()`.
 
-### `padEnd(str: string, len: number, pad: string) -> string`
+### `padEnd(str: string, len: number, pad: string): string`
 
 Global form of `.padEnd()`.

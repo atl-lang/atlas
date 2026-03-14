@@ -20,7 +20,7 @@ fields to Atlas native types.
 
 ## Namespace Functions
 
-### `Json.parse(text: string) -> Result<JsonValue, string>`
+### `Json.parse(text: string): Result<JsonValue, string>`
 
 Parse a JSON string into a `JsonValue`. Returns `Ok(JsonValue)` on success, or
 `Err("Invalid JSON: <detail>")` on malformed input.
@@ -46,7 +46,7 @@ match result {
 
 ---
 
-### `Json.stringify(value: any) -> string`
+### `Json.stringify(value: any): string`
 
 Serialize any Atlas value to a compact JSON string. Returns the JSON with no extra
 whitespace. Detects circular references. Functions cannot be serialized and cause a
@@ -60,7 +60,7 @@ let json3 = Json.stringify([1, 2, 3]); // "[1,2,3]"
 
 ---
 
-### `Json.isValid(text: string) -> bool`
+### `Json.isValid(text: string): bool`
 
 Check if a string is valid JSON without allocating a full parse result. More efficient
 than `Json.parse()` when you only need a validity check.
@@ -72,7 +72,7 @@ let bad = Json.isValid("{bad json}"); // false
 
 ---
 
-### `Json.prettify(text: string, indent: number) -> string`
+### `Json.prettify(text: string, indent: number): string`
 
 Format a JSON string with indentation. `indent` is the number of spaces per level.
 Input must be valid JSON.
@@ -90,7 +90,7 @@ let pretty = Json.prettify(raw, 2);
 
 ---
 
-### `Json.minify(text: string) -> string`
+### `Json.minify(text: string): string`
 
 Remove all extraneous whitespace from a JSON string, producing the most compact
 valid representation.
@@ -102,7 +102,7 @@ let compact = Json.minify(spaced); // '{"a":1,"b":2}'
 
 ---
 
-### `Json.keys(json: JsonValue) -> string[]`
+### `Json.keys(json: JsonValue): string[]`
 
 Return the top-level key names from a JSON object value. Returns an empty array if the
 `JsonValue` is not an object.
@@ -114,7 +114,7 @@ let keys = Json.keys(data); // ["x", "y"]
 
 ---
 
-### `Json.getString(json: JsonValue, key: string) -> Option<string>`
+### `Json.getString(json: JsonValue, key: string): Option<string>`
 
 Safely extract a string field from a JSON object. Returns `None` if the key does not
 exist or if the value at that key is not a JSON string.
@@ -127,7 +127,7 @@ let missing = Json.getString(data, "nope").unwrapOr("default"); // "default"
 
 ---
 
-### `Json.getNumber(json: JsonValue, key: string) -> Option<number>`
+### `Json.getNumber(json: JsonValue, key: string): Option<number>`
 
 Safely extract a number field from a JSON object. Returns `None` if the key does not
 exist or if the value is not a JSON number.
@@ -139,7 +139,7 @@ let count = Json.getNumber(data, "count").unwrapOr(0); // 42
 
 ---
 
-### `Json.getBool(json: JsonValue, key: string) -> Option<bool>`
+### `Json.getBool(json: JsonValue, key: string): Option<bool>`
 
 Safely extract a boolean field from a JSON object. Returns `None` if the key does not
 exist or if the value is not a JSON boolean.
@@ -151,7 +151,7 @@ let active = Json.getBool(data, "active").unwrapOr(false); // true
 
 ---
 
-### `Json.getArray(json: JsonValue, key: string) -> Option<JsonValue[]>`
+### `Json.getArray(json: JsonValue, key: string): Option<JsonValue[]>`
 
 Safely extract an array field from a JSON object. Returns `None` if the key does not
 exist or if the value is not a JSON array. Each element of the returned array is a
@@ -164,7 +164,7 @@ let tags = Json.getArray(data, "tags"); // Some([JsonValue, JsonValue, JsonValue
 
 ---
 
-### `Json.getObject(json: JsonValue, key: string) -> Option<JsonValue>`
+### `Json.getObject(json: JsonValue, key: string): Option<JsonValue>`
 
 Safely extract a nested JSON object field. Returns `None` if the key does not exist or
 if the value is not a JSON object.
@@ -179,7 +179,7 @@ if meta.isSome() {
 
 ---
 
-### `Json.isNull(json: JsonValue, key: string) -> bool`
+### `Json.isNull(json: JsonValue, key: string): bool`
 
 Check if a specific key in a JSON object holds a null value.
 
@@ -197,9 +197,9 @@ After parsing, a `JsonValue` exposes these instance methods via method dispatch:
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `.asString()` | `() -> string` | Extract string — panics if wrong type |
-| `.asNumber()` | `() -> number` | Extract number — panics if wrong type |
-| `.asBool()` | `() -> bool` | Extract bool — panics if wrong type |
+| `.asString()` | `(): string` | Extract string — panics if wrong type |
+| `.asNumber()` | `(): number` | Extract number — panics if wrong type |
+| `.asBool()` | `(): bool` | Extract bool — panics if wrong type |
 
 Prefer the `Json.getString()` / `Json.getNumber()` / `Json.getBool()` namespace functions
 for safe extraction that returns `Option<T>` instead of panicking.

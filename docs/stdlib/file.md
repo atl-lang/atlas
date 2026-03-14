@@ -8,201 +8,201 @@ Basic read/write/append/delete/exists operations live in the `io` namespace (see
 
 ## Directory Operations
 
-### fs.mkdir
+### file.mkdir
 
 ```atlas
-fs.mkdir(path: string): Result<null, string>
+file.mkdir(path: string): Result<null, string>
 ```
 
 Create a single directory. Fails if the parent does not exist or the directory already exists.
 
 ```atlas
-match fs.mkdir("/tmp/myapp") {
+match file.mkdir("/tmp/myapp") {
     Ok(_) => console.log("created"),
     Err(e) => console.log("failed: " + e),
 }
 ```
 
-### fs.mkdirp
+### file.mkdirp
 
 ```atlas
-fs.mkdirp(path: string): Result<null, string>
+file.mkdirp(path: string): Result<null, string>
 ```
 
 Create a directory and all required parent directories (equivalent to `mkdir -p`). Succeeds silently if the directory already exists.
 
 ```atlas
-match fs.mkdirp("/tmp/myapp/data/cache") {
+match file.mkdirp("/tmp/myapp/data/cache") {
     Ok(_) => console.log("ready"),
     Err(e) => console.log(e),
 }
 ```
 
-### fs.rmdir
+### file.rmdir
 
 ```atlas
-fs.rmdir(path: string): null
+file.rmdir(path: string): null
 ```
 
 Remove an empty directory. Throws if the directory is not empty or does not exist.
 
 ```atlas
-fs.rmdir("/tmp/myapp/empty-dir");
+file.rmdir("/tmp/myapp/empty-dir");
 ```
 
-### fs.rmdirRecursive
+### file.rmdirRecursive
 
 ```atlas
-fs.rmdirRecursive(path: string): null
+file.rmdirRecursive(path: string): null
 ```
 
 Remove a directory and all its contents recursively (equivalent to `rm -rf`). Use with caution.
 
 ```atlas
-fs.rmdirRecursive("/tmp/myapp/old-build");
+file.rmdirRecursive("/tmp/myapp/old-build");
 ```
 
-### fs.readdir
+### file.readdir
 
 ```atlas
-fs.readdir(path: string): string[]
+file.readdir(path: string): string[]
 ```
 
 List the names of entries in a directory (names only, not full paths). Throws on permission error or if path does not exist.
 
 ```atlas
-let entries = fs.readdir("/tmp/myapp");
+let entries = file.readdir("/tmp/myapp");
 for name in entries {
     console.log(name);
 }
 ```
 
-### fs.walk
+### file.walk
 
 ```atlas
-fs.walk(path: string): string[]
+file.walk(path: string): string[]
 ```
 
 Recursively walk a directory tree and return all file paths relative to `path`.
 
 ```atlas
-let files = fs.walk("/tmp/myapp");
+let files = file.walk("/tmp/myapp");
 for file in files {
     console.log(file);  // e.g. "data/config.json"
 }
 ```
 
-### fs.filterEntries
+### file.filterEntries
 
 ```atlas
-fs.filterEntries(entries: string[], pattern: string): string[]
+file.filterEntries(entries: string[], pattern: string): string[]
 ```
 
 Filter an array of file names by a glob pattern. Supports `*` as a wildcard.
 
 ```atlas
-let all = fs.readdir("/tmp/myapp/logs");
-let logs = fs.filterEntries(all, "*.log");
+let all = file.readdir("/tmp/myapp/logs");
+let logs = file.filterEntries(all, "*.log");
 ```
 
-### fs.sortEntries
+### file.sortEntries
 
 ```atlas
-fs.sortEntries(entries: string[]): string[]
+file.sortEntries(entries: string[]): string[]
 ```
 
 Sort an array of file names alphabetically (case-insensitive).
 
 ```atlas
-let sorted = fs.sortEntries(fs.readdir("/tmp/myapp"));
+let sorted = file.sortEntries(file.readdir("/tmp/myapp"));
 ```
 
 ---
 
 ## File Metadata
 
-### fs.size
+### file.size
 
 ```atlas
-fs.size(path: string): number
+file.size(path: string): number
 ```
 
 Return the file size in bytes. Throws if the path does not exist.
 
 ```atlas
-let bytes = fs.size("/var/log/app.log");
+let bytes = file.size("/var/log/app.log");
 console.log(bytes.toString() + " bytes");
 ```
 
-### fs.mtime
+### file.mtime
 
 ```atlas
-fs.mtime(path: string): number
+file.mtime(path: string): number
 ```
 
 Return the last-modified time as a Unix timestamp (seconds since epoch, fractional).
 
 ```atlas
-let modified = fs.mtime("config.json");
+let modified = file.mtime("config.json");
 ```
 
-### fs.ctime
+### file.ctime
 
 ```atlas
-fs.ctime(path: string): number
+file.ctime(path: string): number
 ```
 
 Return the creation time as a Unix timestamp.
 
-### fs.atime
+### file.atime
 
 ```atlas
-fs.atime(path: string): number
+file.atime(path: string): number
 ```
 
 Return the last-access time as a Unix timestamp.
 
-### fs.permissions
+### file.permissions
 
 ```atlas
-fs.permissions(path: string): number
+file.permissions(path: string): number
 ```
 
 Return the Unix file mode bits (e.g. `493` = `0o755`). On non-Unix platforms returns `0o444` for read-only files or `0o666` for read-write files.
 
 ```atlas
-let mode = fs.permissions("script.sh");
+let mode = file.permissions("script.sh");
 console.log(mode.toString());  // 493
 ```
 
-### fs.isDir
+### file.isDir
 
 ```atlas
-fs.isDir(path: string): bool
+file.isDir(path: string): bool
 ```
 
 Return `true` if `path` exists and is a directory.
 
-### fs.isFile
+### file.isFile
 
 ```atlas
-fs.isFile(path: string): bool
+file.isFile(path: string): bool
 ```
 
 Return `true` if `path` exists and is a regular file.
 
-### fs.isSymlink
+### file.isSymlink
 
 ```atlas
-fs.isSymlink(path: string): bool
+file.isSymlink(path: string): bool
 ```
 
 Return `true` if `path` is a symbolic link.
 
-### fs.inode
+### file.inode
 
 ```atlas
-fs.inode(path: string): number
+file.inode(path: string): number
 ```
 
 Return the inode number. Unix only — throws on other platforms.
@@ -213,55 +213,55 @@ Return the inode number. Unix only — throws on other platforms.
 
 Temporary files and directories are **not** automatically deleted when the program exits. You must clean them up explicitly.
 
-### fs.tmpfile
+### file.tmpfile
 
 ```atlas
-fs.tmpfile(): string
+file.tmpfile(): string
 ```
 
 Create a new empty temporary file and return its path.
 
 ```atlas
-let tmp = fs.tmpfile();
+let tmp = file.tmpfile();
 // write to tmp, then clean up
-fs.rmdir(tmp);
+file.rmdir(tmp);
 ```
 
-### fs.tmpfileNamed
+### file.tmpfileNamed
 
 ```atlas
-fs.tmpfileNamed(prefix: string): string
+file.tmpfileNamed(prefix: string): string
 ```
 
 Create a temporary file with the given name prefix.
 
 ```atlas
-let tmp = fs.tmpfileNamed("upload_");
+let tmp = file.tmpfileNamed("upload_");
 // e.g. /tmp/upload_1710000000000.tmp
 ```
 
-### fs.tmpdir
+### file.tmpdir
 
 ```atlas
-fs.tmpdir(): string
+file.tmpdir(): string
 ```
 
 Create a new temporary directory and return its path.
 
 ```atlas
-let dir = fs.tmpdir();
+let dir = file.tmpdir();
 ```
 
-### fs.getTempDir
+### file.getTempDir
 
 ```atlas
-fs.getTempDir(): string
+file.getTempDir(): string
 ```
 
 Return the system's temporary directory path (e.g. `/tmp` on Unix).
 
 ```atlas
-let tmp = fs.getTempDir();
+let tmp = file.getTempDir();
 console.log(tmp);
 ```
 
@@ -269,40 +269,40 @@ console.log(tmp);
 
 ## Symlink Operations
 
-### fs.symlink
+### file.symlink
 
 ```atlas
-fs.symlink(target: string, link: string): null
+file.symlink(target: string, link: string): null
 ```
 
 Create a symbolic link at `link` pointing to `target`. On Windows, requires elevated privileges.
 
 ```atlas
-fs.symlink("/usr/local/bin/atlas", "/usr/bin/atlas");
+file.symlink("/usr/local/bin/atlas", "/usr/bin/atlas");
 ```
 
-### fs.readlink
+### file.readlink
 
 ```atlas
-fs.readlink(path: string): string
+file.readlink(path: string): string
 ```
 
 Return the path that the symlink at `path` points to (one hop, not fully resolved).
 
 ```atlas
-let target = fs.readlink("/usr/bin/atlas");
+let target = file.readlink("/usr/bin/atlas");
 ```
 
-### fs.resolveSymlink
+### file.resolveSymlink
 
 ```atlas
-fs.resolveSymlink(path: string): string
+file.resolveSymlink(path: string): string
 ```
 
 Follow the entire symlink chain and return the final canonical absolute path.
 
 ```atlas
-let real = fs.resolveSymlink("/usr/bin/python");
+let real = file.resolveSymlink("/usr/bin/python");
 ```
 
 ---

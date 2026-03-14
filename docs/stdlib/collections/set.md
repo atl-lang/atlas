@@ -154,7 +154,7 @@ for item in elements {
 ### `.forEach(fn)`
 
 ```atlas
-.forEach(fn: (T) -> void): void
+.forEach(fn: (T): void): void
 ```
 
 Calls the provided function once for each element. Order is not guaranteed.

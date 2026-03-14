@@ -10,7 +10,7 @@ Only hashable types can be used as Map keys or Set elements: `number`, `string`,
 
 A key-value map with O(1) average-case get, set, and delete. Keys must be hashable (`number`, `string`, `bool`, `null`).
 
-### `new Map<K, V>() -> Map<K, V>`
+### `new Map<K, V>(): Map<K, V>`
 
 Creates a new empty Map.
 
@@ -18,7 +18,7 @@ Creates a new empty Map.
 let map: Map<string, number> = new Map<string, number>();
 ```
 
-### `Map.fromEntries(entries: [K, V][]) -> Map<K, V>`
+### `Map.fromEntries(entries: [K, V][]): Map<K, V>`
 
 Creates a Map from an array of `[key, value]` pairs.
 
@@ -32,7 +32,7 @@ let map = Map.fromEntries([
 
 ---
 
-### `.set(key: K, value: V) -> Map<K, V>`
+### `.set(key: K, value: V): Map<K, V>`
 
 Inserts or updates a key-value pair. Returns the updated map.
 
@@ -42,7 +42,7 @@ map = map.set("name", "Atlas");
 map = map.set("version", 3);
 ```
 
-### `.get(key: K) -> Option<V>`
+### `.get(key: K): Option<V>`
 
 Returns `Some(value)` if the key exists, or `None` if not.
 
@@ -54,7 +54,7 @@ match val {
 }
 ```
 
-### `.has(key: K) -> bool`
+### `.has(key: K): bool`
 
 Returns `true` if the key exists in the map.
 
@@ -64,7 +64,7 @@ if map.has("name") {
 }
 ```
 
-### `.delete(key: K) -> Map<K, V>`
+### `.delete(key: K): Map<K, V>`
 
 Removes a key. Returns the updated map (unchanged if key was absent).
 
@@ -72,7 +72,7 @@ Removes a key. Returns the updated map (unchanged if key was absent).
 map = map.delete("name");
 ```
 
-### `.keys() -> K[]`
+### `.keys(): K[]`
 
 Returns all keys as an array. Order is not guaranteed.
 
@@ -80,7 +80,7 @@ Returns all keys as an array. Order is not guaranteed.
 let k = map.keys();
 ```
 
-### `.values() -> V[]`
+### `.values(): V[]`
 
 Returns all values as an array. Order is not guaranteed.
 
@@ -88,7 +88,7 @@ Returns all values as an array. Order is not guaranteed.
 let v = map.values();
 ```
 
-### `.entries() -> [K, V][]`
+### `.entries(): [K, V][]`
 
 Returns all key-value pairs as an array of `[key, value]` arrays. Order is not guaranteed.
 
@@ -98,7 +98,7 @@ for entry in map.entries() {
 }
 ```
 
-### `.size() -> number`
+### `.size(): number`
 
 Returns the number of entries in the map.
 
@@ -106,7 +106,7 @@ Returns the number of entries in the map.
 let n = map.size();
 ```
 
-### `.isEmpty() -> bool`
+### `.isEmpty(): bool`
 
 Returns `true` if the map contains no entries.
 
@@ -116,7 +116,7 @@ if map.isEmpty() {
 }
 ```
 
-### `.clear() -> Map<K, V>`
+### `.clear(): Map<K, V>`
 
 Returns an empty map (all entries removed).
 
@@ -124,7 +124,7 @@ Returns an empty map (all entries removed).
 map = map.clear();
 ```
 
-### `.forEach(fn: (K, V) -> void) -> void`
+### `.forEach(fn: (K, V) -> void): void`
 
 Calls the provided function once for each key-value pair.
 
@@ -134,7 +134,7 @@ map.forEach(fn(k, v): void {
 });
 ```
 
-### `.map(fn: (K, V) -> W) -> Map<K, W>`
+### `.map(fn: (K, V) -> W): Map<K, W>`
 
 Returns a new map with each value transformed by `fn`. Keys are preserved.
 
@@ -142,7 +142,7 @@ Returns a new map with each value transformed by `fn`. Keys are preserved.
 let doubled = scores.map(fn(k, v): number { return v * 2; });
 ```
 
-### `.filter(fn: (K, V) -> bool) -> Map<K, V>`
+### `.filter(fn: (K, V) -> bool): Map<K, V>`
 
 Returns a new map containing only the entries for which `fn` returns `true`.
 
@@ -179,7 +179,7 @@ for entry in scores.entries() {
 
 A set of unique hashable values with O(1) average-case membership testing. Automatically deduplicates on insert.
 
-### `new Set<T>() -> Set<T>`
+### `new Set<T>(): Set<T>`
 
 Creates a new empty Set.
 
@@ -187,7 +187,7 @@ Creates a new empty Set.
 let set: Set<string> = new Set<string>();
 ```
 
-### `Set.fromArray(arr: T[]) -> Set<T>`
+### `Set.fromArray(arr: T[]): Set<T>`
 
 Creates a Set from an array, deduplicating automatically.
 
@@ -198,7 +198,7 @@ let set = Set.fromArray([1, 2, 2, 3, 3]);
 
 ---
 
-### `.add(value: T) -> Set<T>`
+### `.add(value: T): Set<T>`
 
 Adds an element. If already present, the set is unchanged. Returns the updated set.
 
@@ -210,7 +210,7 @@ set = set.add("apple");  // duplicate, no effect
 // set contains {"apple", "banana"}
 ```
 
-### `.has(value: T) -> bool`
+### `.has(value: T): bool`
 
 Returns `true` if the value is in the set.
 
@@ -219,7 +219,7 @@ set.has("apple")   // true
 set.has("cherry")  // false
 ```
 
-### `.remove(value: T) -> Set<T>`
+### `.remove(value: T): Set<T>`
 
 Removes an element. If not present, the set is unchanged. Returns the updated set.
 
@@ -227,7 +227,7 @@ Removes an element. If not present, the set is unchanged. Returns the updated se
 set = set.remove("apple");
 ```
 
-### `.size() -> number`
+### `.size(): number`
 
 Returns the number of elements.
 
@@ -235,7 +235,7 @@ Returns the number of elements.
 let n = set.size();
 ```
 
-### `.isEmpty() -> bool`
+### `.isEmpty(): bool`
 
 Returns `true` if the set is empty.
 
@@ -243,7 +243,7 @@ Returns `true` if the set is empty.
 set.isEmpty()  // false
 ```
 
-### `.clear() -> Set<T>`
+### `.clear(): Set<T>`
 
 Returns an empty set.
 
@@ -251,7 +251,7 @@ Returns an empty set.
 set = set.clear();
 ```
 
-### `.toArray() -> T[]`
+### `.toArray(): T[]`
 
 Returns all elements as an array. Order is not guaranteed.
 
@@ -259,7 +259,7 @@ Returns all elements as an array. Order is not guaranteed.
 let arr = set.toArray();
 ```
 
-### `.forEach(fn: (T) -> void) -> void`
+### `.forEach(fn: (T) -> void): void`
 
 Calls the provided function once for each element.
 
@@ -296,7 +296,7 @@ visit("https://example.com");  // already visited
 
 A FIFO (First-In-First-Out) queue backed by a circular buffer (`VecDeque`) for O(1) enqueue and dequeue.
 
-### `new Queue<T>() -> Queue<T>`
+### `new Queue<T>(): Queue<T>`
 
 Creates a new empty queue.
 
@@ -306,7 +306,7 @@ let q: Queue<number> = new Queue<number>();
 
 ---
 
-### `.enqueue(value: T) -> Queue<T>`
+### `.enqueue(value: T): Queue<T>`
 
 Adds an element to the back of the queue. Returns the updated queue.
 
@@ -317,7 +317,7 @@ q = q.enqueue("task2");
 q = q.enqueue("task3");
 ```
 
-### `.dequeue() -> [Option<T>, Queue<T>]`
+### `.dequeue(): [Option<T>, Queue<T>]`
 
 Removes and returns the front element. Returns `[Option<element>, updatedQueue]`. Returns `None` if the queue is empty.
 
@@ -330,7 +330,7 @@ match item {
 }
 ```
 
-### `.peek() -> Option<T>`
+### `.peek(): Option<T>`
 
 Views the front element without removing it. Returns `None` if empty.
 
@@ -338,7 +338,7 @@ Views the front element without removing it. Returns `None` if empty.
 let front = q.peek();
 ```
 
-### `.size() -> number`
+### `.size(): number`
 
 Returns the number of elements in the queue.
 
@@ -346,7 +346,7 @@ Returns the number of elements in the queue.
 let n = q.size();
 ```
 
-### `.isEmpty() -> bool`
+### `.isEmpty(): bool`
 
 Returns `true` if the queue has no elements.
 
@@ -358,7 +358,7 @@ while !q.isEmpty() {
 }
 ```
 
-### `.clear() -> Queue<T>`
+### `.clear(): Queue<T>`
 
 Returns an empty queue.
 
@@ -366,7 +366,7 @@ Returns an empty queue.
 q = q.clear();
 ```
 
-### `.toArray() -> T[]`
+### `.toArray(): T[]`
 
 Returns elements as an array in FIFO order (front first).
 
@@ -400,7 +400,7 @@ while !tasks.isEmpty() {
 
 A LIFO (Last-In-First-Out) stack backed by a `Vec` for O(1) push and pop.
 
-### `new Stack<T>() -> Stack<T>`
+### `new Stack<T>(): Stack<T>`
 
 Creates a new empty stack.
 
@@ -410,7 +410,7 @@ let s: Stack<number> = new Stack<number>();
 
 ---
 
-### `.push(value: T) -> Stack<T>`
+### `.push(value: T): Stack<T>`
 
 Pushes an element onto the top of the stack. Returns the updated stack.
 
@@ -421,7 +421,7 @@ s = s.push(2);
 s = s.push(3);
 ```
 
-### `.pop() -> [Option<T>, Stack<T>]`
+### `.pop(): [Option<T>, Stack<T>]`
 
 Removes and returns the top element. Returns `[Option<element>, updatedStack]`. Returns `None` if the stack is empty.
 
@@ -434,7 +434,7 @@ match top {
 }
 ```
 
-### `.peek() -> Option<T>`
+### `.peek(): Option<T>`
 
 Views the top element without removing it. Returns `None` if empty.
 
@@ -442,7 +442,7 @@ Views the top element without removing it. Returns `None` if empty.
 let top = s.peek();
 ```
 
-### `.size() -> number`
+### `.size(): number`
 
 Returns the number of elements in the stack.
 
@@ -450,7 +450,7 @@ Returns the number of elements in the stack.
 let n = s.size();
 ```
 
-### `.isEmpty() -> bool`
+### `.isEmpty(): bool`
 
 Returns `true` if the stack has no elements.
 
@@ -458,7 +458,7 @@ Returns `true` if the stack has no elements.
 s.isEmpty()  // false after pushes
 ```
 
-### `.clear() -> Stack<T>`
+### `.clear(): Stack<T>`
 
 Returns an empty stack.
 
@@ -466,7 +466,7 @@ Returns an empty stack.
 s = s.clear();
 ```
 
-### `.toArray() -> T[]`
+### `.toArray(): T[]`
 
 Returns elements as an array in bottom-to-top order (bottom of stack is first element).
 

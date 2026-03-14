@@ -17,7 +17,7 @@ let opt: Option<number> = Some(42);
 let empty: Option<number> = None;
 ```
 
-### `.isSome() -> bool`
+### `.isSome(): bool`
 
 Returns `true` if the Option contains a value.
 
@@ -26,7 +26,7 @@ Some(42).isSome()   // true
 None.isSome()       // false
 ```
 
-### `.isNone() -> bool`
+### `.isNone(): bool`
 
 Returns `true` if the Option is `None`.
 
@@ -35,7 +35,7 @@ None.isNone()       // true
 Some(1).isNone()    // false
 ```
 
-### `.unwrap() -> T`
+### `.unwrap(): T`
 
 Returns the contained value. Panics if the Option is `None`.
 
@@ -47,7 +47,7 @@ None.unwrap();
 // runtime panic: "unwrap() called on None"
 ```
 
-### `.unwrapOr(default: T) -> T`
+### `.unwrapOr(default: T): T`
 
 Returns the contained value, or `default` if `None`.
 
@@ -59,7 +59,7 @@ let n2 = None.unwrapOr(0);
 // n2 == 0
 ```
 
-### `.expect(message: string) -> T`
+### `.expect(message: string): T`
 
 Returns the contained value. Panics with `message` if the Option is `None`.
 
@@ -71,7 +71,7 @@ None.expect("expected a number");
 // runtime panic: "expected a number"
 ```
 
-### `.map(fn: (T) -> U) -> Option<U>`
+### `.map(fn: (T) -> U): Option<U>`
 
 Transforms the contained value using `fn`. If `None`, returns `None` unchanged. This is a VM intrinsic.
 
@@ -83,7 +83,7 @@ let still_none = None.map(fn(borrow x: number): number { return x * 2; });
 // still_none == None
 ```
 
-### `.andThen(fn: (T) -> Option<U>) -> Option<U>`
+### `.andThen(fn: (T) -> Option<U>): Option<U>`
 
 Chains Option operations. If `Some`, applies `fn` to the value and returns the result. If `None`, returns `None`. This is a VM intrinsic.
 
@@ -113,7 +113,7 @@ let ok: Result<number, string> = Ok(42);
 let bad: Result<number, string> = Err("something failed");
 ```
 
-### `.isOk() -> bool`
+### `.isOk(): bool`
 
 Returns `true` if the Result is `Ok`.
 
@@ -122,7 +122,7 @@ Ok(42).isOk()    // true
 Err("x").isOk()  // false
 ```
 
-### `.isErr() -> bool`
+### `.isErr(): bool`
 
 Returns `true` if the Result is `Err`.
 
@@ -131,7 +131,7 @@ Err("x").isErr()  // true
 Ok(42).isErr()    // false
 ```
 
-### `.unwrap() -> T`
+### `.unwrap(): T`
 
 Returns the contained value. Panics with the error value if the Result is `Err`.
 
@@ -143,7 +143,7 @@ Err("failed").unwrap();
 // runtime panic: "unwrap() called on Err(failed)"
 ```
 
-### `.unwrapErr() -> E`
+### `.unwrapErr(): E`
 
 Returns the error value. Panics if the Result is `Ok`. This is a VM intrinsic.
 
@@ -152,7 +152,7 @@ let e = Err("oops").unwrapErr();
 // e == "oops"
 ```
 
-### `.unwrapOr(default: T) -> T`
+### `.unwrapOr(default: T): T`
 
 Returns the contained value, or `default` if `Err`.
 
@@ -164,7 +164,7 @@ let n2 = Err("x").unwrapOr(0);
 // n2 == 0
 ```
 
-### `.expect(message: string) -> T`
+### `.expect(message: string): T`
 
 Returns the contained value. Panics with `message: errValue` if `Err`.
 
@@ -176,7 +176,7 @@ Err("bad").expect("parsing failed");
 // runtime panic: "parsing failed: bad"
 ```
 
-### `.context(message: string) -> Result<T, string>`
+### `.context(message: string): Result<T, string>`
 
 Wraps an `Err` with additional context. If `Ok`, passes through unchanged. The new error is formatted as `"message: originalError"`.
 
@@ -188,9 +188,9 @@ let r2 = Ok(42).context("ignored");
 // r2 == Ok(42)
 ```
 
-### `.ok() -> Option<T>`
+### `.ok(): Option<T>`
 
-Converts a `Result` to an `Option`, discarding the error. `Ok(v) -> Some(v)`, `Err(_) -> None`.
+Converts a `Result` to an `Option`, discarding the error. `Ok(v) -> Some(v)`, `Err(_): None`.
 
 ```atlas
 let opt = Ok(42).ok();
@@ -200,9 +200,9 @@ let opt2 = Err("x").ok();
 // opt2 == None
 ```
 
-### `.err() -> Option<E>`
+### `.err(): Option<E>`
 
-Converts a `Result` to an `Option` containing the error. `Ok(_) -> None`, `Err(e) -> Some(e)`.
+Converts a `Result` to an `Option` containing the error. `Ok(_) -> None`, `Err(e): Some(e)`.
 
 ```atlas
 let opt = Err("failed").err();
@@ -212,7 +212,7 @@ let opt2 = Ok(42).err();
 // opt2 == None
 ```
 
-### `.map(fn: (T) -> U) -> Result<U, E>`
+### `.map(fn: (T) -> U): Result<U, E>`
 
 Transforms the `Ok` value using `fn`. `Err` passes through unchanged. This is a VM intrinsic.
 
@@ -224,7 +224,7 @@ let r2 = Err("x").map(fn(borrow x: number): number { return x * 2; });
 // r2 == Err("x")
 ```
 
-### `.mapErr(fn: (E) -> F) -> Result<T, F>`
+### `.mapErr(fn: (E) -> F): Result<T, F>`
 
 Transforms the `Err` value using `fn`. `Ok` passes through unchanged. This is a VM intrinsic.
 
@@ -235,7 +235,7 @@ let r = Err("raw error").mapErr(fn(borrow e: string): string {
 // r == Err("Wrapped: raw error")
 ```
 
-### `.andThen(fn: (T) -> Result<U, E>) -> Result<U, E>`
+### `.andThen(fn: (T) -> Result<U, E>): Result<U, E>`
 
 Chains Result operations (flat-map). If `Ok`, applies `fn`. If `Err`, returns `Err` unchanged. This is a VM intrinsic.
 
@@ -275,7 +275,7 @@ typeof(null) == "null"         // true
 typeof([1, 2]) == "array"      // true
 ```
 
-### `Array.isArray(value) -> bool`
+### `Array.isArray(value): bool`
 
 The one static type-check method — mirrors TypeScript's `Array.isArray()` for AI-generation fidelity.
 
@@ -286,7 +286,7 @@ Array.isArray([])          // true
 Array.isArray(42)          // false
 ```
 
-### `isObject(value: any) -> bool`
+### `isObject(value: any): bool`
 
 Returns `true` only for JSON objects (records), not Atlas structs or maps.
 
@@ -296,7 +296,7 @@ isObject(obj)   // true
 isObject([])    // false
 ```
 
-### `isType(value: any, typeName: string) -> bool`
+### `isType(value: any, typeName: string): bool`
 
 Checks the runtime type name of `value` against `typeName`. The type name string matches the values returned by `type()`.
 
@@ -307,7 +307,7 @@ isType([1, 2], "array")    // true
 isType(None, "option")     // true
 ```
 
-### `hasField(value: any, field: string) -> bool`
+### `hasField(value: any, field: string): bool`
 
 Returns `true` if `value` is a JSON object or HashMap containing the given key.
 
@@ -317,7 +317,7 @@ hasField(obj, "x")    // true
 hasField(obj, "y")    // false
 ```
 
-### `hasTag(value: any, tag: string) -> bool`
+### `hasTag(value: any, tag: string): bool`
 
 Returns `true` if `value` is a JSON object or HashMap with a `"tag"` key matching `tag`. Useful for discriminated union patterns.
 
@@ -331,7 +331,7 @@ hasTag(event, "hover")   // false
 
 ## Type Conversion
 
-### `toNumber(value: any) -> Result<number, string>`
+### `toNumber(value: any): Result<number, string>`
 
 Safely converts a value to number. Returns `Result` so invalid conversions are handled rather than panicked.
 
@@ -359,7 +359,7 @@ match toNumber(userInput) {
 }
 ```
 
-### `toString(value: any) -> string`
+### `toString(value: any): string`
 
 Converts any value to its string representation. Equivalent to the global `str()` function.
 
@@ -371,7 +371,7 @@ let s2 = toString(Some("hi"));
 // s2 == "Some(\"hi\")"
 ```
 
-### `toBool(value: any) -> bool`
+### `toBool(value: any): bool`
 
 Converts a value to boolean using JavaScript-like truthiness rules.
 
@@ -391,8 +391,8 @@ let b3 = toBool([]);     // true  (array is always truthy)
 
 Use method syntax on strings (D-045 — no bare global `parseInt`/`parseFloat`):
 
-- **`.toInt(radix?: number) -> Result<number, string>`** — parse integer, default radix 10
-- **`.toNumber() -> Result<number, string>`** — parse float
+- **`.toInt(radix?: number): Result<number, string>`** — parse integer, default radix 10
+- **`.toNumber(): Result<number, string>`** — parse float
 
 ```atlas
 let r = "42".toInt();
@@ -418,7 +418,7 @@ let rf2 = "abc".toNumber();
 
 ## number Instance Methods
 
-### `.toString() -> string`
+### `.toString(): string`
 
 Returns the canonical string representation of a number.
 
@@ -433,7 +433,7 @@ let s3 = (0 / 0).toString();
 // s3 == "NaN"
 ```
 
-### `.toFixed(digits: number) -> string`
+### `.toFixed(digits: number): string`
 
 Formats the number with exactly `digits` decimal places.
 
@@ -445,7 +445,7 @@ let s2 = (1).toFixed(3);
 // s2 == "1.000"
 ```
 
-### `.toInt() -> number`
+### `.toInt(): number`
 
 Truncates the number toward zero (equivalent to `Math.trunc`).
 
@@ -461,7 +461,7 @@ let n2 = (-3.9).toInt();
 
 ## bool Instance Methods
 
-### `.toString() -> string`
+### `.toString(): string`
 
 Returns `"true"` or `"false"`.
 

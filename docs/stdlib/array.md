@@ -8,7 +8,7 @@ Callback-based operations (`map`, `filter`, `reduce`, `forEach`, `find`, `findIn
 
 ## Instance Methods
 
-### `.push(element: T) -> T[]`
+### `.push(element: T): T[]`
 
 Returns a new array with `element` appended at the end.
 
@@ -20,7 +20,7 @@ let nums2 = nums.push(4);
 
 ---
 
-### `.pop() -> [T, T[]]`
+### `.pop(): [T, T[]]`
 
 Removes and returns the last element. Returns a two-element array `[removedElement, newArray]`. Errors on empty array.
 
@@ -31,7 +31,7 @@ let [last, rest] = [1, 2, 3].pop();
 
 ---
 
-### `.shift() -> [T, T[]]`
+### `.shift(): [T, T[]]`
 
 Removes and returns the first element. Returns a two-element array `[removedElement, newArray]`. Errors on empty array.
 
@@ -42,7 +42,7 @@ let [first, rest] = [1, 2, 3].shift();
 
 ---
 
-### `.unshift(element: T) -> T[]`
+### `.unshift(element: T): T[]`
 
 Returns a new array with `element` prepended at the beginning.
 
@@ -54,7 +54,7 @@ let nums2 = nums.unshift(1);
 
 ---
 
-### `.reverse() -> T[]`
+### `.reverse(): T[]`
 
 Returns a new array with elements in reverse order.
 
@@ -65,7 +65,7 @@ let reversed = [1, 2, 3].reverse();
 
 ---
 
-### `.concat(other: T[]) -> T[]`
+### `.concat(other: T[]): T[]`
 
 Returns a new array containing all elements from both arrays.
 
@@ -78,7 +78,7 @@ let c = a.concat(b);
 
 ---
 
-### `.slice(start: number, end: number) -> T[]`
+### `.slice(start: number, end: number): T[]`
 
 Returns a new array with elements from `start` (inclusive) to `end` (exclusive). Indices are clamped to array bounds. Errors if `start > end`.
 
@@ -89,7 +89,7 @@ let sub = [10, 20, 30, 40, 50].slice(1, 4);
 
 ---
 
-### `.indexOf(value: T) -> Option<number>`
+### `.indexOf(value: T): Option<number>`
 
 Returns `Some(index)` of the first occurrence, or `None` if not found. Arrays and objects are compared by reference identity, not deep equality.
 
@@ -103,7 +103,7 @@ let missing = ["a", "b"].indexOf("z");
 
 ---
 
-### `.lastIndexOf(value: T) -> Option<number>`
+### `.lastIndexOf(value: T): Option<number>`
 
 Returns `Some(index)` of the last occurrence, or `None` if not found.
 
@@ -114,7 +114,7 @@ let idx = [1, 2, 1, 3].lastIndexOf(1);
 
 ---
 
-### `.includes(value: T) -> bool`
+### `.includes(value: T): bool`
 
 Returns `true` if the array contains the given value.
 
@@ -125,7 +125,7 @@ let found = ["x", "y", "z"].includes("y");
 
 ---
 
-### `.sort() -> T[]`
+### `.sort(): T[]`
 
 Returns a new sorted array. Numbers sort ascending by value; strings sort lexicographically. Original is not modified.
 
@@ -139,7 +139,7 @@ let words = ["banana", "apple", "cherry"].sort();
 
 ---
 
-### `.flat() -> T[]`
+### `.flat(): T[]`
 
 Flattens one level of nesting. Nested arrays are expanded in-place; non-array elements are kept as-is.
 
@@ -150,7 +150,7 @@ let flat = [[1, 2], [3, 4], 5].flat();
 
 ---
 
-### `.join(separator: string) -> string`
+### `.join(separator: string): string`
 
 Joins all string elements into a single string separated by `separator`. All elements must be strings.
 
@@ -164,7 +164,7 @@ let csv = ["a", "b", "c"].join(",");
 
 ---
 
-### `.length() -> number`
+### `.length(): number`
 
 Returns the number of elements in the array. Call as a method.
 
@@ -179,7 +179,7 @@ let n = [1, 2, 3].length();
 
 These methods accept a function or closure argument and are executed by the VM directly.
 
-### `.map(fn: (T) -> U) -> U[]`
+### `.map(fn: (T) -> U): U[]`
 
 Transforms each element by applying `fn`.
 
@@ -188,7 +188,7 @@ let doubled = [1, 2, 3].map(fn(borrow x: number): number { return x * 2; });
 // doubled == [2, 4, 6]
 ```
 
-### `.filter(fn: (T) -> bool) -> T[]`
+### `.filter(fn: (T) -> bool): T[]`
 
 Keeps only elements for which `fn` returns `true`.
 
@@ -197,7 +197,7 @@ let evens = [1, 2, 3, 4].filter(fn(borrow x: number): bool { return x % 2 == 0; 
 // evens == [2, 4]
 ```
 
-### `.reduce(fn: (U, T) -> U, initial: U) -> U`
+### `.reduce(fn: (U, T) -> U, initial: U): U`
 
 Accumulates elements into a single value starting from `initial`.
 
@@ -209,7 +209,7 @@ let sum = [1, 2, 3, 4].reduce(
 // sum == 10
 ```
 
-### `.forEach(fn: (T) -> void) -> void`
+### `.forEach(fn: (T) -> void): void`
 
 Calls `fn` for each element. Returns `void`.
 
@@ -219,7 +219,7 @@ Calls `fn` for each element. Returns `void`.
 });
 ```
 
-### `.find(fn: (T) -> bool) -> Option<T>`
+### `.find(fn: (T) -> bool): Option<T>`
 
 Returns `Some(element)` for the first element where `fn` returns `true`, or `None`.
 
@@ -228,7 +228,7 @@ let found = [1, 2, 3, 4].find(fn(borrow x: number): bool { return x > 2; });
 // found == Some(3)
 ```
 
-### `.findIndex(fn: (T) -> bool) -> Option<number>`
+### `.findIndex(fn: (T) -> bool): Option<number>`
 
 Returns `Some(index)` of the first element where `fn` returns `true`, or `None`.
 
@@ -237,7 +237,7 @@ let idx = [10, 20, 30].findIndex(fn(borrow x: number): bool { return x == 20; })
 // idx == Some(1)
 ```
 
-### `.some(fn: (T) -> bool) -> bool`
+### `.some(fn: (T) -> bool): bool`
 
 Returns `true` if any element satisfies `fn`.
 
@@ -246,7 +246,7 @@ let anyBig = [1, 2, 100].some(fn(borrow x: number): bool { return x > 50; });
 // anyBig == true
 ```
 
-### `.every(fn: (T) -> bool) -> bool`
+### `.every(fn: (T) -> bool): bool`
 
 Returns `true` if all elements satisfy `fn`.
 
@@ -255,7 +255,7 @@ let allPos = [1, 2, 3].every(fn(borrow x: number): bool { return x > 0; });
 // allPos == true
 ```
 
-### `.flatMap(fn: (T) -> U[]) -> U[]`
+### `.flatMap(fn: (T) -> U[]): U[]`
 
 Maps each element to an array and flattens one level.
 
@@ -268,7 +268,7 @@ let result = [1, 2, 3].flatMap(fn(borrow x: number): number[] { return [x, x * 1
 
 ## Global Array Utility Functions
 
-### `arrayEnumerate(arr: T[]) -> (number, T)[]`
+### `arrayEnumerate(arr: T[]): (number, T)[]`
 
 Returns an array of `(index, value)` tuples. Useful for indexed iteration without a counter variable.
 
@@ -282,7 +282,7 @@ for pair in arrayEnumerate(["a", "b", "c"]) {
 // 2: c
 ```
 
-### `arrayFill(arr: T[], value: T, start: number, end: number) -> T[]`
+### `arrayFill(arr: T[], value: T, start: number, end: number): T[]`
 
 Returns a new array with elements from `start` (inclusive) to `end` (exclusive) replaced with `value`.
 
@@ -295,7 +295,7 @@ let filled = arrayFill([1, 2, 3, 4, 5], 0, 1, 3);
 
 ## Static Namespace Methods
 
-### `Array.isArray(value: any) -> bool`
+### `Array.isArray(value: any): bool`
 
 Returns `true` if `value` is an array. Mirrors TypeScript's `Array.isArray()` — AI models know this pattern cold (D-062).
 

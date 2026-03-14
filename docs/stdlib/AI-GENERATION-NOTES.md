@@ -130,11 +130,11 @@ console.log(name); // "Atlas"
 ```
 
 Use the typed getters — they return `Option<T>` (safe):
-- `Json.getString(json, key) -> Option<string>`
-- `Json.getNumber(json, key) -> Option<number>`
-- `Json.getBool(json, key) -> Option<bool>`
-- `Json.getArray(json, key) -> Option<JsonValue[]>`
-- `Json.getObject(json, key) -> Option<JsonValue>`
+- `Json.getString(json, key): Option<string>`
+- `Json.getNumber(json, key): Option<number>`
+- `Json.getBool(json, key): Option<bool>`
+- `Json.getArray(json, key): Option<JsonValue[]>`
+- `Json.getObject(json, key): Option<JsonValue>`
 
 ---
 
