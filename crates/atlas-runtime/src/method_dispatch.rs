@@ -713,6 +713,7 @@ fn resolve_http_ns_method(method_name: &str) -> Option<String> {
         "put" => "httpNsPut",
         "delete" => "httpNsDelete",
         "patch" => "httpNsPatch",
+        "checkPermission" => "httpCheckPermission",
         _ => return None,
     };
     Some(func_name.to_string())
