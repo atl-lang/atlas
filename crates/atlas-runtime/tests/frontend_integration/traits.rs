@@ -135,7 +135,7 @@ fn test_h076_supertrait_parses() {
         trait A {
             fn foo(borrow self: A): number;
         }
-        trait B: A {
+        trait B extends A {
             fn bar(borrow self: B): string;
         }
         "#,
@@ -159,7 +159,7 @@ fn test_h076_impl_of_subtrait_requires_supertrait_methods() {
         r#"
         struct MyType { x: number }
         trait A { fn foo(borrow self: A): number; }
-        trait B: A { fn bar(borrow self: B): string; }
+        trait B extends A { fn bar(borrow self: B): string; }
         impl B for MyType {
             fn bar(borrow self: MyType): string { "hello"; }
         }
@@ -177,7 +177,7 @@ fn test_h076_impl_with_all_methods_is_ok() {
         r#"
         struct MyType { x: number }
         trait A { fn foo(borrow self: A): number; }
-        trait B: A {
+        trait B extends A {
             fn bar(borrow self: B): string;
         }
         impl B for MyType {
@@ -197,7 +197,7 @@ fn test_h076_impl_with_all_methods_is_ok() {
 fn test_h076_undefined_supertrait_is_error() {
     let errors = typecheck_errors(
         r#"
-        trait B: NonExistent {
+        trait B extends NonExistent {
             fn bar(borrow self: B): string;
         }
         "#,

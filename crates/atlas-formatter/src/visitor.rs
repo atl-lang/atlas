@@ -504,7 +504,7 @@ impl FormatVisitor {
 
         // Return type (only emit if explicitly annotated)
         if let Some(ref rt) = f.return_type {
-            self.write(" -> ");
+            self.write(": ");
             self.write(&self.type_ref_to_string(rt));
         }
 
@@ -1135,7 +1135,7 @@ impl FormatVisitor {
                 self.write(&params_str);
                 self.write(")");
                 if let Some(ref rt) = f.return_type {
-                    self.write(" -> ");
+                    self.write(": ");
                     self.write(&self.type_ref_to_string(rt));
                 }
                 self.write(" ");
