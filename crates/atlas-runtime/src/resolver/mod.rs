@@ -10,8 +10,38 @@
 use crate::diagnostic::error_codes::{CIRCULAR_DEPENDENCY, INVALID_MODULE_PATH, MODULE_NOT_FOUND};
 use crate::diagnostic::Diagnostic;
 use crate::span::Span;
+use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+
+// ---------------------------------------------------------------------------
+// Minimal inline lockfile reader (avoids pulling in atlas-package + reqwest)
+// ---------------------------------------------------------------------------
+
+/// Minimal subset of atlas.lock needed for bare specifier resolution.
+#[derive(Debug, Deserialize)]
+struct MinLockfile {
+    #[serde(default)]
+    packages: Vec<MinLockedPackage>,
+}
+
+#[derive(Debug, Deserialize)]
+struct MinLockedPackage {
+    name: String,
+    version: String,
+}
+
+impl MinLockfile {
+    fn from_file(path: &std::path::Path) -> Result<Self, String> {
+        let content = std::fs::read_to_string(path)
+            .map_err(|e| format!("could not read {}: {}", path.display(), e))?;
+        toml::from_str(&content).map_err(|e| format!("parse error in {}: {}", path.display(), e))
+    }
+
+    fn get_package(&self, name: &str) -> Option<&MinLockedPackage> {
+        self.packages.iter().find(|p| p.name == name)
+    }
+}
 
 /// Module resolver - handles path resolution and circular dependency detection
 pub struct ModuleResolver {
@@ -59,6 +89,9 @@ impl ModuleResolver {
         } else if source.starts_with("./") || source.starts_with("../") {
             // Relative path: resolve from importing file's directory
             self.resolve_relative(source, importing_file)?
+        } else if !source.contains('/') {
+            // Bare package name: 'web', 'http-router', etc.
+            return self.resolve_package(source, span);
         } else {
             return Err(INVALID_MODULE_PATH.emit(span)
                 .arg("path", source)
@@ -225,5 +258,156 @@ impl ModuleResolver {
     pub fn clear(&mut self) {
         self.path_cache.clear();
         self.dependencies.clear();
+    }
+
+    /// Resolve a bare package specifier (e.g., `'web'`, `'http-router'`) using atlas.lock
+    fn resolve_package(&self, name: &str, span: Span) -> Result<PathBuf, Diagnostic> {
+        // 1. Find atlas.lock by walking up from project root
+        let lockfile_path = self.find_lockfile(span)?;
+
+        // 2. Parse the lockfile
+        let lockfile = MinLockfile::from_file(&lockfile_path).map_err(|e| {
+            MODULE_NOT_FOUND
+                .emit(span)
+                .arg("path", name)
+                .with_help(format!(
+                    "failed to read atlas.lock: {} — run: atlas install",
+                    e
+                ))
+                .build()
+        })?;
+
+        // 3. Look up package in lockfile
+        let locked_pkg = lockfile.get_package(name).ok_or_else(|| {
+            MODULE_NOT_FOUND
+                .emit(span)
+                .arg("path", name)
+                .with_help(format!(
+                    "package \"{}\" not found in atlas.lock — run: atlas install",
+                    name
+                ))
+                .build()
+        })?;
+
+        // 4. Determine cache dir
+        let cache_dir = std::env::var("ATLAS_CACHE_DIR")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|_| {
+                dirs::home_dir()
+                    .unwrap_or_else(|| std::path::PathBuf::from("."))
+                    .join(".atlas")
+                    .join("cache")
+            });
+
+        // 5. Get version from lockfile entry
+        let version = locked_pkg.version.to_string();
+        let pkg_dir = cache_dir.join(name).join(&version);
+
+        // 6. Try entry point candidates: lib.atlas, index.atlas, mod.atlas
+        let candidates = ["lib.atlas", "index.atlas", "mod.atlas"];
+        for candidate in &candidates {
+            let path = pkg_dir.join(candidate);
+            if path.exists() {
+                return Ok(path);
+            }
+        }
+
+        // 7. Package is in lockfile but not in cache
+        Err(MODULE_NOT_FOUND
+            .emit(span)
+            .arg("path", name)
+            .with_help(format!(
+                "package \"{}\" is in atlas.lock but not in cache — run: atlas install",
+                name
+            ))
+            .build())
+    }
+
+    /// Walk up from self.root looking for atlas.lock
+    fn find_lockfile(&self, span: Span) -> Result<std::path::PathBuf, Diagnostic> {
+        let mut current = self.root.clone();
+        loop {
+            let candidate = current.join("atlas.lock");
+            if candidate.exists() {
+                return Ok(candidate);
+            }
+            if !current.pop() {
+                break;
+            }
+        }
+        Err(MODULE_NOT_FOUND
+            .emit(span)
+            .arg("path", "atlas.lock")
+            .with_help("no atlas.lock found — run: atlas install")
+            .build())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    fn dummy_span() -> Span {
+        Span::new(0, 0)
+    }
+
+    fn make_resolver(root: &std::path::Path) -> ModuleResolver {
+        ModuleResolver::new(root.to_path_buf())
+    }
+
+    /// Bare specifier with no atlas.lock present → error containing "atlas install"
+    #[test]
+    fn test_bare_specifier_no_lockfile() {
+        let dir = TempDir::new().expect("tempdir");
+        let resolver = make_resolver(dir.path());
+        let result = resolver.resolve_package("web", dummy_span());
+        assert!(result.is_err());
+        let err = result.expect_err("expected error");
+        let msg = format!("{:?}", err);
+        assert!(
+            msg.contains("atlas install"),
+            "expected 'atlas install' in error, got: {}",
+            msg
+        );
+    }
+
+    /// Relative imports (./foo) must still resolve through resolve_path normally
+    #[test]
+    fn test_relative_import_unchanged() {
+        let dir = TempDir::new().expect("tempdir");
+        // Create a file to resolve to
+        let file_path = dir.path().join("foo.atlas");
+        fs::write(&file_path, "// test").expect("write foo.atlas");
+
+        let mut resolver = make_resolver(dir.path());
+        // Use a fake importing file inside the same dir
+        let importing = dir.path().join("main.atlas");
+        fs::write(&importing, "// main").expect("write main.atlas");
+
+        let result = resolver.resolve_path("./foo", &importing, dummy_span());
+        assert!(result.is_ok(), "relative import failed: {:?}", result.err());
+        let resolved = result.expect("resolved path");
+        assert!(resolved.ends_with("foo.atlas"));
+    }
+
+    /// Absolute imports (/src/foo) must still resolve through resolve_path normally
+    #[test]
+    fn test_absolute_import_unchanged() {
+        let dir = TempDir::new().expect("tempdir");
+        let src_dir = dir.path().join("src");
+        fs::create_dir_all(&src_dir).expect("create src dir");
+        let file_path = src_dir.join("foo.atlas");
+        fs::write(&file_path, "// test").expect("write foo.atlas");
+
+        let mut resolver = make_resolver(dir.path());
+        let importing = dir.path().join("main.atlas");
+        fs::write(&importing, "// main").expect("write main.atlas");
+
+        let result = resolver.resolve_path("/src/foo", &importing, dummy_span());
+        assert!(result.is_ok(), "absolute import failed: {:?}", result.err());
+        let resolved = result.expect("resolved path");
+        assert!(resolved.ends_with("foo.atlas"));
     }
 }
