@@ -2,7 +2,7 @@ console.log(typeof(42));
 console.log(typeof("hello"));
 console.log(typeof(true));
 console.log(typeof(null));
-console.log(is_number(42));
+console.log(typeof(42) == "number");
 console.log(typeof("hello") == "string");
 console.log(typeof(true) == "bool");
 console.log(typeof(null) == "null");

@@ -12,15 +12,15 @@ fn test_csv_multi_column_filter() {
     let code = format!(
         r#"
         fn isHighValueInStock(borrow row: string): bool {{
-            let fields: string[] = split(row, ",");
-            let price: number = unwrap(parse_float(fields[1]));
-            let stock: number = unwrap(parse_float(fields[2]));
+            let fields: string[] = row.split(",");
+            let price: number = unwrap(fields[1].toNumber());
+            let stock: number = unwrap(fields[2].toNumber());
             return price >= 1.0 && stock >= 100.0;
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
-        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
+        let dataLines: string[] = lines.slice(1, len(lines) - 1.0);
 
         let filtered: string[] = filter(dataLines, isHighValueInStock);
         len(filtered)
@@ -43,18 +43,18 @@ fn test_csv_column_sum_with_condition() {
     let code = format!(
         r#"
         fn sumNorth(borrow total: number, borrow row: string): number {{
-            let fields: string[] = split(row, ",");
+            let fields: string[] = row.split(",");
             let region: string = fields[0];
-            let amount: number = unwrap(parse_float(fields[1]));
+            let amount: number = unwrap(fields[1].toNumber());
             if (region == "North") {{
                 return total + amount;
             }}
             return total;
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
-        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
+        let dataLines: string[] = lines.slice(1, len(lines) - 1.0);
 
         reduce(dataLines, sumNorth, 0.0)
     "#,
@@ -76,13 +76,13 @@ fn test_csv_row_count_by_group() {
     let code = format!(
         r#"
         fn isError(borrow row: string): bool {{
-            let fields: string[] = split(row, ",");
+            let fields: string[] = row.split(",");
             return fields[0] == "ERROR";
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
-        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
+        let dataLines: string[] = lines.slice(1, len(lines) - 1.0);
 
         let errors: string[] = filter(dataLines, isError);
         len(errors)
@@ -101,16 +101,16 @@ fn test_csv_transform_and_join() {
     let code = format!(
         r#"
         fn fullName(borrow row: string): string {{
-            let fields: string[] = split(row, ",");
+            let fields: string[] = row.split(",");
             return fields[0] + " " + fields[1];
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
-        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
+        let dataLines: string[] = lines.slice(1, len(lines) - 1.0);
 
         let names: string[] = map(dataLines, fullName);
-        join(names, "; ")
+        names.join("; ")
     "#,
         path_for_atlas(&csv_path)
     );
@@ -126,14 +126,14 @@ fn test_csv_percentage_calculation() {
     let code = format!(
         r#"
         fn calcPercentage(borrow row: string): number {{
-            let fields: string[] = split(row, ",");
-            let sold: number = unwrap(parse_float(fields[1]));
-            let total: number = unwrap(parse_float(fields[2]));
+            let fields: string[] = row.split(",");
+            let sold: number = unwrap(fields[1].toNumber());
+            let total: number = unwrap(fields[2].toNumber());
             return (sold / total) * 100.0;
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
         let row1: string = lines[1];
 
         calcPercentage(row1)
@@ -152,14 +152,14 @@ fn test_csv_trim_whitespace() {
     let code = format!(
         r#"
         fn cleanRow(borrow row: string): string {{
-            let fields: string[] = split(row, ",");
+            let fields: string[] = row.split(",");
             let name: string = fields[0].trim();
             let value: string = fields[1].trim();
             return name + "," + value;
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
         let row1: string = lines[1];
 
         cleanRow(row1)
@@ -182,14 +182,14 @@ fn test_csv_case_insensitive_filter() {
     let code = format!(
         r#"
         fn isFruit(borrow row: string): bool {{
-            let fields: string[] = split(row, ",");
+            let fields: string[] = row.split(",");
             let kind: string = fields[1].toLowerCase();
             return kind == "fruit";
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
-        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
+        let dataLines: string[] = lines.slice(1, len(lines) - 1.0);
 
         let fruits: string[] = filter(dataLines, isFruit);
         len(fruits)
@@ -212,12 +212,12 @@ fn test_csv_contains_filter() {
     let code = format!(
         r#"
         fn hasError(borrow row: string): bool {{
-            return includes(row, "Error");
+            return row.includes("Error");
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
-        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
+        let dataLines: string[] = lines.slice(1, len(lines) - 1.0);
 
         let errors: string[] = filter(dataLines, hasError);
         len(errors)
@@ -236,20 +236,20 @@ fn test_csv_numeric_sort_data() {
     let code = format!(
         r#"
         fn compareById(borrow a: string, borrow b: string): number {{
-            let fieldsA: string[] = split(a, ",");
-            let fieldsB: string[] = split(b, ",");
-            let idA: number = unwrap(parse_float(fieldsA[0]));
-            let idB: number = unwrap(parse_float(fieldsB[0]));
+            let fieldsA: string[] = a.split(",");
+            let fieldsB: string[] = b.split(",");
+            let idA: number = unwrap(fieldsA[0].toNumber());
+            let idB: number = unwrap(fieldsB[0].toNumber());
             return idA - idB;
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
-        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
+        let dataLines: string[] = lines.slice(1, len(lines) - 1.0);
 
         let sorted: string[] = sort(dataLines, compareById);
         let first: string = sorted[0];
-        let fields: string[] = split(first, ",");
+        let fields: string[] = first.split(",");
         fields[0]
     "#,
         path_for_atlas(&csv_path)
@@ -265,13 +265,13 @@ fn test_csv_append_row() {
 
     let code = format!(
         r#"
-        let csv: string = read_file("{}");
+        let csv: string = file.read("{}").unwrap();
         let newRow: string = "Bob,90";
         let updated: string = csv + newRow + "\n";
-        write_file("{}", updated);
+        file.write("{}", updated);
 
-        let result: string = read_file("{}");
-        let lines: string[] = split(result, "\n");
+        let result: string = file.read("{}").unwrap();
+        let lines: string[] = result.split("\n");
         len(lines) - 1.0
     "#,
         path_for_atlas(&csv_path),
@@ -290,13 +290,13 @@ fn test_csv_validate_column_count() {
     let code = format!(
         r#"
         fn hasThreeColumns(borrow row: string): bool {{
-            let fields: string[] = split(row, ",");
+            let fields: string[] = row.split(",");
             return len(fields) == 3.0;
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
-        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
+        let dataLines: string[] = lines.slice(1, len(lines) - 1.0);
 
         let valid: string[] = filter(dataLines, hasThreeColumns);
         len(valid) == len(dataLines)
@@ -319,19 +319,19 @@ fn test_csv_extract_unique_values() {
     let code = format!(
         r#"
         fn getCategory(borrow row: string): string {{
-            let fields: string[] = split(row, ",");
+            let fields: string[] = row.split(",");
             return fields[1];
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
-        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
+        let dataLines: string[] = lines.slice(1, len(lines) - 1.0);
 
         let categories: string[] = map(dataLines, getCategory);
         // Count unique by checking first occurrence
-        let hasFruit: bool = array_includes(categories, "fruit");
-        let hasVeggie: bool = array_includes(categories, "veggie");
-        let hasMeat: bool = array_includes(categories, "meat");
+        let hasFruit: bool = categories.includes("fruit");
+        let hasVeggie: bool = categories.includes("veggie");
+        let hasMeat: bool = categories.includes("meat");
 
         str(hasFruit) + "," + str(hasVeggie) + "," + str(hasMeat)
     "#,
@@ -349,8 +349,8 @@ fn test_csv_conditional_transformation() {
     let code = format!(
         r#"
         fn addGrade(borrow row: string): string {{
-            let fields: string[] = split(row, ",");
-            let score: number = unwrap(parse_float(fields[1]));
+            let fields: string[] = row.split(",");
+            let score: number = unwrap(fields[1].toNumber());
             let mut grade: string = "F";
             if (score >= 90.0) {{
                 grade = "A";
@@ -364,8 +364,8 @@ fn test_csv_conditional_transformation() {
             return fields[0] + "," + fields[1] + "," + grade;
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
         let row1: string = lines[1];
 
         addGrade(row1)
@@ -384,17 +384,17 @@ fn test_csv_min_value() {
     let code = format!(
         r#"
         fn findMin(borrow current: number, borrow row: string): number {{
-            let fields: string[] = split(row, ",");
-            let temp: number = unwrap(parse_float(fields[1]));
+            let fields: string[] = row.split(",");
+            let temp: number = unwrap(fields[1].toNumber());
             if (current == 0.0) {{
                 return temp;
             }}
             return Math.min(current, temp);
         }}
 
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
-        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
+        let dataLines: string[] = lines.slice(1, len(lines) - 1.0);
 
         reduce(dataLines, findMin, 0.0)
     "#,
@@ -411,10 +411,10 @@ fn test_csv_concatenate_fields() {
 
     let code = format!(
         r#"
-        let csv: string = read_file("{}");
-        let lines: string[] = split(csv, "\n");
+        let csv: string = file.read("{}").unwrap();
+        let lines: string[] = csv.split("\n");
         let row1: string = lines[1];
-        let fields: string[] = split(row1, ",");
+        let fields: string[] = row1.split(",");
         fields[0] + ", " + fields[1] + ", " + fields[2]
     "#,
         path_for_atlas(&csv_path)

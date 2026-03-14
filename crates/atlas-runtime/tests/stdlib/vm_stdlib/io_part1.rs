@@ -3,6 +3,16 @@ use super::*;
 use std::fs;
 use tempfile::TempDir;
 
+fn unwrap_atlas_result_ok(val: atlas_runtime::Value) -> atlas_runtime::Value {
+    match val {
+        atlas_runtime::Value::Result(inner) => match inner {
+            Ok(v) => *v,
+            Err(e) => panic!("Expected Atlas Ok, got Atlas Err: {:?}", e),
+        },
+        other => other,
+    }
+}
+
 // From vm_stdlib_io_tests.rs
 // Standard library file I/O tests (VM/Bytecode)
 //
@@ -18,11 +28,12 @@ fn vm_test_read_file_basic() {
     let test_file = temp_dir.path().join("test.txt");
     fs::write(&test_file, "Hello, VM!").unwrap();
 
-    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = file.read("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
-    assert!(matches!(result.unwrap(), atlas_runtime::Value::String(_)));
+    let inner = unwrap_atlas_result_ok(result.unwrap());
+    assert!(matches!(inner, atlas_runtime::Value::String(_)));
 }
 
 #[test]
@@ -31,7 +42,7 @@ fn vm_test_write_file_basic() {
     let test_file = temp_dir.path().join("output.txt");
 
     let code = format!(
-        r#"write_file("{}", "VM content");"#,
+        r#"file.write("{}", "VM content");"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -48,7 +59,7 @@ fn vm_test_append_file_basic() {
     fs::write(&test_file, "line1\n").unwrap();
 
     let code = format!(
-        r#"append_file("{}", "line2\n");"#,
+        r#"file.append("{}", "line2\n");"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -65,7 +76,7 @@ fn vm_test_file_exists_true() {
     fs::write(&test_file, "").unwrap();
 
     let code = format!(
-        r#"let result = file_exists("{}"); result;"#,
+        r#"let result = file.exists("{}"); result;"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -81,7 +92,7 @@ fn vm_test_file_exists_false() {
     let nonexistent = temp_dir.path().join("does_not_exist.txt");
 
     let code = format!(
-        r#"let result = file_exists("{}"); result;"#,
+        r#"let result = file.exists("{}"); result;"#,
         path_for_atlas(&nonexistent)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -97,7 +108,7 @@ fn vm_test_read_dir_basic() {
     fs::write(temp_dir.path().join("file2.txt"), "").unwrap();
 
     let code = format!(
-        r#"let result = read_dir("{}"); result;"#,
+        r#"let result = file.readDir("{}"); result;"#,
         path_for_atlas(temp_dir.path())
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -111,7 +122,7 @@ fn vm_test_create_dir_basic() {
     let temp_dir = TempDir::new().unwrap();
     let new_dir = temp_dir.path().join("newdir");
 
-    let code = format!(r#"create_dir("{}");"#, path_for_atlas(&new_dir));
+    let code = format!(r#"file.createDir("{}");"#, path_for_atlas(&new_dir));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -124,7 +135,7 @@ fn vm_test_create_dir_nested() {
     let temp_dir = TempDir::new().unwrap();
     let nested_dir = temp_dir.path().join("a/b/c");
 
-    let code = format!(r#"create_dir("{}");"#, path_for_atlas(&nested_dir));
+    let code = format!(r#"file.createDir("{}");"#, path_for_atlas(&nested_dir));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -137,7 +148,7 @@ fn vm_test_remove_file_basic() {
     let test_file = temp_dir.path().join("remove.txt");
     fs::write(&test_file, "").unwrap();
 
-    let code = format!(r#"remove_file("{}");"#, path_for_atlas(&test_file));
+    let code = format!(r#"file.remove("{}");"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -150,7 +161,7 @@ fn vm_test_remove_dir_basic() {
     let test_dir = temp_dir.path().join("rmdir");
     fs::create_dir(&test_dir).unwrap();
 
-    let code = format!(r#"remove_dir("{}");"#, path_for_atlas(&test_dir));
+    let code = format!(r#"file.removeDir("{}");"#, path_for_atlas(&test_dir));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -164,7 +175,7 @@ fn vm_test_file_info_file() {
     fs::write(&test_file, "test content").unwrap();
 
     let code = format!(
-        r#"let result = file_info("{}"); result;"#,
+        r#"let result = file.info("{}"); result;"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -179,7 +190,7 @@ fn vm_test_file_info_file() {
 #[test]
 fn vm_test_path_join_basic() {
     let temp_dir = TempDir::new().unwrap();
-    let code = r#"let result = path_join("a", "b", "c"); result;"#;
+    let code = r#"let result = path.join("a", "b", "c"); result;"#;
     let result = execute_with_io(code, &temp_dir);
 
     assert!(result.is_ok());
@@ -196,7 +207,7 @@ fn vm_test_read_file_utf8() {
     let test_file = temp_dir.path().join("utf8.txt");
     fs::write(&test_file, "Hello 你好 🎉").unwrap();
 
-    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = file.read("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -207,11 +218,17 @@ fn vm_test_read_file_not_found() {
     let temp_dir = TempDir::new().unwrap();
     let nonexistent = temp_dir.path().join("does_not_exist.txt");
 
-    let code = format!(r#"read_file("{}");"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"file.read("{}");"#, path_for_atlas(&nonexistent));
     let result = execute_with_io(&code, &temp_dir);
 
-    assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Failed to resolve path"));
+    assert!(result.is_ok());
+    let val = result.unwrap();
+    match val {
+        atlas_runtime::Value::Result(inner) => {
+            assert!(inner.is_err(), "Expected Atlas Err");
+        }
+        other => panic!("Expected Atlas Result(Err), got {:?}", other),
+    }
 }
 
 #[test]
@@ -222,7 +239,7 @@ fn vm_test_read_file_permission_denied() {
 
     // Execute without granting permissions
     let mut lexer =
-        atlas_runtime::Lexer::new(format!(r#"read_file("{}");"#, path_for_atlas(&test_file)));
+        atlas_runtime::Lexer::new(format!(r#"file.read("{}");"#, path_for_atlas(&test_file)));
     let (tokens, _) = lexer.tokenize();
     let mut parser = atlas_runtime::Parser::new(tokens);
     let (ast, _) = parser.parse();
@@ -237,7 +254,10 @@ fn vm_test_read_file_permission_denied() {
     let mut vm = atlas_runtime::VM::new(bytecode);
     let result = vm.run(&security);
 
-    assert!(result.is_err());
+    // file.read returns Atlas Result(Err) for permission denial
+    assert!(result.is_ok());
+    let val = result.unwrap().unwrap_or(atlas_runtime::Value::Null);
+    assert!(matches!(val, atlas_runtime::Value::Result(Err(_))));
 }
 
 #[test]
@@ -247,7 +267,7 @@ fn vm_test_write_file_overwrite() {
     fs::write(&test_file, "original").unwrap();
 
     let code = format!(
-        r#"write_file("{}", "new content");"#,
+        r#"file.write("{}", "new content");"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -264,7 +284,7 @@ fn vm_test_write_file_permission_denied() {
 
     // Execute without granting permissions
     let mut lexer = atlas_runtime::Lexer::new(format!(
-        r#"write_file("{}", "content");"#,
+        r#"file.write("{}", "content");"#,
         path_for_atlas(&test_file)
     ));
     let (tokens, _) = lexer.tokenize();
@@ -281,7 +301,10 @@ fn vm_test_write_file_permission_denied() {
     let mut vm = atlas_runtime::VM::new(bytecode);
     let result = vm.run(&security);
 
-    assert!(result.is_err());
+    // file.write returns Atlas Result(Err) for permission denial
+    assert!(result.is_ok());
+    let val = result.unwrap().unwrap_or(atlas_runtime::Value::Null);
+    assert!(matches!(val, atlas_runtime::Value::Result(Err(_))));
 }
 
 #[test]
@@ -290,7 +313,7 @@ fn vm_test_append_file_create_if_not_exists() {
     let test_file = temp_dir.path().join("new.txt");
 
     let code = format!(
-        r#"append_file("{}", "content");"#,
+        r#"file.append("{}", "content");"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -305,7 +328,7 @@ fn vm_test_read_dir_not_found() {
     let temp_dir = TempDir::new().unwrap();
     let nonexistent = temp_dir.path().join("nonexistent_dir");
 
-    let code = format!(r#"read_dir("{}");"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"file.readDir("{}");"#, path_for_atlas(&nonexistent));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_err());
@@ -316,10 +339,17 @@ fn vm_test_remove_file_not_found() {
     let temp_dir = TempDir::new().unwrap();
     let nonexistent = temp_dir.path().join("does_not_exist.txt");
 
-    let code = format!(r#"remove_file("{}");"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"file.remove("{}");"#, path_for_atlas(&nonexistent));
     let result = execute_with_io(&code, &temp_dir);
 
-    assert!(result.is_err());
+    assert!(result.is_ok());
+    let val = result.unwrap();
+    match val {
+        atlas_runtime::Value::Result(inner) => {
+            assert!(inner.is_err(), "Expected Atlas Err");
+        }
+        other => panic!("Expected Atlas Result(Err), got {:?}", other),
+    }
 }
 
 #[test]
@@ -329,11 +359,17 @@ fn vm_test_remove_dir_not_empty() {
     fs::create_dir(&test_dir).unwrap();
     fs::write(test_dir.join("file.txt"), "").unwrap();
 
-    let code = format!(r#"remove_dir("{}");"#, path_for_atlas(&test_dir));
+    let code = format!(r#"file.removeDir("{}");"#, path_for_atlas(&test_dir));
     let result = execute_with_io(&code, &temp_dir);
 
-    assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Failed to remove directory"));
+    assert!(result.is_ok());
+    let val = result.unwrap();
+    match val {
+        atlas_runtime::Value::Result(inner) => {
+            assert!(inner.is_err(), "Expected Atlas Err");
+        }
+        other => panic!("Expected Atlas Result(Err), got {:?}", other),
+    }
 }
 
 #[test]
@@ -343,7 +379,7 @@ fn vm_test_file_info_directory() {
     fs::create_dir(&test_dir).unwrap();
 
     let code = format!(
-        r#"let result = file_info("{}"); result;"#,
+        r#"let result = file.info("{}"); result;"#,
         path_for_atlas(&test_dir)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -354,7 +390,7 @@ fn vm_test_file_info_directory() {
 #[test]
 fn vm_test_path_join_single() {
     let temp_dir = TempDir::new().unwrap();
-    let code = r#"let result = path_join("single"); result;"#;
+    let code = r#"let result = path.join("single"); result;"#;
     let result = execute_with_io(code, &temp_dir);
 
     assert!(result.is_ok());
@@ -363,7 +399,7 @@ fn vm_test_path_join_single() {
 #[test]
 fn vm_test_path_join_no_args() {
     let temp_dir = TempDir::new().unwrap();
-    let code = r#"path_join();"#;
+    let code = r#"path.join();"#;
     let result = execute_with_io(code, &temp_dir);
 
     assert!(result.is_err());
@@ -379,11 +415,12 @@ fn vm_test_read_file_empty() {
     let test_file = temp_dir.path().join("empty.txt");
     fs::write(&test_file, "").unwrap();
 
-    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = file.read("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
-    if let atlas_runtime::Value::String(s) = result.unwrap() {
+    let inner = unwrap_atlas_result_ok(result.unwrap());
+    if let atlas_runtime::Value::String(s) = inner {
         assert_eq!(s.as_str(), "");
     } else {
         panic!("Expected string");
@@ -396,10 +433,17 @@ fn vm_test_read_file_invalid_utf8() {
     let test_file = temp_dir.path().join("binary.bin");
     fs::write(&test_file, [0xFF, 0xFE, 0xFD]).unwrap();
 
-    let code = format!(r#"read_file("{}");"#, path_for_atlas(&test_file));
+    let code = format!(r#"file.read("{}");"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
-    assert!(result.is_err());
+    assert!(result.is_ok());
+    let val = result.unwrap();
+    match val {
+        atlas_runtime::Value::Result(inner) => {
+            assert!(inner.is_err(), "Expected Atlas Err");
+        }
+        other => panic!("Expected Atlas Result(Err), got {:?}", other),
+    }
 }
 
 #[test]
@@ -409,11 +453,12 @@ fn vm_test_read_file_multiline() {
     let content = "line1\nline2\nline3\n";
     fs::write(&test_file, content).unwrap();
 
-    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = file.read("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
-    if let atlas_runtime::Value::String(s) = result.unwrap() {
+    let inner = unwrap_atlas_result_ok(result.unwrap());
+    if let atlas_runtime::Value::String(s) = inner {
         assert_eq!(s.as_str(), content);
     } else {
         panic!("Expected string");
@@ -427,11 +472,12 @@ fn vm_test_read_file_large() {
     let content = "x".repeat(10000);
     fs::write(&test_file, &content).unwrap();
 
-    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = file.read("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
-    if let atlas_runtime::Value::String(s) = result.unwrap() {
+    let inner = unwrap_atlas_result_ok(result.unwrap());
+    if let atlas_runtime::Value::String(s) = inner {
         assert_eq!(s.len(), 10000);
     } else {
         panic!("Expected string");
@@ -446,7 +492,7 @@ fn vm_test_read_file_with_bom() {
     content.extend_from_slice(b"Hello");
     fs::write(&test_file, content).unwrap();
 
-    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = file.read("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());

@@ -1,1 +1,1 @@
-Type error: Cannot infer type of empty array literal
+Type error: inferred type `{inferred}` is incompatible with usage expecting `{expected}`

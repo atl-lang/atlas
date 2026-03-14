@@ -9,9 +9,9 @@ fn test_config_parse_json() {
 
     let code = format!(
         r#"
-        let configStr: string = read_file("{}");
+        let configStr: string = file.read("{}").unwrap();
         let config: json = Json.parse(configStr)?;
-        let host: string = config["host"].as_string();
+        let host: string = config["host"].asString();
         host
     "#,
         path_for_atlas(&config_path)
@@ -27,9 +27,9 @@ fn test_config_extract_port() {
 
     let code = format!(
         r#"
-        let configStr: string = read_file("{}");
+        let configStr: string = file.read("{}").unwrap();
         let config: json = Json.parse(configStr)?;
-        let port: number = config["port"].as_number();
+        let port: number = config["port"].asNumber();
         port
     "#,
         path_for_atlas(&config_path)
@@ -42,8 +42,8 @@ fn test_config_validate_required_fields() {
     let code = r#"
         let configStr: string = "{\"host\": \"localhost\", \"port\": 8080}";
         let config: json = Json.parse(configStr)?;
-        let hasHost: bool = !json.isNull(config["host"]);
-        let hasPort: bool = !json.isNull(config["port"]);
+        let hasHost: bool = !config["host"].isNull();
+        let hasPort: bool = !config["port"].isNull();
         hasHost && hasPort
     "#;
     assert_eval_bool_with_io(code, true);
@@ -56,8 +56,8 @@ fn test_config_missing_field_default() {
         let config: json = Json.parse(configStr)?;
         let port: json = config["port"];
         let mut portValue: number = 8080.0;
-        if (!json.isNull(port)) {
-            portValue = port.as_number();
+        if (!port.isNull()) {
+            portValue = port.asNumber();
         }
         portValue
     "#;
@@ -70,7 +70,7 @@ fn test_config_nested_settings() {
         let configStr: string = "{\"database\": {\"host\": \"db.local\", \"port\": 5432}}";
         let config: json = Json.parse(configStr)?;
         let db: json = config["database"];
-        let dbHost: string = db["host"].as_string();
+        let dbHost: string = db["host"].asString();
         dbHost
     "#;
     assert_eval_string_with_io(code, "db.local");
@@ -81,8 +81,8 @@ fn test_config_boolean_flags() {
     let code = r#"
         let configStr: string = "{\"debug\": true, \"production\": false}";
         let config: json = Json.parse(configStr)?;
-        let debug: bool = config["debug"].as_bool();
-        let prod: bool = config["production"].as_bool();
+        let debug: bool = config["debug"].asBool();
+        let prod: bool = config["production"].asBool();
         debug && !prod
     "#;
     assert_eval_bool_with_io(code, true);
@@ -94,7 +94,7 @@ fn test_config_array_values() {
         let configStr: string = "{\"allowed_hosts\": [\"localhost\", \"127.0.0.1\"]}";
         let config: json = Json.parse(configStr)?;
         let hosts: json = config["allowed_hosts"];
-        let first: string = hosts[0].as_string();
+        let first: string = hosts[0].asString();
         first
     "#;
     assert_eval_string_with_io(code, "localhost");
@@ -108,16 +108,16 @@ fn test_config_write_updated() {
 
     let code = format!(
         r#"
-        let configStr: string = read_file("{}");
+        let configStr: string = file.read("{}").unwrap();
         let config: json = Json.parse(configStr)?;
-        let version: number = config["version"].as_number();
+        let version: number = config["version"].asNumber();
         let newVersion: number = version + 1.0;
         let updated: string = "{{\"version\":" + str(newVersion) + "}}";
-        write_file("{}", updated);
+        file.write("{}", updated);
 
-        let result: string = read_file("{}");
+        let result: string = file.read("{}").unwrap();
         let newConfig: json = Json.parse(result)?;
-        let finalVersion: number = newConfig["version"].as_number();
+        let finalVersion: number = newConfig["version"].asNumber();
         finalVersion
     "#,
         path_for_atlas(&config_path),
@@ -139,14 +139,14 @@ fn test_config_merge_defaults() {
         let hostUser: json = user["host"];
         let portUser: json = user["port"];
 
-        let mut finalHost: string = user["host"].as_string();
-        if (json.isNull(hostUser)) {
-            finalHost = def["host"].as_string();
+        let mut finalHost: string = user["host"].asString();
+        if (hostUser.isNull()) {
+            finalHost = def["host"].asString();
         }
 
-        let mut finalPort: number = def["port"].as_number();
-        if (!json.isNull(portUser)) {
-            finalPort = user["port"].as_number();
+        let mut finalPort: number = def["port"].asNumber();
+        if (!portUser.isNull()) {
+            finalPort = user["port"].asNumber();
         }
 
         finalHost + ":" + str(finalPort)
@@ -159,7 +159,7 @@ fn test_config_prettify_for_humans() {
     let code = r#"
         let compact: string = "{\"host\":\"localhost\",\"port\":8080}";
         let pretty: string = Json.prettify(compact, 2.0);
-        includes(pretty, "\n") && includes(pretty, "  ")
+        pretty.includes("\n") && pretty.includes("  ")
     "#;
     assert_eval_bool_with_io(code, true);
 }
@@ -170,9 +170,9 @@ fn test_config_array_length() {
         let configStr: string = "{\"servers\": [\"server1\", \"server2\", \"server3\"]}";
         let config: json = Json.parse(configStr)?;
         let servers: json = config["servers"];
-        let s0: string = servers[0].as_string();
-        let s1: string = servers[1].as_string();
-        let s2: string = servers[2].as_string();
+        let s0: string = servers[0].asString();
+        let s1: string = servers[1].asString();
+        let s2: string = servers[2].asString();
         len(s0) > 0.0 && len(s1) > 0.0 && len(s2) > 0.0
     "#;
     assert_eval_bool_with_io(code, true);
@@ -183,8 +183,8 @@ fn test_config_environment_specific() {
     let code = r#"
         let configStr: string = "{\"env\": \"production\", \"debug\": false}";
         let config: json = Json.parse(configStr)?;
-        let env: string = config["env"].as_string();
-        let debug: bool = config["debug"].as_bool();
+        let env: string = config["env"].asString();
+        let debug: bool = config["debug"].asBool();
         let isProd: bool = env == "production";
         isProd && !debug
     "#;

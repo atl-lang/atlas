@@ -1,6 +1,6 @@
 let data: json = unwrap(Json.parse("{\"name\":\"Alice\",\"age\":30}"));
-let name: string = data["name"].as_string();
-let age: number = data["age"].as_number();
+let name: string = data["name"].asString();
+let age: number = data["age"].asNumber();
 console.log(name);
 console.log(age);
 

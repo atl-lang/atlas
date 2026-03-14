@@ -1163,7 +1163,7 @@ fn resolve_datetime_instance_method(method_name: &str) -> Option<String> {
 /// These take the Regex value as the first argument (receiver).
 fn resolve_regex_instance_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
-        "test" | "isMatch" => "regexTest",
+        "test" | "isMatch" => "regexIsMatch",
         "find" => "regexFind",
         "findAll" => "regexFindAll",
         "replace" => "regexReplace",

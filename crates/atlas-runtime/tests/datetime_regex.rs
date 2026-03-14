@@ -750,7 +750,7 @@ fn test_duration_format_zero_seconds() {
 #[test]
 fn test_regex_new_valid_pattern() {
     let code = r#"
-        let pattern = regex_new("\\d+");
+        let pattern = regex.new("\\d+");
         typeof(unwrap(pattern))
     "#;
     assert_eq!(eval_ok(code), "record");
@@ -759,7 +759,7 @@ fn test_regex_new_valid_pattern() {
 #[test]
 fn test_regex_new_invalid_pattern() {
     let code = r#"
-        let pattern = regex_new("[invalid");
+        let pattern = regex.new("[invalid");
         is_err(pattern)
     "#;
     assert_eq!(eval_ok(code), "true");
@@ -768,7 +768,7 @@ fn test_regex_new_invalid_pattern() {
 #[test]
 fn test_regex_new_empty_pattern() {
     let code = r#"
-        let pattern = regex_new("");
+        let pattern = regex.new("");
         typeof(unwrap(pattern))
     "#;
     assert_eq!(eval_ok(code), "record");
@@ -777,7 +777,7 @@ fn test_regex_new_empty_pattern() {
 #[test]
 fn test_regex_new_complex_pattern() {
     let code = r#"
-        let pattern = regex_new("(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})");
+        let pattern = regex.new("(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})");
         typeof(unwrap(pattern))
     "#;
     assert_eq!(eval_ok(code), "record");
@@ -786,7 +786,7 @@ fn test_regex_new_complex_pattern() {
 #[test]
 fn test_regex_escape() {
     let code = r#"
-        regex_escape("hello.world*test+")
+        regex.escape("hello.world*test+")
     "#;
     assert_eq!(eval_ok(code), "hello\\.world\\*test\\+");
 }
@@ -794,9 +794,9 @@ fn test_regex_escape() {
 #[test]
 fn test_regex_new_with_flags() {
     let code = r#"
-        let pattern = regex_new_with_flags("HELLO", "i");
-        let regex = unwrap(pattern);
-        regex_is_match(regex, "hello")
+        let pattern = regex.new("HELLO");
+        let r = unwrap(pattern);
+        r.isMatch("hello")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -808,8 +808,8 @@ fn test_regex_new_with_flags() {
 #[test]
 fn test_is_match_true() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        regex_is_match(pattern, "hello123world")
+        let pattern = unwrap(regex.new("\\d+"));
+        pattern.isMatch("hello123world")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -817,8 +817,8 @@ fn test_is_match_true() {
 #[test]
 fn test_is_match_false() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        regex_is_match(pattern, "hello world")
+        let pattern = unwrap(regex.new("\\d+"));
+        pattern.isMatch("hello world")
     "#;
     assert_eq!(eval_ok(code), "false");
 }
@@ -826,8 +826,8 @@ fn test_is_match_false() {
 #[test]
 fn test_is_match_case_insensitive() {
     let code = r#"
-        let pattern = unwrap(regex_new_with_flags("HELLO", "i"));
-        regex_is_match(pattern, "hello world")
+        let pattern = unwrap(regex.new("HELLO"));
+        pattern.isMatch("hello world")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -835,8 +835,8 @@ fn test_is_match_case_insensitive() {
 #[test]
 fn test_is_match_multiline() {
     let code = r#"
-        let pattern = unwrap(regex_new_with_flags("^world", "m"));
-        regex_is_match(pattern, "hello\nworld")
+        let pattern = unwrap(regex.new("^world"));
+        pattern.isMatch("hello\nworld")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -844,8 +844,8 @@ fn test_is_match_multiline() {
 #[test]
 fn test_find_returns_match() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        let result = regex_find(pattern, "hello123world");
+        let pattern = unwrap(regex.new("\\d+"));
+        let result = pattern.find("hello123world");
         let match_obj = unwrap(result);
         unwrap(match_obj.get("text"))
     "#;
@@ -855,8 +855,8 @@ fn test_find_returns_match() {
 #[test]
 fn test_find_returns_none() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        let result = regex_find(pattern, "hello world");
+        let pattern = unwrap(regex.new("\\d+"));
+        let result = pattern.find("hello world");
         is_none(result)
     "#;
     assert_eq!(eval_ok(code), "true");
@@ -865,8 +865,8 @@ fn test_find_returns_none() {
 #[test]
 fn test_find_all_multiple_matches() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        let matches = regex_find_all(pattern, "a1 b22 c333");
+        let pattern = unwrap(regex.new("\\d+"));
+        let matches = pattern.findAll("a1 b22 c333");
         len(matches)
     "#;
     assert_eq!(eval_ok(code), "3");
@@ -875,8 +875,8 @@ fn test_find_all_multiple_matches() {
 #[test]
 fn test_find_all_no_matches() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        let matches = regex_find_all(pattern, "hello world");
+        let pattern = unwrap(regex.new("\\d+"));
+        let matches = pattern.findAll("hello world");
         len(matches)
     "#;
     assert_eq!(eval_ok(code), "0");
@@ -885,8 +885,8 @@ fn test_find_all_no_matches() {
 #[test]
 fn test_find_all_non_overlapping() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\w+"));
-        let matches = regex_find_all(pattern, "hello world test");
+        let pattern = unwrap(regex.new("\\w+"));
+        let matches = pattern.findAll("hello world test");
         len(matches)
     "#;
     assert_eq!(eval_ok(code), "3");
@@ -895,8 +895,8 @@ fn test_find_all_non_overlapping() {
 #[test]
 fn test_unicode_handling() {
     let code = r#"
-        let pattern = unwrap(regex_new("世界"));
-        regex_is_match(pattern, "こんにちは世界")
+        let pattern = unwrap(regex.new("世界"));
+        pattern.isMatch("こんにちは世界")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -904,8 +904,8 @@ fn test_unicode_handling() {
 #[test]
 fn test_dot_matches_newline_with_flag() {
     let code = r#"
-        let pattern = unwrap(regex_new_with_flags("a.b", "s"));
-        regex_is_match(pattern, "a\nb")
+        let pattern = unwrap(regex.new("a.b"));
+        pattern.isMatch("a\nb")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -913,8 +913,8 @@ fn test_dot_matches_newline_with_flag() {
 #[test]
 fn test_anchors_start_end() {
     let code = r#"
-        let pattern = unwrap(regex_new("^hello$"));
-        regex_is_match(pattern, "hello")
+        let pattern = unwrap(regex.new("^hello$"));
+        pattern.isMatch("hello")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -926,8 +926,8 @@ fn test_anchors_start_end() {
 #[test]
 fn test_captures_simple_group() {
     let code = r#"
-        let pattern = unwrap(regex_new("(\\d+)"));
-        let groups = unwrap(regex_captures(pattern, "hello123"));
+        let pattern = unwrap(regex.new("(\\d+)"));
+        let groups = unwrap(regex.captures(pattern, "hello123"));
         len(groups)
     "#;
     assert_eq!(eval_ok(code), "2"); // Full match + 1 group
@@ -936,8 +936,8 @@ fn test_captures_simple_group() {
 #[test]
 fn test_captures_multiple_groups() {
     let code = r#"
-        let pattern = unwrap(regex_new("(\\d+)-(\\w+)"));
-        let groups = unwrap(regex_captures(pattern, "123-abc"));
+        let pattern = unwrap(regex.new("(\\d+)-(\\w+)"));
+        let groups = unwrap(regex.captures(pattern, "123-abc"));
         len(groups)
     "#;
     assert_eq!(eval_ok(code), "3"); // Full match + 2 groups
@@ -946,8 +946,8 @@ fn test_captures_multiple_groups() {
 #[test]
 fn test_captures_nested_groups() {
     let code = r#"
-        let pattern = unwrap(regex_new("((\\d+)-(\\w+))"));
-        let groups = unwrap(regex_captures(pattern, "123-abc"));
+        let pattern = unwrap(regex.new("((\\d+)-(\\w+))"));
+        let groups = unwrap(regex.captures(pattern, "123-abc"));
         len(groups)
     "#;
     assert_eq!(eval_ok(code), "4"); // Full match + 3 groups
@@ -956,8 +956,8 @@ fn test_captures_nested_groups() {
 #[test]
 fn test_captures_optional_group() {
     let code = r#"
-        let pattern = unwrap(regex_new("(\\d+)?-(\\w+)"));
-        let groups = unwrap(regex_captures(pattern, "-abc"));
+        let pattern = unwrap(regex.new("(\\d+)?-(\\w+)"));
+        let groups = unwrap(regex.captures(pattern, "-abc"));
         len(groups)
     "#;
     assert_eq!(eval_ok(code), "3"); // Full match + 2 groups (first is null)
@@ -966,8 +966,8 @@ fn test_captures_optional_group() {
 #[test]
 fn test_captures_named_groups() {
     let code = r#"
-        let pattern = unwrap(regex_new("(?P<num>\\d+)-(?P<word>\\w+)"));
-        let groups = unwrap(regex_captures_named(pattern, "123-abc"));
+        let pattern = unwrap(regex.new("(?P<num>\\d+)-(?P<word>\\w+)"));
+        let groups = unwrap(regex.captures(pattern, "123-abc"));
         unwrap(groups.get("num"))
     "#;
     assert_eq!(eval_ok(code), "123");
@@ -976,9 +976,9 @@ fn test_captures_named_groups() {
 #[test]
 fn test_captures_named_and_positional() {
     let code = r#"
-        let pattern = unwrap(regex_new("(?P<first>\\d+)-(\\w+)"));
-        let positional = unwrap(regex_captures(pattern, "123-abc"));
-        let named = unwrap(regex_captures_named(pattern, "123-abc"));
+        let pattern = unwrap(regex.new("(?P<first>\\d+)-(\\w+)"));
+        let positional = unwrap(regex.captures(pattern, "123-abc"));
+        let named = unwrap(regex.captures(pattern, "123-abc"));
         len(positional)
     "#;
     assert_eq!(eval_ok(code), "3");
@@ -987,8 +987,8 @@ fn test_captures_named_and_positional() {
 #[test]
 fn test_captures_none_when_no_match() {
     let code = r#"
-        let pattern = unwrap(regex_new("(\\d+)"));
-        let groups = regex_captures(pattern, "hello world");
+        let pattern = unwrap(regex.new("(\\d+)"));
+        let groups = regex.captures(pattern, "hello world");
         is_none(groups)
     "#;
     assert_eq!(eval_ok(code), "true");
@@ -997,8 +997,8 @@ fn test_captures_none_when_no_match() {
 #[test]
 fn test_captures_named_none_when_no_match() {
     let code = r#"
-        let pattern = unwrap(regex_new("(?P<num>\\d+)"));
-        let groups = regex_captures_named(pattern, "hello world");
+        let pattern = unwrap(regex.new("(?P<num>\\d+)"));
+        let groups = regex.captures(pattern, "hello world");
         is_none(groups)
     "#;
     assert_eq!(eval_ok(code), "true");
@@ -1007,8 +1007,8 @@ fn test_captures_named_none_when_no_match() {
 #[test]
 fn test_captures_with_alternation() {
     let code = r#"
-        let pattern = unwrap(regex_new("(cat|dog)"));
-        let groups = unwrap(regex_captures(pattern, "I have a dog"));
+        let pattern = unwrap(regex.new("(cat|dog)"));
+        let groups = unwrap(regex.captures(pattern, "I have a dog"));
         len(groups)
     "#;
     assert_eq!(eval_ok(code), "2");
@@ -1019,7 +1019,7 @@ fn test_captures_backreferences_unsupported() {
     // Backreferences are NOT supported by Rust's regex crate
     // This test verifies we get an error (not a panic)
     let code = r#"
-        let pattern = regex_new("(\\w+)\\s+\\1");
+        let pattern = regex.new("(\\w+)\\s+\\1");
         is_err(pattern)
     "#;
     assert_eq!(eval_ok(code), "true");
@@ -1028,8 +1028,8 @@ fn test_captures_backreferences_unsupported() {
 #[test]
 fn test_captures_non_capturing_groups() {
     let code = r#"
-        let pattern = unwrap(regex_new("(?:\\d+)-(\\w+)"));
-        let groups = unwrap(regex_captures(pattern, "123-abc"));
+        let pattern = unwrap(regex.new("(?:\\d+)-(\\w+)"));
+        let groups = unwrap(regex.captures(pattern, "123-abc"));
         len(groups)
     "#;
     assert_eq!(eval_ok(code), "2"); // Full match + 1 capturing group (non-capturing doesn't count)
@@ -1038,8 +1038,8 @@ fn test_captures_non_capturing_groups() {
 #[test]
 fn test_captures_full_match_at_index_zero() {
     let code = r#"
-        let pattern = unwrap(regex_new("(\\d+)-(\\w+)"));
-        let groups = unwrap(regex_captures(pattern, "123-abc"));
+        let pattern = unwrap(regex.new("(\\d+)-(\\w+)"));
+        let groups = unwrap(regex.captures(pattern, "123-abc"));
         groups[0]
     "#;
     assert_eq!(eval_ok(code), "123-abc");
@@ -1052,8 +1052,8 @@ fn test_captures_full_match_at_index_zero() {
 #[test]
 fn test_find_with_positions() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        let match_obj = unwrap(regex_find(pattern, "hello123world"));
+        let pattern = unwrap(regex.new("\\d+"));
+        let match_obj = unwrap(pattern.find("hello123world"));
         let start = unwrap(match_obj.get("start"));
         let end_pos = unwrap(match_obj.get("end"));
         start
@@ -1064,8 +1064,8 @@ fn test_find_with_positions() {
 #[test]
 fn test_find_all_extracts_all_text() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        let matches = regex_find_all(pattern, "1 and 22 and 333");
+        let pattern = unwrap(regex.new("\\d+"));
+        let matches = pattern.findAll("1 and 22 and 333");
         let first = unwrap(matches[0].get("text"));
         let second = unwrap(matches[1].get("text"));
         let third = unwrap(matches[2].get("text"));
@@ -1077,9 +1077,9 @@ fn test_find_all_extracts_all_text() {
 #[test]
 fn test_regex_escape_all_special_chars() {
     let code = r#"
-        let escaped = regex_escape(".*+?^$()[]{}|\\");
-        let pattern = unwrap(regex_new(escaped));
-        regex_is_match(pattern, ".*+?^$()[]{}|\\")
+        let escaped = regex.escape(".*+?^$()[]{}|\\");
+        let pattern = unwrap(regex.new(escaped));
+        pattern.isMatch(".*+?^$()[]{}|\\")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -1087,7 +1087,7 @@ fn test_regex_escape_all_special_chars() {
 #[test]
 fn test_invalid_flag_returns_error() {
     let code = r#"
-        let pattern = regex_new_with_flags("test", "xyz");
+        let pattern = regex.new("test");
         is_err(pattern)
     "#;
     assert_eq!(eval_ok(code), "true");
@@ -1096,8 +1096,8 @@ fn test_invalid_flag_returns_error() {
 #[test]
 fn test_complex_email_pattern() {
     let code = r#"
-        let pattern = unwrap(regex_new("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"));
-        regex_is_match(pattern, "user@example.com")
+        let pattern = unwrap(regex.new("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"));
+        pattern.isMatch("user@example.com")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -1131,8 +1131,8 @@ fn test_complex_email_pattern() {
 #[test]
 fn test_replace_first_match_only() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        regex_replace(pattern, "a1b2c3", "X")
+        let pattern = unwrap(regex.new("\\d+"));
+        pattern.replace("a1b2c3", "X")
     "#;
     assert_eq!(eval_ok(code), "aXb2c3");
 }
@@ -1140,8 +1140,8 @@ fn test_replace_first_match_only() {
 #[test]
 fn test_replace_all_matches() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        regex_replace_all(pattern, "a1b2c3", "X")
+        let pattern = unwrap(regex.new("\\d+"));
+        pattern.replaceAll("a1b2c3", "X")
     "#;
     assert_eq!(eval_ok(code), "aXbXcX");
 }
@@ -1149,8 +1149,8 @@ fn test_replace_all_matches() {
 #[test]
 fn test_replace_with_capture_group_refs() {
     let code = r#"
-        let pattern = unwrap(regex_new("(\\d+)"));
-        regex_replace(pattern, "a123b", "[$1]")
+        let pattern = unwrap(regex.new("(\\d+)"));
+        pattern.replace("a123b", "[$1]")
     "#;
     assert_eq!(eval_ok(code), "a[123]b");
 }
@@ -1158,8 +1158,8 @@ fn test_replace_with_capture_group_refs() {
 #[test]
 fn test_replace_all_with_capture_groups() {
     let code = r#"
-        let pattern = unwrap(regex_new("(\\d+)"));
-        regex_replace_all(pattern, "a1b22c333", "[$1]")
+        let pattern = unwrap(regex.new("(\\d+)"));
+        pattern.replaceAll("a1b22c333", "[$1]")
     "#;
     assert_eq!(eval_ok(code), "a[1]b[22]c[333]");
 }
@@ -1167,8 +1167,8 @@ fn test_replace_all_with_capture_groups() {
 #[test]
 fn test_replace_special_refs_full_match() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        regex_replace(pattern, "a123b", "[$0]")
+        let pattern = unwrap(regex.new("\\d+"));
+        pattern.replace("a123b", "[$0]")
     "#;
     assert_eq!(eval_ok(code), "a[123]b");
 }
@@ -1176,8 +1176,8 @@ fn test_replace_special_refs_full_match() {
 #[test]
 fn test_replace_empty_replacement() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        regex_replace_all(pattern, "a1b2c3", "")
+        let pattern = unwrap(regex.new("\\d+"));
+        pattern.replaceAll("a1b2c3", "")
     "#;
     assert_eq!(eval_ok(code), "abc");
 }
@@ -1185,8 +1185,8 @@ fn test_replace_empty_replacement() {
 #[test]
 fn test_replace_no_match_returns_original() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        regex_replace(pattern, "abc", "X")
+        let pattern = unwrap(regex.new("\\d+"));
+        pattern.replace("abc", "X")
     "#;
     assert_eq!(eval_ok(code), "abc");
 }
@@ -1194,8 +1194,8 @@ fn test_replace_no_match_returns_original() {
 #[test]
 fn test_replace_unicode() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        regex_replace(pattern, "こんにちは123世界", "★")
+        let pattern = unwrap(regex.new("\\d+"));
+        pattern.replace("こんにちは123世界", "★")
     "#;
     assert_eq!(eval_ok(code), "こんにちは★世界");
 }
@@ -1203,8 +1203,8 @@ fn test_replace_unicode() {
 #[test]
 fn test_replace_multiple_capture_groups() {
     let code = r#"
-        let pattern = unwrap(regex_new("(\\d+)-(\\w+)"));
-        regex_replace(pattern, "abc 123-xyz def", "[$2:$1]")
+        let pattern = unwrap(regex.new("(\\d+)-(\\w+)"));
+        pattern.replace("abc 123-xyz def", "[$2:$1]")
     "#;
     assert_eq!(eval_ok(code), "abc [xyz:123] def");
 }
@@ -1212,8 +1212,8 @@ fn test_replace_multiple_capture_groups() {
 #[test]
 fn test_replace_at_boundaries() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
-        regex_replace_all(pattern, "123abc456", "X")
+        let pattern = unwrap(regex.new("\\d+"));
+        pattern.replaceAll("123abc456", "X")
     "#;
     assert_eq!(eval_ok(code), "XabcX");
 }
@@ -1228,7 +1228,7 @@ fn test_replace_with_calls_callback_first_match() {
         fn bracketize(borrow m: HashMap): string {
             return "[" + unwrap(m.get("text")) + "]";
         }
-        let pattern = unwrap(regex_new("\\d+"));
+        let pattern = unwrap(regex.new("\\d+"));
         regex_replace_with(pattern, "a1b2c3", bracketize)
     "#;
     assert_eq!(eval_ok(code), "a[1]b2c3");
@@ -1240,7 +1240,7 @@ fn test_replace_all_with_calls_callback_all_matches() {
         fn bracketize(borrow m: HashMap): string {
             return "[" + unwrap(m.get("text")) + "]";
         }
-        let pattern = unwrap(regex_new("\\d+"));
+        let pattern = unwrap(regex.new("\\d+"));
         regex_replace_all_with(pattern, "a1b2c3", bracketize)
     "#;
     assert_eq!(eval_ok(code), "a[1]b[2]c[3]");
@@ -1255,7 +1255,7 @@ fn test_callback_receives_correct_match_data() {
             let end_pos = unwrap(m.get("end"));
             return "[" + text + "@" + toString(start) + "-" + toString(end_pos) + "]";
         }
-        let pattern = unwrap(regex_new("\\d+"));
+        let pattern = unwrap(regex.new("\\d+"));
         regex_replace_with(pattern, "hello123world", formatter)
     "#;
     assert_eq!(eval_ok(code), "hello[123@5-8]world");
@@ -1268,7 +1268,7 @@ fn test_callback_return_value_used_as_replacement() {
             let num = unwrap(m.get("text"));
             return toString(unwrap((num).toNumber()) * 2);
         }
-        let pattern = unwrap(regex_new("\\d+"));
+        let pattern = unwrap(regex.new("\\d+"));
         regex_replace_with(pattern, "value:42", doubler)
     "#;
     assert_eq!(eval_ok(code), "value:84");
@@ -1283,7 +1283,7 @@ fn test_callback_with_capture_groups() {
             let word = groups[2];
             return word + ":" + num;
         }
-        let pattern = unwrap(regex_new("(\\d+)-(\\w+)"));
+        let pattern = unwrap(regex.new("(\\d+)-(\\w+)"));
         regex_replace_with(pattern, "abc 123-xyz def", swapper)
     "#;
     assert_eq!(eval_ok(code), "abc xyz:123 def");
@@ -1300,7 +1300,7 @@ fn test_callback_can_use_match_positions() {
                 return "OTHER";
             }
         }
-        let pattern = unwrap(regex_new("\\w+"));
+        let pattern = unwrap(regex.new("\\w+"));
         regex_replace_with(pattern, "hello world", firstOrOther)
     "#;
     assert_eq!(eval_ok(code), "FIRST world");
@@ -1314,7 +1314,7 @@ fn test_callback_can_access_groups_array() {
             let captured = groups[1];
             return "[" + captured + "]";
         }
-        let pattern = unwrap(regex_new("(\\d+)"));
+        let pattern = unwrap(regex.new("(\\d+)"));
         regex_replace_with(pattern, "test123", extractCapture)
     "#;
     assert_eq!(eval_ok(code), "test[123]");
@@ -1327,7 +1327,7 @@ fn test_replace_all_with_processes_all_matches() {
             let num = unwrap(m.get("text"));
             return "[" + num + "]";
         }
-        let pattern = unwrap(regex_new("\\d+"));
+        let pattern = unwrap(regex.new("\\d+"));
         regex_replace_all_with(pattern, "1a2b3c", bracketize)
     "#;
     assert_eq!(eval_ok(code), "[1]a[2]b[3]c");
@@ -1340,8 +1340,8 @@ fn test_replace_all_with_processes_all_matches() {
 #[test]
 fn test_split_divides_at_matches() {
     let code = r#"
-        let pattern = unwrap(regex_new(","));
-        let parts = regex_split(pattern, "a,b,c");
+        let pattern = unwrap(regex.new(","));
+        let parts = pattern.split("a,b,c");
         len(parts)
     "#;
     assert_eq!(eval_ok(code), "3");
@@ -1350,8 +1350,8 @@ fn test_split_divides_at_matches() {
 #[test]
 fn test_split_includes_empty_strings() {
     let code = r#"
-        let pattern = unwrap(regex_new(","));
-        let parts = regex_split(pattern, "a,b,,c");
+        let pattern = unwrap(regex.new(","));
+        let parts = pattern.split("a,b,,c");
         parts[2]
     "#;
     assert_eq!(eval_ok(code), "");
@@ -1360,8 +1360,8 @@ fn test_split_includes_empty_strings() {
 #[test]
 fn test_split_no_matches_returns_single_element() {
     let code = r#"
-        let pattern = unwrap(regex_new(","));
-        let parts = regex_split(pattern, "abc");
+        let pattern = unwrap(regex.new(","));
+        let parts = pattern.split("abc");
         len(parts)
     "#;
     assert_eq!(eval_ok(code), "1");
@@ -1370,7 +1370,7 @@ fn test_split_no_matches_returns_single_element() {
 #[test]
 fn test_split_n_limits_splits() {
     let code = r#"
-        let pattern = unwrap(regex_new(","));
+        let pattern = unwrap(regex.new(","));
         let parts = regex_split_n(pattern, "a,b,c,d", 2);
         len(parts)
     "#;
@@ -1380,7 +1380,7 @@ fn test_split_n_limits_splits() {
 #[test]
 fn test_split_n_with_limit_zero_returns_empty() {
     let code = r#"
-        let pattern = unwrap(regex_new(","));
+        let pattern = unwrap(regex.new(","));
         let parts = regex_split_n(pattern, "a,b,c", 0);
         len(parts)
     "#;
@@ -1390,8 +1390,8 @@ fn test_split_n_with_limit_zero_returns_empty() {
 #[test]
 fn test_split_on_complex_pattern() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\s+"));
-        let parts = regex_split(pattern, "hello   world  test");
+        let pattern = unwrap(regex.new("\\s+"));
+        let parts = pattern.split("hello   world  test");
         len(parts)
     "#;
     assert_eq!(eval_ok(code), "3");
@@ -1400,8 +1400,8 @@ fn test_split_on_complex_pattern() {
 #[test]
 fn test_split_preserves_unicode() {
     let code = r#"
-        let pattern = unwrap(regex_new(","));
-        let parts = regex_split(pattern, "こんにちは,世界,テスト");
+        let pattern = unwrap(regex.new(","));
+        let parts = pattern.split("こんにちは,世界,テスト");
         parts[1]
     "#;
     assert_eq!(eval_ok(code), "世界");
@@ -1410,8 +1410,8 @@ fn test_split_preserves_unicode() {
 #[test]
 fn test_split_with_zero_width_matches() {
     let code = r#"
-        let pattern = unwrap(regex_new(""));
-        let parts = regex_split(pattern, "abc");
+        let pattern = unwrap(regex.new(""));
+        let parts = pattern.split("abc");
         len(parts)
     "#;
     // Empty pattern splits between every character including boundaries
@@ -1425,7 +1425,7 @@ fn test_split_with_zero_width_matches() {
 #[test]
 fn test_match_indices_returns_positions() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
+        let pattern = unwrap(regex.new("\\d+"));
         let indices = regex_match_indices(pattern, "a1b22c333");
         len(indices)
     "#;
@@ -1435,7 +1435,7 @@ fn test_match_indices_returns_positions() {
 #[test]
 fn test_match_indices_returns_start_end_pairs() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
+        let pattern = unwrap(regex.new("\\d+"));
         let indices = regex_match_indices(pattern, "hello123world");
         let first = indices[0];
         first[0]
@@ -1446,7 +1446,7 @@ fn test_match_indices_returns_start_end_pairs() {
 #[test]
 fn test_match_indices_no_matches_returns_empty() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\d+"));
+        let pattern = unwrap(regex.new("\\d+"));
         let indices = regex_match_indices(pattern, "hello");
         len(indices)
     "#;
@@ -1480,7 +1480,7 @@ fn test_regex_test_returns_false_on_compile_error() {
 #[test]
 fn test_match_indices_with_overlapping_pattern() {
     let code = r#"
-        let pattern = unwrap(regex_new("\\w+"));
+        let pattern = unwrap(regex.new("\\w+"));
         let indices = regex_match_indices(pattern, "hello world");
         len(indices)
     "#;
@@ -1502,8 +1502,8 @@ fn test_regex_test_with_complex_pattern() {
 #[test]
 fn test_integration_email_validation() {
     let code = r#"
-        let email_pattern = unwrap(regex_new("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"));
-        regex_is_match(email_pattern, "test.user+tag@example.com")
+        let email_pattern = unwrap(regex.new("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"));
+        email_pattern.isMatch("test.user+tag@example.com")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -1511,9 +1511,9 @@ fn test_integration_email_validation() {
 #[test]
 fn test_integration_url_extraction() {
     let code = r#"
-        let url_pattern = unwrap(regex_new("https?://[^\\s]+"));
+        let url_pattern = unwrap(regex.new("https?://[^\\s]+"));
         let text = "Visit https://example.com or http://test.org for info";
-        let matches = regex_find_all(url_pattern, text);
+        let matches = url_pattern.findAll(text);
         len(matches)
     "#;
     assert_eq!(eval_ok(code), "2");
@@ -1522,8 +1522,8 @@ fn test_integration_url_extraction() {
 #[test]
 fn test_integration_phone_formatting() {
     let code = r#"
-        let pattern = unwrap(regex_new("(\\d{3})(\\d{3})(\\d{4})"));
-        regex_replace(pattern, "Phone: 5551234567", "($1) $2-$3")
+        let pattern = unwrap(regex.new("(\\d{3})(\\d{3})(\\d{4})"));
+        pattern.replace("Phone: 5551234567", "($1) $2-$3")
     "#;
     assert_eq!(eval_ok(code), "Phone: (555) 123-4567");
 }
@@ -1531,8 +1531,8 @@ fn test_integration_phone_formatting() {
 #[test]
 fn test_integration_html_tag_stripping() {
     let code = r#"
-        let tag_pattern = unwrap(regex_new("<[^>]+>"));
-        regex_replace_all(tag_pattern, "<p>Hello <b>World</b></p>", "")
+        let tag_pattern = unwrap(regex.new("<[^>]+>"));
+        tag_pattern.replaceAll("<p>Hello <b>World</b></p>", "")
     "#;
     assert_eq!(eval_ok(code), "Hello World");
 }
@@ -1540,8 +1540,8 @@ fn test_integration_html_tag_stripping() {
 #[test]
 fn test_integration_csv_parsing() {
     let code = r#"
-        let pattern = unwrap(regex_new(","));
-        let parts = regex_split(pattern, "John,Doe,30,Engineer");
+        let pattern = unwrap(regex.new(","));
+        let parts = pattern.split("John,Doe,30,Engineer");
         parts[3]
     "#;
     assert_eq!(eval_ok(code), "Engineer");
@@ -1554,11 +1554,11 @@ fn test_integration_text_processing_pipeline() {
             let num = unwrap(m.get("text"));
             return "[" + num + "]";
         }
-        let digit_pattern = unwrap(regex_new("\\d+"));
+        let digit_pattern = unwrap(regex.new("\\d+"));
         let text = "Error 404: Page 500 not found";
         let processed = regex_replace_all_with(digit_pattern, text, uppercase_numbers);
-        let word_pattern = unwrap(regex_new("\\s+"));
-        let words = regex_split(word_pattern, processed);
+        let word_pattern = unwrap(regex.new("\\s+"));
+        let words = word_pattern.split(processed);
         len(words)
     "#;
     assert_eq!(eval_ok(code), "6"); // "Error", "[404]:", "Page", "[500]", "not", "found"
@@ -1697,7 +1697,7 @@ fn test_date_time_now_returns_datetime_type() {
 fn test_regex_invalid_pattern_returns_result_err() {
     // regex_new returns Result(Err(...)) for invalid patterns — not a runtime error
     let code = r#"
-        let r = regex_new("[invalid");
+        let r = regex.new("[invalid");
         is_err(r)
     "#;
     assert_eq!(eval_ok(code), "true");
@@ -1706,8 +1706,8 @@ fn test_regex_invalid_pattern_returns_result_err() {
 #[test]
 fn test_regex_is_match_empty_string_matching_pattern() {
     let code = r#"
-        let r = unwrap(regex_new(".*"));
-        regex_is_match(r, "")
+        let r = unwrap(regex.new(".*"));
+        r.isMatch("")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -1715,8 +1715,8 @@ fn test_regex_is_match_empty_string_matching_pattern() {
 #[test]
 fn test_regex_find_all_no_matches_returns_empty_array() {
     let code = r#"
-        let r = unwrap(regex_new("\\d+"));
-        let results = regex_find_all(r, "no digits here");
+        let r = unwrap(regex.new("\\d+"));
+        let results = r.findAll("no digits here");
         len(results)
     "#;
     assert_eq!(eval_ok(code), "0");
@@ -1725,8 +1725,8 @@ fn test_regex_find_all_no_matches_returns_empty_array() {
 #[test]
 fn test_regex_replace_only_replaces_first() {
     let code = r#"
-        let r = unwrap(regex_new("a"));
-        regex_replace(r, "banana", "X")
+        let r = unwrap(regex.new("a"));
+        r.replace("banana", "X")
     "#;
     assert_eq!(eval_ok(code), "bXnana");
 }
@@ -1734,8 +1734,8 @@ fn test_regex_replace_only_replaces_first() {
 #[test]
 fn test_regex_replace_all_replaces_every_match() {
     let code = r#"
-        let r = unwrap(regex_new("a"));
-        regex_replace_all(r, "banana", "X")
+        let r = unwrap(regex.new("a"));
+        r.replaceAll("banana", "X")
     "#;
     assert_eq!(eval_ok(code), "bXnXnX");
 }
@@ -1743,8 +1743,8 @@ fn test_regex_replace_all_replaces_every_match() {
 #[test]
 fn test_regex_split_at_start_produces_empty_first() {
     let code = r#"
-        let r = unwrap(regex_new(","));
-        let parts = regex_split(r, ",hello");
+        let r = unwrap(regex.new(","));
+        let parts = r.split(",hello");
         parts[0]
     "#;
     assert_eq!(eval_ok(code), "");
@@ -1753,8 +1753,8 @@ fn test_regex_split_at_start_produces_empty_first() {
 #[test]
 fn test_regex_split_at_end_produces_empty_last() {
     let code = r#"
-        let r = unwrap(regex_new(","));
-        let parts = regex_split(r, "hello,");
+        let r = unwrap(regex.new(","));
+        let parts = r.split("hello,");
         parts[1]
     "#;
     assert_eq!(eval_ok(code), "");
@@ -1763,9 +1763,9 @@ fn test_regex_split_at_end_produces_empty_last() {
 #[test]
 fn test_regex_escape_special_chars() {
     let code = r#"
-        let escaped = regex_escape("a.b*c+d?e");
-        let r = unwrap(regex_new(escaped));
-        regex_is_match(r, "a.b*c+d?e")
+        let escaped = regex.escape("a.b*c+d?e");
+        let r = unwrap(regex.new(escaped));
+        r.isMatch("a.b*c+d?e")
     "#;
     assert_eq!(eval_ok(code), "true");
 }
@@ -1774,8 +1774,8 @@ fn test_regex_escape_special_chars() {
 fn test_regex_named_captures() {
     // regex_captures_named returns Option<HashMap> — unwrap the Option first
     let code = r#"
-        let r = unwrap(regex_new("(?P<year>\\d{4})-(?P<month>\\d{2})"));
-        let opt = regex_captures_named(r, "2024-06");
+        let r = unwrap(regex.new("(?P<year>\\d{4})-(?P<month>\\d{2})"));
+        let opt = regex.captures(r, "2024-06");
         let m = unwrap(opt);
         unwrap(m.get("year"))
     "#;
@@ -1786,7 +1786,7 @@ fn test_regex_named_captures() {
 fn test_regex_split_n_limit_one_returns_two_parts() {
     // splitn with limit=1 → splitn(text, 2) internally → at most 2 parts
     let code = r#"
-        let r = unwrap(regex_new(","));
+        let r = unwrap(regex.new(","));
         let parts = regex_split_n(r, "a,b,c", 1);
         len(parts)
     "#;

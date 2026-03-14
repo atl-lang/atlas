@@ -1,1 +1,2 @@
-Type error: '+' requires matching types, found number[] and string[]inferred type 'number[]' is incompatible with 'string[]' at this use site
+Type error: operator `+` cannot be applied to `number[]` and `string[]`
+  inferred type `number[]` is incompatible with usage expecting `string[]`

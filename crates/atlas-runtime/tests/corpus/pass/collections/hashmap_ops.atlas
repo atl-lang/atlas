@@ -1,7 +1,7 @@
-let hm = Map();
-hm.set("name", "Alice");
-hm.set("age", "30");
-hm.set("city", "Paris");
+let hm = new Map<string, string>();
+hm = hm.set("name", "Alice");
+hm = hm.set("age", "30");
+hm = hm.set("city", "Paris");
 
 console.log(hm.size());
 console.log(hm.has("name"));
