@@ -380,6 +380,19 @@ impl Bytecode {
                 // Copy arg_count (u8)
                 self.instructions.push(other.instructions[i]);
                 i += 1;
+            } else if opcode_byte == Opcode::MakeClosure as u8 && i + 3 < other.instructions.len() {
+                // MakeClosure: [u16 const_idx (needs adjustment)] [u16 n_upvalues (copy as-is)]
+                let high = other.instructions[i] as u16;
+                let low = other.instructions[i + 1] as u16;
+                let old_index = (high << 8) | low;
+                let new_index = old_index + constant_offset;
+                self.instructions.push((new_index >> 8) as u8);
+                self.instructions.push((new_index & 0xFF) as u8);
+                i += 2;
+                // Copy n_upvalues (u16, not a constant reference)
+                self.instructions.push(other.instructions[i]);
+                self.instructions.push(other.instructions[i + 1]);
+                i += 2;
             } else if opcode_byte == Opcode::Struct as u8 && i + 3 < other.instructions.len() {
                 // Struct has one constant index + field count
                 let high = other.instructions[i] as u16;
@@ -431,16 +444,26 @@ impl Bytecode {
                             || x == Opcode::GetLocal as u8
                             || x == Opcode::SetLocal as u8
                             || x == Opcode::Array as u8
-                            || x == Opcode::CheckStructType as u8 =>
+                            || x == Opcode::CheckStructType as u8
+                            || x == Opcode::Loop as u8
+                            || x == Opcode::GetUpvalue as u8
+                            || x == Opcode::SetUpvalue as u8
+                            || x == Opcode::TupleGet as u8
+                            || x == Opcode::Tuple as u8
+                            || x == Opcode::HashMap as u8
+                            || x == Opcode::DeferPush as u8 =>
                         {
                             2 // u16 operand
                         }
-                        x if x == Opcode::Call as u8 => 1, // u8 operand
-                        x if x == Opcode::TraitDispatch as u8 => 5, // u16 + u16 + u8 operand
-                        x if x == Opcode::Struct as u8 => 4, // u16 + u16 operand
-                        x if x == Opcode::AsyncCall as u8 || x == Opcode::SpawnTask as u8 => {
-                            1 // u8 arg_count (same layout as Call)
+                        x if x == Opcode::Call as u8
+                            || x == Opcode::AsyncCall as u8
+                            || x == Opcode::SpawnTask as u8
+                            || x == Opcode::EnumVariant as u8 =>
+                        {
+                            1 // u8 operand
                         }
+                        x if x == Opcode::TraitDispatch as u8 => 5, // u16 + u16 + u8 operand
+                        x if x == Opcode::Struct as u8 => 4,        // u16 + u16 operand
                         _ => 0, // No operand (Await, WrapFuture, etc.)
                     };
 
