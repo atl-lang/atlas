@@ -178,7 +178,7 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         | "is_ok" | "is_err" | "is_some" | "is_none"
         | "isOk" | "isErr" | "isSome" | "isNone"
         // Core utilities (print is console.log, not a bare global)
-        | "len" | "typeof" | "type_of" | "toString"
+        | "len" | "typeof" | "type_of" | "toString" | "str"
         // Type constructors
         | "Map" | "Set" | "Queue" | "Stack"
         // Future bare globals (namespace equivalent: future.resolve(), future.all(), etc.)

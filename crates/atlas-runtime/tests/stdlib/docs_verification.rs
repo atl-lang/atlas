@@ -87,7 +87,7 @@ fn docs_split_basic() {
 
 #[test]
 fn docs_join_basic() {
-    assert_eval_string(r#"join(["x", "y", "z"], "-")"#, "x-y-z");
+    assert_eval_string(r#"["x", "y", "z"].join("-")"#, "x-y-z");
 }
 
 #[test]
@@ -97,12 +97,12 @@ fn docs_trim() {
 
 #[test]
 fn docs_trim_start() {
-    assert_eval_string(r#"trim_start("  hello  ")"#, "hello  ");
+    assert_eval_string(r#""  hello  ".trimStart()"#, "hello  ");
 }
 
 #[test]
 fn docs_trim_end() {
-    assert_eval_string(r#"trim_end("  hello  ")"#, "  hello");
+    assert_eval_string(r#""  hello  ".trimEnd()"#, "  hello");
 }
 
 #[test]
@@ -117,27 +117,27 @@ fn docs_to_lower_case() {
 
 #[test]
 fn docs_starts_with_true() {
-    assert_eval_bool(r#"starts_with("hello world", "hello")"#, true);
+    assert_eval_bool(r#""hello world".startsWith("hello")"#, true);
 }
 
 #[test]
 fn docs_starts_with_false() {
-    assert_eval_bool(r#"starts_with("hello world", "world")"#, false);
+    assert_eval_bool(r#""hello world".startsWith("world")"#, false);
 }
 
 #[test]
 fn docs_ends_with_true() {
-    assert_eval_bool(r#"ends_with("hello world", "world")"#, true);
+    assert_eval_bool(r#""hello world".endsWith("world")"#, true);
 }
 
 #[test]
 fn docs_includes_true() {
-    assert_eval_bool(r#"includes("hello world", "lo wo")"#, true);
+    assert_eval_bool(r#""hello world".includes("lo wo")"#, true);
 }
 
 #[test]
 fn docs_includes_false() {
-    assert_eval_bool(r#"includes("hello world", "xyz")"#, false);
+    assert_eval_bool(r#""hello world".includes("xyz")"#, false);
 }
 
 #[test]
@@ -152,22 +152,22 @@ fn docs_index_of_not_found() {
 
 #[test]
 fn docs_replace() {
-    assert_eval_string(r#"replace("hello world", "world", "Atlas")"#, "hello Atlas");
+    assert_eval_string(r#""hello world".replace("world", "Atlas")"#, "hello Atlas");
 }
 
 #[test]
 fn docs_repeat() {
-    assert_eval_string(r#"repeat("ab", 3)"#, "ababab");
+    assert_eval_string(r#""ab".repeat(3)"#, "ababab");
 }
 
 #[test]
 fn docs_repeat_zero() {
-    assert_eval_string(r#"repeat("x", 0)"#, "");
+    assert_eval_string(r#""x".repeat(0)"#, "");
 }
 
 #[test]
 fn docs_substring() {
-    assert_eval_string(r#"substring("hello world", 6, 11)"#, "world");
+    assert_eval_string(r#""hello world".substring(6, 11)"#, "world");
 }
 
 #[test]
@@ -177,12 +177,12 @@ fn docs_char_at() {
 
 #[test]
 fn docs_pad_start() {
-    assert_eval_string(r#"pad_start("42", 5, "0")"#, "00042");
+    assert_eval_string(r#""42".padStart(5, "0")"#, "00042");
 }
 
 #[test]
 fn docs_pad_end() {
-    assert_eval_string(r#"pad_end("hi", 5, ".")"#, "hi...");
+    assert_eval_string(r#""hi".padEnd(5, ".")"#, "hi...");
 }
 
 // --- Array functions ---
@@ -191,7 +191,7 @@ fn docs_pad_end() {
 fn docs_reverse() {
     assert_eval_bool(
         r#"
-        let rev = reverse([1, 2, 3]);
+        let rev = [1, 2, 3].reverse();
         rev[0] == 3 && rev[2] == 1
         "#,
         true,
@@ -202,7 +202,7 @@ fn docs_reverse() {
 fn docs_flatten() {
     assert_eval_bool(
         r#"
-        let flat = flatten([[1, 2], [3, 4]]);
+        let flat = [[1, 2], [3, 4]].flatten();
         len(flat) == 4 && flat[0] == 1 && flat[3] == 4
         "#,
         true,
@@ -213,7 +213,7 @@ fn docs_flatten() {
 fn docs_slice() {
     assert_eval_bool(
         r#"
-        let s = slice([1, 2, 3, 4, 5], 1, 4);
+        let s = [1, 2, 3, 4, 5].slice(1, 4);
         len(s) == 3 && s[0] == 2 && s[2] == 4
         "#,
         true,
@@ -222,59 +222,59 @@ fn docs_slice() {
 
 #[test]
 fn docs_array_includes_true() {
-    assert_eval_bool(r#"array_includes([1, 2, 3], 2)"#, true);
+    assert_eval_bool(r#"[1, 2, 3].includes(2)"#, true);
 }
 
 #[test]
 fn docs_array_includes_false() {
-    assert_eval_bool(r#"array_includes(["a", "b"], "c")"#, false);
+    assert_eval_bool(r#"["a", "b"].includes("c")"#, false);
 }
 
 #[test]
 fn docs_array_index_of() {
-    assert_eval_option_some_number(r#"array_index_of([10, 20, 30], 20)"#, 1.0);
+    assert_eval_option_some_number(r#"[10, 20, 30].indexOf(20)"#, 1.0);
 }
 
 // --- Math functions ---
 
 #[test]
 fn docs_abs_negative() {
-    assert_eval_number(r#"abs(-5)"#, 5.0);
+    assert_eval_number(r#"Math.abs(-5)"#, 5.0);
 }
 
 #[test]
 fn docs_floor() {
-    assert_eval_number(r#"floor(3.7)"#, 3.0);
+    assert_eval_number(r#"Math.floor(3.7)"#, 3.0);
 }
 
 #[test]
 fn docs_ceil() {
-    assert_eval_number(r#"ceil(3.1)"#, 4.0);
+    assert_eval_number(r#"Math.ceil(3.1)"#, 4.0);
 }
 
 #[test]
 fn docs_sqrt() {
-    assert_eval_result_ok_number(r#"sqrt(9)"#, 3.0);
+    assert_eval_result_ok_number(r#"Math.sqrt(9)"#, 3.0);
 }
 
 #[test]
 fn docs_pow() {
-    assert_eval_number(r#"pow(2, 10)"#, 1024.0);
+    assert_eval_number(r#"Math.pow(2, 10)"#, 1024.0);
 }
 
 #[test]
 fn docs_max() {
-    assert_eval_number(r#"max(3, 7)"#, 7.0);
+    assert_eval_number(r#"Math.max(3, 7)"#, 7.0);
 }
 
 #[test]
 fn docs_min() {
-    assert_eval_number(r#"min(3, 7)"#, 3.0);
+    assert_eval_number(r#"Math.min(3, 7)"#, 3.0);
 }
 
 #[test]
 fn docs_clamp_in_range() {
-    assert_eval_result_ok_number(r#"clamp(5, 0, 10)"#, 5.0);
+    assert_eval_result_ok_number(r#"Math.clamp(5, 0, 10)"#, 5.0);
 }
 
 #[test]
@@ -284,7 +284,7 @@ fn docs_clamp_below() {
 
 #[test]
 fn docs_clamp_above() {
-    assert_eval_result_ok_number(r#"clamp(15, 0, 10)"#, 10.0);
+    assert_eval_result_ok_number(r#"Math.clamp(15, 0, 10)"#, 10.0);
 }
 
 #[test]
@@ -299,7 +299,7 @@ fn docs_sign_zero() {
 
 #[test]
 fn docs_sign_positive() {
-    assert_eval_number(r#"sign(3)"#, 1.0);
+    assert_eval_number(r#"Math.sign(3)"#, 1.0);
 }
 
 // --- Type checking ---
@@ -316,12 +316,12 @@ fn docs_is_string_false() {
 
 #[test]
 fn docs_is_number_true() {
-    assert_eval_bool(r#"is_number(3.14)"#, true);
+    assert_eval_bool(r#"typeof(3.14) == "number""#, true);
 }
 
 #[test]
 fn docs_is_bool() {
-    assert_eval_bool(r#"typeof(true) == "bool""#, true);
+    assert_eval_bool(r#"typeof(true) == "boolean""#, true);
 }
 
 #[test]
@@ -331,13 +331,13 @@ fn docs_is_null() {
 
 #[test]
 fn docs_is_array() {
-    assert_eval_bool(r#"is_array([1, 2])"#, true);
+    assert_eval_bool(r#"typeof([1, 2]) == "array""#, true);
 }
 
 #[test]
 fn docs_is_object() {
-    // is_object returns false for non-objects
-    assert_eval_bool(r#"is_object([1, 2])"#, false);
+    // objects in Atlas are records/structs, arrays return "array" not "object"
+    assert_eval_bool(r#"typeof([1, 2]) == "object""#, false);
 }
 
 // --- JSON functions ---
@@ -348,7 +348,7 @@ fn docs_parse_json_object() {
         r#"
         let json_str = "[1, 2, 3]";
         let arr: json = Json.parse(json_str)?;
-        json_as_number(arr[0]) == 1
+        arr[0].asNumber() == 1
         "#,
         true,
     );
@@ -356,7 +356,7 @@ fn docs_parse_json_object() {
 
 #[test]
 fn docs_to_json() {
-    assert_eval_bool(r#"typeof(Json.stringify([1, 2, 3]) == "string")"#, true);
+    assert_eval_bool(r#"typeof(Json.stringify([1, 2, 3])) == "string""#, true);
 }
 
 #[test]
@@ -371,12 +371,12 @@ fn docs_is_valid_json_false() {
 
 #[test]
 fn docs_json_as_number() {
-    assert_eval_number(r#"json_as_number(Json.parse("42")?)"#, 42.0);
+    assert_eval_number(r#"Json.parse("42")?.asNumber()"#, 42.0);
 }
 
 #[test]
 fn docs_json_is_null() {
-    assert_eval_bool(r#"json.isNull(Json.parse("null")?)"#, true);
+    assert_eval_bool(r#"Json.parse("null")?.isNull()"#, true);
 }
 
 // --- Result / Option functions ---

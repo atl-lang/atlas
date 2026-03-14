@@ -31,38 +31,38 @@ use pretty_assertions::assert_eq;
 #[case::length_unicode("len(\"hello世界\")", "7")]
 #[case::concat("\"hello\" + \" \" + \"world\"", "hello world")]
 #[case::concat_empty("\"\" + \"test\"", "test")]
-#[case::substring("substring(\"hello\", 1, 4)", "ell")]
-#[case::substring_full("substring(\"hello\", 0, 5)", "hello")]
+#[case::substring("\"hello\".substring(1, 4)", "ell")]
+#[case::substring_full("\"hello\".substring(0, 5)", "hello")]
 #[case::charat("\"hello\".charAt(1)", "Some(e)")]
 #[case::charat_first("\"hello\".charAt(0)", "Some(h)")]
 #[case::indexof("\"hello\".indexOf(\"l\")", "Some(2)")]
 #[case::indexof_not_found("\"hello\".indexOf(\"x\")", "None")]
-#[case::split("join(split(\"a,b,c\", \",\"), \"|\")", "a|b|c")]
-#[case::split_empty("len(split(\"\", \",\"))", "1")] // Empty string splits to [""]
-#[case::join("join([\"a\", \"b\", \"c\"], \",\")", "a,b,c")]
-#[case::join_empty("join(slice([\"a\"], 1, 1), \",\")", "")]
-#[case::replace("replace(\"hello world\", \"world\", \"Atlas\")", "hello Atlas")]
-#[case::replace_first("replace(\"aaa\", \"a\", \"b\")", "baa")] // replace() only replaces first occurrence
+#[case::split("\"a,b,c\".split(\",\").join(\"|\")", "a|b|c")]
+#[case::split_empty("len(\"\".split(\",\"))", "1")] // Empty string splits to [""]
+#[case::join("[\"a\", \"b\", \"c\"].join(\",\")", "a,b,c")]
+#[case::join_empty("[\"a\"].slice(1, 1).join(\",\")", "")]
+#[case::replace("\"hello world\".replace(\"world\", \"Atlas\")", "hello Atlas")]
+#[case::replace_first("\"aaa\".replace(\"a\", \"b\")", "baa")] // replace() only replaces first occurrence
 #[case::trim("\"  hello  \".trim()", "hello")]
 #[case::trim_no_space("\"hello\".trim()", "hello")]
 #[case::to_upper("\"hello\".toUpperCase()", "HELLO")]
 #[case::to_upper_mixed("\"HeLLo\".toUpperCase()", "HELLO")]
 #[case::to_lower("\"HELLO\".toLowerCase()", "hello")]
 #[case::to_lower_mixed("\"HeLLo\".toLowerCase()", "hello")]
-#[case::startswith("starts_with(\"hello\", \"he\")", "true")]
-#[case::startswith_false("starts_with(\"hello\", \"wo\")", "false")]
-#[case::endswith("ends_with(\"hello\", \"lo\")", "true")]
-#[case::endswith_false("ends_with(\"hello\", \"he\")", "false")]
-#[case::includes("includes(\"hello world\", \"wo\")", "true")]
-#[case::includes_false("includes(\"hello world\", \"xyz\")", "false")]
-#[case::repeat("repeat(\"ab\", 3)", "ababab")]
-#[case::repeat_zero("repeat(\"x\", 0)", "")]
-#[case::padstart("pad_start(\"5\", 3, \"0\")", "005")]
-#[case::padend("pad_end(\"5\", 3, \"0\")", "500")]
-#[case::lastindexof("last_index_of(\"hello\", \"l\")", "Some(3)")]
-#[case::lastindexof_not_found("last_index_of(\"hello\", \"x\")", "None")]
-#[case::trimstart("trim_start(\"  hello\")", "hello")]
-#[case::trimend("trim_end(\"hello  \")", "hello")]
+#[case::startswith("\"hello\".startsWith(\"he\")", "true")]
+#[case::startswith_false("\"hello\".startsWith(\"wo\")", "false")]
+#[case::endswith("\"hello\".endsWith(\"lo\")", "true")]
+#[case::endswith_false("\"hello\".endsWith(\"he\")", "false")]
+#[case::includes("\"hello world\".includes(\"wo\")", "true")]
+#[case::includes_false("\"hello world\".includes(\"xyz\")", "false")]
+#[case::repeat("\"ab\".repeat(3)", "ababab")]
+#[case::repeat_zero("\"x\".repeat(0)", "")]
+#[case::padstart("\"5\".padStart(3, \"0\")", "005")]
+#[case::padend("\"5\".padEnd(3, \"0\")", "500")]
+#[case::lastindexof("\"hello\".lastIndexOf(\"l\")", "Some(3)")]
+#[case::lastindexof_not_found("\"hello\".lastIndexOf(\"x\")", "None")]
+#[case::trimstart("\"  hello\".trimStart()", "hello")]
+#[case::trimend("\"hello  \".trimEnd()", "hello")]
 fn test_string_parity(#[case] code: &str, #[case] expected: &str) {
     // Run in interpreter
     let runtime_interp = Atlas::new();
@@ -99,31 +99,28 @@ fn test_string_parity(#[case] code: &str, #[case] expected: &str) {
 #[rstest]
 #[case::len("len([1, 2, 3])", "3")]
 #[case::len_empty("len([])", "0")]
-#[case::concat_add("len(concat([1, 2], [3]))", "3")]
-#[case::concat_empty_add("len(concat([], [1]))", "1")]
-#[case::pop_result("pop([1, 2, 3])[0]", "3")]
-#[case::pop_remainder("len(pop([1, 2, 3])[1])", "2")]
-#[case::shift_result("shift([1, 2, 3])[0]", "1")]
-#[case::shift_remainder("len(shift([1, 2, 3])[1])", "2")]
-#[case::unshift("len(unshift([2, 3], 1))", "3")]
-#[case::concat_arr("len(concat([1, 2], [3, 4]))", "4")]
-#[case::slice("slice([1, 2, 3, 4], 1, 3)[0]", "2")]
-#[case::reverse("reverse([1, 2, 3])[0]", "3")]
-// Note: sort() not yet implemented - removing test cases
-// #[case::sort_nums("sort([3, 1, 2])[0]", "1")]
-// #[case::sort_strings("join(sort([\"c\", \"a\", \"b\"]), \",\")", "a,b,c")]
-#[case::indexof_arr("array_index_of([1, 2, 3], 2)", "Some(1)")]
-#[case::indexof_not_found_arr("array_index_of([1, 2, 3], 5)", "None")]
-#[case::includes_arr("array_includes([1, 2, 3], 2)", "true")]
-#[case::includes_false_arr("array_includes([1, 2, 3], 5)", "false")]
+#[case::concat_add("len([1, 2].concat([3]))", "3")]
+#[case::concat_empty_add("len([].concat([1]))", "1")]
+#[case::pop_result("[1, 2, 3].pop()", "3")]
+#[case::pop_remainder("{ let arr = [1, 2, 3]; arr.pop(); arr.len() }", "2")]
+#[case::shift_result("[1, 2, 3].shift()", "1")]
+#[case::shift_remainder("{ let arr = [1, 2, 3]; arr.shift(); arr.len() }", "2")]
+#[case::unshift("{ let arr = [2, 3]; arr.unshift(1); arr.len() }", "3")]
+#[case::concat_arr("len([1, 2].concat([3, 4]))", "4")]
+#[case::slice("[1, 2, 3, 4].slice(1, 3)[0]", "2")]
+#[case::reverse("[1, 2, 3].reverse()[0]", "3")]
+#[case::indexof_arr("[1, 2, 3].indexOf(2)", "Some(1)")]
+#[case::indexof_not_found_arr("[1, 2, 3].indexOf(5)", "None")]
+#[case::includes_arr("[1, 2, 3].includes(2)", "true")]
+#[case::includes_false_arr("[1, 2, 3].includes(5)", "false")]
 #[case::first_elem("[1, 2, 3][0]", "1")]
 #[case::last_elem("[1, 2, 3][2]", "3")]
-#[case::slice_rest("slice([1, 2, 3], 1, 3)[0]", "2")]
-#[case::slice_rest_len("len(slice([1], 1, 1))", "0")]
-#[case::flatten("len(flatten([[1, 2], [3, 4]]))", "4")]
-#[case::flatten_empty("len(flatten(slice([[1]], 1, 1)))", "0")]
-#[case::arraylastindexof("array_last_index_of([1, 2, 3, 2], 2)", "Some(3)")]
-#[case::arraylastindexof_not_found("array_last_index_of([1, 2, 3], 5)", "None")]
+#[case::slice_rest("[1, 2, 3].slice(1, 3)[0]", "2")]
+#[case::slice_rest_len("len([1].slice(1, 1))", "0")]
+#[case::flatten("len([[1, 2], [3, 4]].flatten())", "4")]
+#[case::flatten_empty("len([[1]].slice(1, 1).flatten())", "0")]
+#[case::arraylastindexof("[1, 2, 3, 2].lastIndexOf(2)", "Some(3)")]
+#[case::arraylastindexof_not_found("[1, 2, 3].lastIndexOf(5)", "None")]
 fn test_array_basic_parity(#[case] code: &str, #[case] expected: &str) {
     let runtime_interp = Atlas::new();
     let interp_result = runtime_interp.eval(code).unwrap();
@@ -279,19 +276,19 @@ fn test_math_parity(#[case] code: &str, #[case] expected: &str) {
 
 #[rstest]
 #[case::parse_object(
-    "let j = Json.parse(\"{\\\"key\\\": \\\"value\\\"}\"); j?[\"key\"].as_string()",
+    "let j = Json.parse(\"{\\\"key\\\": \\\"value\\\"}\"); j?[\"key\"].asString()",
     "value"
 )]
-#[case::parse_array("let j = Json.parse(\"[1, 2, 3]\"); j?[0].as_number()", "1")]
-#[case::parse_number("let j = Json.parse(\"42\"); j?.as_number()", "42")]
-#[case::parse_string("let j = Json.parse(\"\\\"hello\\\"\"); j?.as_string()", "hello")]
-#[case::parse_bool("let j = Json.parse(\"true\"); j?.as_bool()", "true")]
+#[case::parse_array("let j = Json.parse(\"[1, 2, 3]\"); j?[0].asNumber()", "1")]
+#[case::parse_number("let j = Json.parse(\"42\"); j?.asNumber()", "42")]
+#[case::parse_string("let j = Json.parse(\"\\\"hello\\\"\"); j?.asString()", "hello")]
+#[case::parse_bool("let j = Json.parse(\"true\"); j?.asBool()", "true")]
 #[case::parse_null("let j = Json.parse(\"null\"); j?.isNull()", "true")]
 #[case::stringify_object("Json.stringify(Json.parse(\"{\\\"a\\\": 1}\")?)", "{\"a\":1}")]
 #[case::stringify_array("Json.stringify(Json.parse(\"[1,2,3]\")?)", "[1,2,3]")]
-#[case::as_string("Json.parse(\"\\\"test\\\"\")?.as_string()", "test")]
-#[case::as_number("Json.parse(\"123\")?.as_number()", "123")]
-#[case::as_bool("Json.parse(\"true\")?.as_bool()", "true")]
+#[case::as_string("Json.parse(\"\\\"test\\\"\")?.asString()", "test")]
+#[case::as_number("Json.parse(\"123\")?.asNumber()", "123")]
+#[case::as_bool("Json.parse(\"true\")?.asBool()", "true")]
 #[case::is_null_true("Json.parse(\"null\")?.isNull()", "true")]
 #[case::is_null_false("Json.parse(\"123\")?.isNull()", "false")]
 // Note: JSON type checking methods not yet implemented
@@ -301,16 +298,16 @@ fn test_math_parity(#[case] code: &str, #[case] expected: &str) {
 // #[case::is_object_false("Json.parse(\"123\")?.is_object()", "false")]
 // #[case::array_length("Json.parse(\"[1,2,3]\")?.array_length()", "3")]
 #[case::nested_access(
-    "let j = Json.parse(\"{\\\"a\\\": {\\\"b\\\": 42}}\"); j?[\"a\"][\"b\"].as_number()",
+    "let j = Json.parse(\"{\\\"a\\\": {\\\"b\\\": 42}}\"); j?[\"a\"][\"b\"].asNumber()",
     "42"
 )]
-#[case::json_array_index("let j = Json.parse(\"[10, 20, 30]\"); j?[1].as_number()", "20")]
+#[case::json_array_index("let j = Json.parse(\"[10, 20, 30]\"); j?[1].asNumber()", "20")]
 #[case::json_string_value(
-    "let j = Json.parse(\"{\\\"name\\\": \\\"Alice\\\"}\"); j?[\"name\"].as_string()",
+    "let j = Json.parse(\"{\\\"name\\\": \\\"Alice\\\"}\"); j?[\"name\"].asString()",
     "Alice"
 )]
 #[case::json_bool_value(
-    "let j = Json.parse(\"{\\\"active\\\": false}\"); j?[\"active\"].as_bool()",
+    "let j = Json.parse(\"{\\\"active\\\": false}\"); j?[\"active\"].asBool()",
     "false"
 )]
 #[case::isvalidjson_true("Json.isValid(\"{\\\"key\\\": \\\"value\\\"}\")", "true")]
@@ -591,9 +588,9 @@ fn test_type_checking_parity(#[case] code: &str, #[case] expected: &str) {
 
 #[rstest]
 #[case::empty_string_operations("len(\"\".trim())", "0")]
-#[case::empty_array_operations("len(reverse([]))", "0")]
+#[case::empty_array_operations("len([].reverse())", "0")]
 #[case::divide_by_zero("1 / 0 > 999999999999999", "true")] // inf
-#[case::negative_sqrt("sqrt(-1)", "NaN")] // NaN as string
+#[case::negative_sqrt("Math.sqrt(-1)", "NaN")] // NaN as string
 #[case::parse_invalid_json_safety("let j = Json.parse(\"invalid\"); j.isNull()", "false")] // Returns error, not crash
 fn test_edge_cases_parity(#[case] code: &str, #[case] _expected: &str) {
     let runtime_interp = Atlas::new();
