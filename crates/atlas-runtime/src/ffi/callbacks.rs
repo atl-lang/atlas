@@ -19,8 +19,14 @@ use crate::value::{RuntimeError, Value};
 use std::ffi::c_void;
 use std::os::raw::{c_double, c_int, c_long};
 
-/// The closure type stored in callback handles
-type CallbackClosure = Box<dyn Fn(&[Value]) -> Result<Value, RuntimeError>>;
+/// The closure type stored in callback handles.
+///
+/// `FnMut` rather than `Fn` because callbacks that call into the Atlas VM
+/// mutate the VM's execution context (stack, ip, frames).  Trampolines cast
+/// the context pointer to `*mut CallbackClosure` and call through `&mut *`.
+/// This is sound because C callbacks are invoked sequentially from a single
+/// call-site — there is no concurrent access to the context pointer.
+type CallbackClosure = Box<dyn FnMut(&[Value]) -> Result<Value, RuntimeError>>;
 
 /// Errors that can occur during callback creation or execution
 #[derive(Debug)]
@@ -68,7 +74,7 @@ impl std::error::Error for CallbackError {}
 /// # Safety
 /// Context must be a valid pointer created by Box::into_raw on a CallbackClosure.
 unsafe extern "C" fn trampoline_void_to_int(context: *mut c_void) -> c_int {
-    let closure = &*(context as *const CallbackClosure);
+    let closure = &mut *(context as *mut CallbackClosure);
     match closure(&[]) {
         Ok(Value::Number(n)) => n as c_int,
         Ok(_) | Err(_) => 0,
@@ -80,7 +86,7 @@ unsafe extern "C" fn trampoline_void_to_int(context: *mut c_void) -> c_int {
 /// # Safety
 /// Context must be a valid pointer created by Box::into_raw on a CallbackClosure.
 unsafe extern "C" fn trampoline_double_to_double(context: *mut c_void, x: c_double) -> c_double {
-    let closure = &*(context as *const CallbackClosure);
+    let closure = &mut *(context as *mut CallbackClosure);
     match closure(&[Value::Number(x)]) {
         Ok(Value::Number(n)) => n,
         Ok(_) | Err(_) => 0.0,
@@ -96,7 +102,7 @@ unsafe extern "C" fn trampoline_double_double_to_double(
     x: c_double,
     y: c_double,
 ) -> c_double {
-    let closure = &*(context as *const CallbackClosure);
+    let closure = &mut *(context as *mut CallbackClosure);
     match closure(&[Value::Number(x), Value::Number(y)]) {
         Ok(Value::Number(n)) => n,
         Ok(_) | Err(_) => 0.0,
@@ -108,7 +114,7 @@ unsafe extern "C" fn trampoline_double_double_to_double(
 /// # Safety
 /// Context must be a valid pointer created by Box::into_raw on a CallbackClosure.
 unsafe extern "C" fn trampoline_int_to_int(context: *mut c_void, x: c_int) -> c_int {
-    let closure = &*(context as *const CallbackClosure);
+    let closure = &mut *(context as *mut CallbackClosure);
     match closure(&[Value::Number(x as f64)]) {
         Ok(Value::Number(n)) => n as c_int,
         Ok(_) | Err(_) => 0,
@@ -120,7 +126,7 @@ unsafe extern "C" fn trampoline_int_to_int(context: *mut c_void, x: c_int) -> c_
 /// # Safety
 /// Context must be a valid pointer created by Box::into_raw on a CallbackClosure.
 unsafe extern "C" fn trampoline_int_int_to_int(context: *mut c_void, x: c_int, y: c_int) -> c_int {
-    let closure = &*(context as *const CallbackClosure);
+    let closure = &mut *(context as *mut CallbackClosure);
     match closure(&[Value::Number(x as f64), Value::Number(y as f64)]) {
         Ok(Value::Number(n)) => n as c_int,
         Ok(_) | Err(_) => 0,
@@ -132,7 +138,7 @@ unsafe extern "C" fn trampoline_int_int_to_int(context: *mut c_void, x: c_int, y
 /// # Safety
 /// Context must be a valid pointer created by Box::into_raw on a CallbackClosure.
 unsafe extern "C" fn trampoline_long_to_long(context: *mut c_void, x: c_long) -> c_long {
-    let closure = &*(context as *const CallbackClosure);
+    let closure = &mut *(context as *mut CallbackClosure);
     match closure(&[Value::Number(x as f64)]) {
         Ok(Value::Number(n)) => n as c_long,
         Ok(_) | Err(_) => 0,
@@ -144,7 +150,7 @@ unsafe extern "C" fn trampoline_long_to_long(context: *mut c_void, x: c_long) ->
 /// # Safety
 /// Context must be a valid pointer created by Box::into_raw on a CallbackClosure.
 unsafe extern "C" fn trampoline_void_to_void(context: *mut c_void) {
-    let closure = &*(context as *const CallbackClosure);
+    let closure = &mut *(context as *mut CallbackClosure);
     let _ = closure(&[]);
 }
 
@@ -153,7 +159,7 @@ unsafe extern "C" fn trampoline_void_to_void(context: *mut c_void) {
 /// # Safety
 /// Context must be a valid pointer created by Box::into_raw on a CallbackClosure.
 unsafe extern "C" fn trampoline_int_to_void(context: *mut c_void, x: c_int) {
-    let closure = &*(context as *const CallbackClosure);
+    let closure = &mut *(context as *mut CallbackClosure);
     let _ = closure(&[Value::Number(x as f64)]);
 }
 
@@ -269,7 +275,7 @@ pub fn create_callback<F>(
     return_type: ExternType,
 ) -> Result<CallbackHandle, CallbackError>
 where
-    F: Fn(&[Value]) -> Result<Value, RuntimeError> + 'static,
+    F: FnMut(&[Value]) -> Result<Value, RuntimeError> + 'static,
 {
     // Build signature string for error reporting
     let sig = signature_string(&param_types, &return_type);
