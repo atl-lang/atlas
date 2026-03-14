@@ -71,7 +71,7 @@ fn typecheck_modules(entry: &str, modules: &[(&str, &str)]) -> Vec<Diagnostic> {
 #[case("type Numbers = number[]; let _x: Numbers = [1, 2, 3];")]
 #[case("type Handler = (number, string): bool; fn h(borrow x: number, borrow y: string): bool { return true; } let _x: Handler = h;")]
 #[case("type Pair<T, U> = (T, U): T; fn fst<T, U>(borrow x: T, borrow _y: U): T { return x; } let _x: Pair<number, string> = fst;")]
-#[case("type ResultMap = HashMap<string, Result<number, string>>; let _x: ResultMap = Map();")]
+#[case("type ResultMap = Map<string, Result<number, string>>; let _x: ResultMap = new Map<string, number>();")]
 #[case("export type PublicId = string; let _x: PublicId = \"ok\";")]
 fn test_alias_declarations(#[case] source: &str) {
     let diags = errors(source);
@@ -88,7 +88,7 @@ fn test_alias_declarations(#[case] source: &str) {
 #[case("type A = number[]; let _x: A = [1, 2];")]
 #[case("type A = (number): number; fn f(borrow x: number): number { return x; } let _x: A = f;")]
 #[case("type A = Result<number, string>; let _x: A = Ok(1);")]
-#[case("type A = HashMap<string, number>; let _x: A = Map();")]
+#[case("type A = Map<string, number>; let _x: A = new Map<string, number>();")]
 #[case("type A = Option<number>; let _x: A = Some(1);")]
 #[case("type A = Result<number, string>; let _x: A = Err(\"no\");")]
 fn test_alias_resolution(#[case] source: &str) {
@@ -131,7 +131,7 @@ fn test_generic_aliases(#[case] source: &str) {
 #[case("type A = (number): number; type B = (number): number; fn f(borrow x: number): number { return x; } let _x: A = f; let _y: B = _x;")]
 #[case("type A = Result<number, string>; type B = Result<number, string>; let _x: A = Ok(1); let _y: B = _x;")]
 #[case("type A = Option<number>; type B = Option<number>; let _x: A = Some(1); let _y: B = _x;")]
-#[case("type A = HashMap<string, number>; type B = HashMap<string, number>; let _x: A = Map(); let _y: B = _x;")]
+#[case("type A = Map<string, number>; type B = Map<string, number>; let _x: A = new Map<string, number>(); let _y: B = _x;")]
 #[case("type A = string; type B = A; let _x: B = \"ok\";")]
 #[case("type A = number; type B = A; type C = B; let _x: C = 1;")]
 #[case("type A<T> = T[]; type B<T> = A<T>; let _x: B<number> = [1];")]

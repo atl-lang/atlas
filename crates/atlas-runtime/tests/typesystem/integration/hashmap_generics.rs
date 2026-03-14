@@ -3,11 +3,11 @@ use super::super::*;
 #[test]
 fn hashmap_generic_params_must_match() {
     let src = r#"
-fn takes_numbers(borrow m: HashMap<string, number>): void {
+fn takes_numbers(borrow m: Map<string, number>): void {
     let _ = m;
 }
 
-let m: HashMap<string, string> = Map();
+let m: Map<string, string> = new Map<string, string>();
 takes_numbers(m);
 "#;
     let diagnostics = typecheck_source(src);
@@ -17,7 +17,7 @@ takes_numbers(m);
 #[test]
 fn hashmap_put_enforces_value_type() {
     let src = r#"
-let m: HashMap<string, number> = Map();
+let m: Map<string, number> = new Map<string, number>();
 m.set("age", "thirty");
 "#;
     let diagnostics = typecheck_source(src);
@@ -27,7 +27,7 @@ m.set("age", "thirty");
 #[test]
 fn hashmap_get_returns_value_type() {
     let src = r#"
-let m: HashMap<string, number> = Map();
+let m: Map<string, number> = new Map<string, number>();
 let v: string = m.get("age");
 "#;
     let diagnostics = typecheck_source(src);
@@ -38,7 +38,7 @@ let v: string = m.get("age");
 #[test]
 fn hashmap_has_returns_bool() {
     let src = r#"
-let m: HashMap<string, number> = Map();
+let m: Map<string, number> = new Map<string, number>();
 let has: bool = m.has("key");
 "#;
     let diagnostics = typecheck_source(src);
@@ -48,7 +48,7 @@ let has: bool = m.has("key");
 #[test]
 fn hashmap_has_usable_in_if_condition() {
     let src = r#"
-let m: HashMap<string, number> = Map();
+let m: Map<string, number> = new Map<string, number>();
 if m.has("key") {
     let x: number = 1;
 }

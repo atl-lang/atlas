@@ -156,13 +156,13 @@ fn test_is_string_false_null() {
 
 #[test]
 fn test_is_number_true_int() {
-    let code = r#"is_number(42)"#;
+    let code = r#"typeof(42) == "number""#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_is_number_true_float() {
-    let code = r#"is_number(3.5)"#;
+    let code = r#"typeof(3.5) == "number""#;
     assert_eval_bool(code, true);
 }
 
@@ -170,25 +170,25 @@ fn test_is_number_true_float() {
 
 #[test]
 fn test_is_number_false_string() {
-    let code = r#"is_number("42")"#;
+    let code = r#"typeof("42") == "number""#;
     assert_eval_bool(code, false);
 }
 
 #[test]
 fn test_is_bool_true() {
-    let code = r#"typeof(true) == "bool""#;
+    let code = r#"typeof(true) == "boolean""#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_is_bool_false() {
-    let code = r#"typeof(false) == "bool""#;
+    let code = r#"typeof(false) == "boolean""#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_is_bool_false_number() {
-    let code = r#"typeof(1) == "bool""#;
+    let code = r#"typeof(1) == "boolean""#;
     assert_eval_bool(code, false);
 }
 
@@ -206,19 +206,19 @@ fn test_is_null_false() {
 
 #[test]
 fn test_is_array_true() {
-    let code = r#"is_array([1,2,3])"#;
+    let code = r#"typeof([1,2,3]) == "array""#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_is_array_true_empty() {
-    let code = r#"is_array([])"#;
+    let code = r#"typeof([]) == "array""#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_is_array_false() {
-    let code = r#"is_array("not array")"#;
+    let code = r#"typeof("not array") == "array""#;
     assert_eval_bool(code, false);
 }
 

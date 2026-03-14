@@ -117,12 +117,12 @@ fn test_trim_all_whitespace() {
 
 #[test]
 fn test_trim_start_all_whitespace() {
-    assert_eq!(eval_ok(r#"trim_start("   ");"#), Value::string(""));
+    assert_eq!(eval_ok(r#""   ".trimStart();"#), Value::string(""));
 }
 
 #[test]
 fn test_trim_end_all_whitespace() {
-    assert_eq!(eval_ok(r#"trim_end("   ");"#), Value::string(""));
+    assert_eq!(eval_ok(r#""   ".trimEnd();"#), Value::string(""));
 }
 
 #[test]
@@ -154,16 +154,13 @@ fn test_index_of_empty_needle_on_empty() {
 
 #[test]
 fn test_last_index_of_not_found() {
-    assert_eq!(
-        eval_ok(r#"last_index_of("hello", "x");"#),
-        Value::Option(None)
-    );
+    assert_eq!(eval_ok(r#""hello".lastIndexOf("x");"#), Value::Option(None));
 }
 
 #[test]
 fn test_last_index_of_multiple_occurrences() {
     assert_eq!(
-        eval_ok(r#"last_index_of("abcabc", "b");"#),
+        eval_ok(r#""abcabc".lastIndexOf("b");"#),
         Value::Option(Some(Box::new(Value::Number(4.0))))
     );
 }
@@ -175,36 +172,33 @@ fn test_index_of_parity() {
     assert_eq!(i, v);
 }
 
-// str_index_of / str_last_index_of / str_join
+// indexOf / lastIndexOf / join — method syntax (bare str_* globals removed)
 
 #[test]
 fn test_str_index_of_found() {
     assert_eq!(
-        eval_ok(r#"str_index_of("hello", "ll");"#),
+        eval_ok(r#""hello".indexOf("ll");"#),
         Value::Option(Some(Box::new(Value::Number(2.0))))
     );
 }
 
 #[test]
 fn test_str_last_index_of_not_found() {
-    assert_eq!(
-        eval_ok(r#"str_last_index_of("hello", "z");"#),
-        Value::Option(None)
-    );
+    assert_eq!(eval_ok(r#""hello".lastIndexOf("z");"#), Value::Option(None));
 }
 
 #[test]
 fn test_str_join_basic() {
     assert_eq!(
-        eval_ok(r#"str_join(["a", "b", "c"], "-");"#),
+        eval_ok(r#"["a", "b", "c"].join("-");"#),
         Value::string("a-b-c")
     );
 }
 
 #[test]
 fn test_str_index_of_parity() {
-    let i = eval_ok(r#"str_index_of("ababa", "ba");"#);
-    let v = vm_eval_ok(r#"str_index_of("ababa", "ba");"#);
+    let i = eval_ok(r#""ababa".indexOf("ba");"#);
+    let v = vm_eval_ok(r#""ababa".indexOf("ba");"#);
     assert_eq!(i, v);
 }
 
@@ -212,33 +206,33 @@ fn test_str_index_of_parity() {
 
 #[test]
 fn test_substring_start_equals_end() {
-    assert_eq!(eval_ok(r#"substring("hello", 2, 2);"#), Value::string(""));
+    assert_eq!(eval_ok(r#""hello".substring(2, 2);"#), Value::string(""));
 }
 
 #[test]
 fn test_substring_full_string() {
     assert_eq!(
-        eval_ok(r#"substring("hello", 0, 5);"#),
+        eval_ok(r#""hello".substring(0, 5);"#),
         Value::string("hello")
     );
 }
 
 #[test]
 fn test_substring_out_of_bounds_error() {
-    let err = eval_err(r#"substring("hello", 0, 10);"#);
+    let err = eval_err(r#""hello".substring(0, 10);"#);
     assert!(is_runtime_error(&err));
 }
 
 #[test]
 fn test_substring_start_greater_than_end_error() {
-    let err = eval_err(r#"substring("hello", 3, 1);"#);
+    let err = eval_err(r#""hello".substring(3, 1);"#);
     assert!(is_runtime_error(&err));
 }
 
 #[test]
 fn test_substring_parity() {
-    let i = eval_ok(r#"substring("hello world", 6, 11);"#);
-    let v = vm_eval_ok(r#"substring("hello world", 6, 11);"#);
+    let i = eval_ok(r#""hello world".substring(6, 11);"#);
+    let v = vm_eval_ok(r#""hello world".substring(6, 11);"#);
     assert_eq!(i, v);
 }
 
@@ -353,26 +347,23 @@ fn test_pad_start_parity() {
 
 #[test]
 fn test_starts_with_empty_needle() {
-    assert_eq!(eval_ok(r#"starts_with("hello", "");"#), Value::Bool(true));
+    assert_eq!(eval_ok(r#""hello".startsWith("");"#), Value::Bool(true));
 }
 
 #[test]
 fn test_ends_with_empty_needle() {
-    assert_eq!(eval_ok(r#"ends_with("hello", "");"#), Value::Bool(true));
+    assert_eq!(eval_ok(r#""hello".endsWith("");"#), Value::Bool(true));
 }
 
 #[test]
 fn test_starts_with_longer_needle() {
-    assert_eq!(
-        eval_ok(r#"starts_with("hi", "hello");"#),
-        Value::Bool(false)
-    );
+    assert_eq!(eval_ok(r#""hi".startsWith("hello");"#), Value::Bool(false));
 }
 
 #[test]
 fn test_starts_with_parity() {
-    let i = eval_ok(r#"starts_with("hello world", "hello");"#);
-    let v = vm_eval_ok(r#"starts_with("hello world", "hello");"#);
+    let i = eval_ok(r#""hello world".startsWith("hello");"#);
+    let v = vm_eval_ok(r#""hello world".startsWith("hello");"#);
     assert_eq!(i, v);
 }
 
@@ -469,7 +460,7 @@ fn test_concat_parity() {
 
 #[test]
 fn test_flatten_empty_array() {
-    let result = eval_ok("flatten(slice([[1]], 1, 1));");
+    let result = eval_ok("[[1]].slice(1, 1).flatten();");
     match result {
         Value::Array(arr) => assert_eq!(arr.len(), 0),
         _ => panic!("Expected array"),
@@ -517,13 +508,13 @@ fn test_flatten_parity() {
 
 #[test]
 fn test_array_index_of_empty_array() {
-    assert_eq!(eval_ok("array_index_of([], 1);"), Value::Option(None));
+    assert_eq!(eval_ok("[].indexOf(1);"), Value::Option(None));
 }
 
 #[test]
 fn test_array_index_of_first_occurrence() {
     assert_eq!(
-        eval_ok("array_index_of([1, 2, 1, 3], 1);"),
+        eval_ok("[1, 2, 1, 3].indexOf(1);"),
         Value::Option(Some(Box::new(Value::Number(0.0))))
     );
 }
@@ -531,20 +522,20 @@ fn test_array_index_of_first_occurrence() {
 #[test]
 fn test_array_last_index_of_last_occurrence() {
     assert_eq!(
-        eval_ok("array_last_index_of([1, 2, 1, 3], 1);"),
+        eval_ok("[1, 2, 1, 3].lastIndexOf(1);"),
         Value::Option(Some(Box::new(Value::Number(2.0))))
     );
 }
 
 #[test]
 fn test_array_includes_empty() {
-    assert_eq!(eval_ok("array_includes([], 1);"), Value::Bool(false));
+    assert_eq!(eval_ok("[].includes(1);"), Value::Bool(false));
 }
 
 #[test]
 fn test_array_index_of_parity() {
-    let i = eval_ok("array_index_of([10, 20, 30, 20], 20);");
-    let v = vm_eval_ok("array_index_of([10, 20, 30, 20], 20);");
+    let i = eval_ok("[10, 20, 30, 20].indexOf(20);");
+    let v = vm_eval_ok("[10, 20, 30, 20].indexOf(20);");
     assert_eq!(i, v);
 }
 
@@ -552,7 +543,7 @@ fn test_array_index_of_parity() {
 
 #[test]
 fn test_slice_end_beyond_length_clamps() {
-    let result = eval_ok("slice([0, 1, 2, 3, 4], 1, 100);");
+    let result = eval_ok("[0, 1, 2, 3, 4].slice(1, 100);");
     match result {
         Value::Array(arr) => {
             let b = arr.as_slice();
@@ -565,7 +556,7 @@ fn test_slice_end_beyond_length_clamps() {
 
 #[test]
 fn test_slice_empty_array() {
-    let result = eval_ok("slice([], 0, 0);");
+    let result = eval_ok("[].slice(0, 0);");
     match result {
         Value::Array(arr) => assert_eq!(arr.len(), 0),
         _ => panic!("Expected array"),
@@ -574,7 +565,7 @@ fn test_slice_empty_array() {
 
 #[test]
 fn test_slice_start_equals_end() {
-    let result = eval_ok("slice([1, 2, 3], 1, 1);");
+    let result = eval_ok("[1, 2, 3].slice(1, 1);");
     match result {
         Value::Array(arr) => assert_eq!(arr.len(), 0),
         _ => panic!("Expected array"),
@@ -583,14 +574,14 @@ fn test_slice_start_equals_end() {
 
 #[test]
 fn test_slice_start_greater_than_end_error() {
-    let err = eval_err("slice([1, 2, 3], 3, 1);");
+    let err = eval_err("[1, 2, 3].slice(3, 1);");
     assert!(is_runtime_error(&err));
 }
 
 #[test]
 fn test_slice_parity() {
-    let i = format!("{:?}", eval_ok("slice([0, 1, 2, 3, 4], 1, 4);"));
-    let v = format!("{:?}", vm_eval_ok("slice([0, 1, 2, 3, 4], 1, 4);"));
+    let i = format!("{:?}", eval_ok("[0, 1, 2, 3, 4].slice(1, 4);"));
+    let v = format!("{:?}", vm_eval_ok("[0, 1, 2, 3, 4].slice(1, 4);"));
     assert_eq!(i, v);
 }
 
@@ -1050,7 +1041,7 @@ fn test_type_of_parity() {
 
 #[test]
 fn test_is_number_false_for_string() {
-    assert_eq!(eval_ok(r#"is_number("42");"#), Value::Bool(false));
+    assert_eq!(eval_ok(r#"typeof("42") == "number";"#), Value::Bool(false));
 }
 
 #[test]
@@ -1223,10 +1214,9 @@ fn test_h083_str_last_index_of_removed() {
 
 #[test]
 fn test_h083_canonical_join_still_works() {
-    // join and str_join (snake alias) must still work
-    let r1 = eval_ok(r#"join(["a", "b", "c"], "-");"#);
-    let r2 = eval_ok(r#"str_join(["a", "b", "c"], "-");"#);
-    assert_eq!(r1, r2);
+    // method syntax is the canonical form — bare join() is gone
+    let r1 = eval_ok(r#"["a", "b", "c"].join("-");"#);
+    assert_eq!(r1, Value::string("a-b-c"));
 }
 
 #[test]

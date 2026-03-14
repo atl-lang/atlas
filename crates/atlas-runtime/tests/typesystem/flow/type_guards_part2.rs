@@ -387,7 +387,7 @@ fn test_runtime_basic_guards(#[case] expr: &str, #[case] expected: Value) {
 )]
 #[case(
     r#"
-    let hmap = Map();
+    let hmap = new Map<string, number>();
     hmap.set("name", 1);
     has_field(hmap, "name")
     "#,
@@ -395,7 +395,7 @@ fn test_runtime_basic_guards(#[case] expr: &str, #[case] expected: Value) {
 )]
 #[case(
     r#"
-    let hmap = Map();
+    let hmap = new Map<string, string>();
     hmap.set("tag", "ok");
     has_tag(hmap, "ok")
     "#,

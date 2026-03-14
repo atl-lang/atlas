@@ -49,19 +49,19 @@ fn test_split_unicode() {
 
 #[test]
 fn test_join_basic() {
-    let code = r#"join(["a", "b", "c"], ",")"#;
+    let code = r#"["a", "b", "c"].join(",")"#;
     assert_eval_string(code, "a,b,c");
 }
 
 #[test]
 fn test_join_empty_array() {
-    let code = r#"join(slice(["a"], 1, 1), ",")"#;
+    let code = r#"["a"].slice(1, 1).join(",")"#;
     assert_eval_string(code, "");
 }
 
 #[test]
 fn test_join_empty_separator() {
-    let code = r#"join(["a", "b", "c"], "")"#;
+    let code = r#"["a", "b", "c"].join("")"#;
     assert_eval_string(code, "abc");
 }
 
@@ -79,13 +79,13 @@ fn test_trim_unicode_whitespace() {
 
 #[test]
 fn test_trim_start() {
-    let code = r#"trim_start("  hello")"#;
+    let code = r#""  hello".trimStart()"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_trim_end() {
-    let code = r#"trim_end("hello  ")"#;
+    let code = r#""hello  ".trimEnd()"#;
     assert_eval_string(code, "hello");
 }
 
@@ -119,31 +119,31 @@ fn test_index_of_unicode_offset() {
 
 #[test]
 fn test_last_index_of_found() {
-    let code = r#"last_index_of("hello", "l")"#;
+    let code = r#""hello".lastIndexOf("l")"#;
     assert_eval_option_some_number(code, 3.0);
 }
 
 #[test]
 fn test_last_index_of_not_found() {
-    let code = r#"last_index_of("hello", "x")"#;
+    let code = r#""hello".lastIndexOf("x")"#;
     assert_eval_option_none(code);
 }
 
 #[test]
 fn test_last_index_of_unicode_offset() {
-    let code = r#"last_index_of("éa😊a😊", "😊")"#;
+    let code = r#""éa😊a😊".lastIndexOf("😊")"#;
     assert_eval_option_some_number(code, 4.0);
 }
 
 #[test]
 fn test_includes_found() {
-    let code = r#"includes("hello", "ll")"#;
+    let code = r#""hello".includes("ll")"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_includes_not_found() {
-    let code = r#"includes("hello", "x")"#;
+    let code = r#""hello".includes("x")"#;
     assert_eval_bool(code, false);
 }
 
@@ -177,19 +177,19 @@ fn test_to_lower_case_unicode() {
 
 #[test]
 fn test_substring_basic() {
-    let code = r#"substring("hello", 1, 4)"#;
+    let code = r#""hello".substring(1, 4)"#;
     assert_eval_string(code, "ell");
 }
 
 #[test]
 fn test_substring_empty() {
-    let code = r#"substring("hello", 2, 2)"#;
+    let code = r#""hello".substring(2, 2)"#;
     assert_eval_string(code, "");
 }
 
 #[test]
 fn test_substring_out_of_bounds() {
-    let code = r#"substring("hello", 0, 100)"#;
+    let code = r#""hello".substring(0, 100)"#;
     assert_has_error(code);
 }
 
@@ -213,37 +213,37 @@ fn test_char_at_out_of_bounds() {
 
 #[test]
 fn test_repeat_basic() {
-    let code = r#"repeat("ha", 3)"#;
+    let code = r#""ha".repeat(3)"#;
     assert_eval_string(code, "hahaha");
 }
 
 #[test]
 fn test_repeat_zero() {
-    let code = r#"repeat("ha", 0)"#;
+    let code = r#""ha".repeat(0)"#;
     assert_eval_string(code, "");
 }
 
 #[test]
 fn test_repeat_negative() {
-    let code = r#"repeat("ha", -1)"#;
+    let code = r#""ha".repeat(-1)"#;
     assert_has_error(code);
 }
 
 #[test]
 fn test_replace_basic() {
-    let code = r#"replace("hello", "l", "L")"#;
+    let code = r#""hello".replace("l", "L")"#;
     assert_eval_string(code, "heLlo");
 }
 
 #[test]
 fn test_replace_not_found() {
-    let code = r#"replace("hello", "x", "y")"#;
+    let code = r#""hello".replace("x", "y")"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_replace_empty_search() {
-    let code = r#"replace("hello", "", "x")"#;
+    let code = r#""hello".replace("", "x")"#;
     assert_eval_string(code, "hello");
 }
 
@@ -253,67 +253,67 @@ fn test_replace_empty_search() {
 
 #[test]
 fn test_pad_start_basic() {
-    let code = r#"pad_start("5", 3, "0")"#;
+    let code = r#""5".padStart(3, "0")"#;
     assert_eval_string(code, "005");
 }
 
 #[test]
 fn test_pad_start_already_long() {
-    let code = r#"pad_start("hello", 3, "0")"#;
+    let code = r#""hello".padStart(3, "0")"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_pad_start_multichar_fill() {
-    let code = r#"pad_start("x", 5, "ab")"#;
+    let code = r#""x".padStart(5, "ab")"#;
     assert_eval_string(code, "ababx");
 }
 
 #[test]
 fn test_pad_end_basic() {
-    let code = r#"pad_end("5", 3, "0")"#;
+    let code = r#""5".padEnd(3, "0")"#;
     assert_eval_string(code, "500");
 }
 
 #[test]
 fn test_pad_end_already_long() {
-    let code = r#"pad_end("hello", 3, "0")"#;
+    let code = r#""hello".padEnd(3, "0")"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_starts_with_true() {
-    let code = r#"starts_with("hello", "he")"#;
+    let code = r#""hello".startsWith("he")"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_starts_with_false() {
-    let code = r#"starts_with("hello", "x")"#;
+    let code = r#""hello".startsWith("x")"#;
     assert_eval_bool(code, false);
 }
 
 #[test]
 fn test_starts_with_empty() {
-    let code = r#"starts_with("hello", "")"#;
+    let code = r#""hello".startsWith("")"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_ends_with_true() {
-    let code = r#"ends_with("hello", "lo")"#;
+    let code = r#""hello".endsWith("lo")"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_ends_with_false() {
-    let code = r#"ends_with("hello", "x")"#;
+    let code = r#""hello".endsWith("x")"#;
     assert_eval_bool(code, false);
 }
 
 #[test]
 fn test_ends_with_empty() {
-    let code = r#"ends_with("hello", "")"#;
+    let code = r#""hello".endsWith("")"#;
     assert_eval_bool(code, true);
 }
 

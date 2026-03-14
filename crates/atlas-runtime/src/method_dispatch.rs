@@ -151,6 +151,7 @@ fn resolve_number_method(method_name: &str) -> Option<String> {
         "toString" => "numberToString",
         "toFixed" => "numberToFixed",
         "toInt" => "numberToInt",
+        "toBool" => "toBool",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -159,6 +160,7 @@ fn resolve_number_method(method_name: &str) -> Option<String> {
 fn resolve_bool_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         "toString" => "boolToString",
+        "toBool" => "toBool",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -176,7 +178,7 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         | "is_ok" | "is_err" | "is_some" | "is_none"
         | "isOk" | "isErr" | "isSome" | "isNone"
         // Core utilities (print is console.log, not a bare global)
-        | "len" | "typeof" | "type_of" | "toString"
+        | "len" | "typeof" | "type_of" | "toString" | "str"
         // Type constructors
         | "Map" | "Set" | "Queue" | "Stack"
         // Future bare globals (namespace equivalent: future.resolve(), future.all(), etc.)
@@ -306,6 +308,7 @@ fn resolve_string_method(method_name: &str) -> Option<String> {
         // Type conversion (bare globals purged)
         "toNumber" => "parseFloat",
         "toInt" => "parseInt",
+        "toBool" => "toBool",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -342,6 +345,7 @@ fn resolve_array_method(method_name: &str) -> Option<String> {
         "flat" | "flatten" => "flatten",
         "flatMap" => "flatMap",
         "join" => "join",
+        "toBool" => "toBool",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -382,6 +386,10 @@ fn resolve_hashset_method(method_name: &str) -> Option<String> {
         "toArray" => "setToArray",
         "forEach" => "setForEach",
         "clear" => "setClear",
+        "union" => "setUnion",
+        "intersection" => "setIntersection",
+        "difference" => "setDifference",
+        "symmetricDifference" => "setSymmetricDifference",
         _ => return None,
     };
     Some(func_name.to_string())

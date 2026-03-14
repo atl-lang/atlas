@@ -3214,7 +3214,19 @@ impl<'a> TypeChecker<'a> {
             let provided_args = member.args.as_ref().map(|args| args.len()).unwrap_or(0);
             let expected_args = method_sig.arg_types.len();
 
-            if provided_args != expected_args {
+            // Trailing Unknown-typed args are treated as optional — allow fewer args provided.
+            let min_required = {
+                let mut min = expected_args;
+                for t in method_sig.arg_types.iter().rev() {
+                    if t.normalized() == Type::Unknown {
+                        min = min.saturating_sub(1);
+                    } else {
+                        break;
+                    }
+                }
+                min
+            };
+            if provided_args < min_required || provided_args > expected_args {
                 self.diagnostics.push(
                     error_codes::ARITY_MISMATCH
                         .emit(member.span)
