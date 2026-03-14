@@ -48,7 +48,7 @@ Language docs:    docs/language/
 Before closing the issue, ALL of these must be true:
 
 - [ ] **Stdlib impl** — function implemented in `stdlib/<module>.rs`
-- [ ] **Stdlib mod** — registered in `stdlib/mod.rs` interpreter map
+- [ ] **Stdlib mod** — registered in `stdlib/mod.rs` function registry (builtin dispatch map)
 - [ ] **Symbol table** — registered in `stdlib/mod.rs` VM symbol map (the second map)
 - [ ] **Method dispatch** — if namespace method: added to `method_dispatch.rs`
   - TypeTag variant added

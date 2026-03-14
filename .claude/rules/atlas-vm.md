@@ -99,5 +99,4 @@ struct UpvalueContext { parent_base: usize, captures: Vec<(String, UpvalueCaptur
 ## Parity Rule
 
 **Every opcode handled in the VM must have a corresponding emit in the compiler.**
-**Every construct handled in the interpreter must have a VM equivalent.**
 Parity break = BLOCKING. Never ship a phase with divergence.
