@@ -249,6 +249,10 @@ fn format_value(value: &crate::value::Value) -> String {
         Value::DateTime(dt) => format!("<datetime {}>", dt.to_rfc3339()),
         Value::HttpRequest(req) => format!("<HttpRequest {} {}>", req.method(), req.url()),
         Value::HttpResponse(res) => format!("<HttpResponse {}>", res.status()),
+        #[cfg(feature = "http")]
+        Value::HttpServerRequest(req) => {
+            format!("<HttpServerRequest {} {}>", req.method, req.path)
+        }
         Value::ProcessOutput(out) => format!("<ProcessOutput exit={}>", out.exit_code),
         Value::SqliteConnection(c) => {
             let status = if c.is_closed() { "closed" } else { "open" };

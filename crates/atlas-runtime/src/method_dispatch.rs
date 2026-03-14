@@ -12,6 +12,8 @@ pub enum TypeTag {
     JsonValue,
     Array,
     HttpResponse,
+    /// Instance methods on HttpServerRequest values (method, path, headers, body, query)
+    HttpServerRequest,
     String,
     Map,
     Set,
@@ -109,6 +111,9 @@ pub fn resolve_method(
         TypeTag::Array => resolve_array_method(method_name).map(std::borrow::Cow::Borrowed),
         TypeTag::HttpResponse => {
             resolve_http_response_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::HttpServerRequest => {
+            resolve_http_server_request_method(method_name).map(std::borrow::Cow::Borrowed)
         }
         TypeTag::String => resolve_string_method(method_name).map(std::borrow::Cow::Borrowed),
         TypeTag::Map => resolve_hashmap_method(method_name).map(std::borrow::Cow::Borrowed),
@@ -353,6 +358,19 @@ fn resolve_http_response_method(method_name: &str) -> Option<&'static str> {
         "header" => "httpHeader",
         "url" => "httpUrl",
         "isSuccess" => "httpIsSuccess",
+        _ => return None,
+    };
+    Some(func_name)
+}
+
+/// Resolve an HttpServerRequest instance method call to its stdlib function name.
+fn resolve_http_server_request_method(method_name: &str) -> Option<&'static str> {
+    let func_name = match method_name {
+        "method" => "httpServerRequestMethod",
+        "path" => "httpServerRequestPath",
+        "headers" => "httpServerRequestHeaders",
+        "body" => "httpServerRequestBody",
+        "query" => "httpServerRequestQuery",
         _ => return None,
     };
     Some(func_name)
@@ -762,6 +780,7 @@ fn resolve_http_ns_method(method_name: &str) -> Option<&'static str> {
         "delete" => "httpNsDelete",
         "patch" => "httpNsPatch",
         "checkPermission" => "httpCheckPermission",
+        "serve" => "httpServe",
         _ => return None,
     };
     Some(func_name)

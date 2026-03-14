@@ -111,6 +111,8 @@ fn type_name(value: &Value) -> &'static str {
         Value::DateTime(_) => "datetime",
         Value::HttpRequest(_) => "HttpRequest",
         Value::HttpResponse(_) => "HttpResponse",
+        #[cfg(feature = "http")]
+        Value::HttpServerRequest(_) => "HttpServerRequest",
         Value::ProcessOutput(_) => "ProcessOutput",
         Value::SqliteConnection(_) => "SqliteConnection",
         Value::Future(_) => "Future",

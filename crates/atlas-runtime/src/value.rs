@@ -516,6 +516,9 @@ pub enum Value {
     /// HTTP Response data
     #[cfg(feature = "http")]
     HttpResponse(Arc<crate::stdlib::http::HttpResponse>),
+    /// Server-side HTTP request (from http.serve handler)
+    #[cfg(feature = "http")]
+    HttpServerRequest(Arc<crate::stdlib::http_server::HttpServerRequest>),
     /// Process output — result of exec()/shell() calls
     ProcessOutput(Arc<crate::stdlib::process::ProcessOutput>),
     /// SQLite database connection
@@ -630,6 +633,8 @@ impl Value {
             Value::HttpRequest(_) => "HttpRequest",
             #[cfg(feature = "http")]
             Value::HttpResponse(_) => "HttpResponse",
+            #[cfg(feature = "http")]
+            Value::HttpServerRequest(_) => "HttpServerRequest",
             Value::ProcessOutput(_) => "ProcessOutput",
             Value::SqliteConnection(_) => "SqliteConnection",
             Value::Future(_) => "Future",
@@ -708,6 +713,8 @@ impl PartialEq for Value {
             (Value::HttpRequest(a), Value::HttpRequest(b)) => a.as_ref() == b.as_ref(),
             #[cfg(feature = "http")]
             (Value::HttpResponse(a), Value::HttpResponse(b)) => a.as_ref() == b.as_ref(),
+            #[cfg(feature = "http")]
+            (Value::HttpServerRequest(a), Value::HttpServerRequest(b)) => a.as_ref() == b.as_ref(),
             (Value::ProcessOutput(a), Value::ProcessOutput(b)) => a == b,
             (Value::JsonValue(a), Value::JsonValue(b)) => a == b,
             (Value::Option(a), Value::Option(b)) => a == b,
@@ -806,6 +813,10 @@ impl fmt::Display for Value {
             Value::HttpRequest(req) => write!(f, "<HttpRequest {} {}>", req.method(), req.url()),
             #[cfg(feature = "http")]
             Value::HttpResponse(res) => write!(f, "<HttpResponse {}>", res.status()),
+            #[cfg(feature = "http")]
+            Value::HttpServerRequest(req) => {
+                write!(f, "<HttpServerRequest {} {}>", req.method, req.path)
+            }
             Value::ProcessOutput(out) => {
                 write!(f, "<ProcessOutput exit={}>", out.exit_code)
             }
@@ -881,6 +892,10 @@ impl fmt::Debug for Value {
             Value::HttpRequest(req) => write!(f, "HttpRequest({} {})", req.method(), req.url()),
             #[cfg(feature = "http")]
             Value::HttpResponse(res) => write!(f, "HttpResponse({})", res.status()),
+            #[cfg(feature = "http")]
+            Value::HttpServerRequest(req) => {
+                write!(f, "HttpServerRequest({} {})", req.method, req.path)
+            }
             Value::ProcessOutput(out) => {
                 write!(f, "ProcessOutput(exit={})", out.exit_code)
             }

@@ -445,6 +445,19 @@ impl VM {
             .map_err(|e| format!("{e}"))
     }
 
+    /// Public entry point for calling an Atlas function or closure value.
+    ///
+    /// Used by the HTTP server primitive (and any other stdlib code that needs
+    /// to invoke an Atlas callable from outside the VM module).
+    pub fn call_value(
+        &mut self,
+        func: &Value,
+        args: Vec<Value>,
+        span: crate::span::Span,
+    ) -> Result<Value, crate::value::RuntimeError> {
+        self.vm_call_function_value(func, args, span)
+    }
+
     /// Drain and return all runtime warnings collected during execution.
     /// Called by the runtime layer after execute() to surface warnings through
     /// the proper diagnostic system instead of inline eprintln!().

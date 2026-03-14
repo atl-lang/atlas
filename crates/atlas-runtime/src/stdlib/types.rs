@@ -264,6 +264,8 @@ fn type_of_impl(args: &[Value], span: Span, name: &str) -> Result<Value, Runtime
             Value::DateTime(_) => "record",
             Value::HttpRequest(_) => "record",
             Value::HttpResponse(_) => "record",
+            #[cfg(feature = "http")]
+            Value::HttpServerRequest(_) => "record",
             Value::ProcessOutput(_) => "record",
             Value::SqliteConnection(_) => "record",
             Value::TaskHandle(_) => "record",
@@ -574,6 +576,10 @@ pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
                 format!("{}::{}({})", enum_name, variant_name, args.join(", "))
             }
         }
+        #[cfg(feature = "http")]
+        Value::HttpServerRequest(req) => {
+            format!("<HttpServerRequest {} {}>", req.method, req.path)
+        }
     };
 
     Ok(Value::string(string_value))
@@ -655,6 +661,7 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         | Value::DateTime(_)
         | Value::HttpRequest(_)
         | Value::HttpResponse(_)
+        | Value::HttpServerRequest(_)
         | Value::ProcessOutput(_)
         | Value::SqliteConnection(_)
         | Value::Future(_)
@@ -811,6 +818,8 @@ fn type_name(value: &Value) -> &str {
         Value::DateTime(_) => "datetime",
         Value::HttpRequest(_) => "HttpRequest",
         Value::HttpResponse(_) => "HttpResponse",
+        #[cfg(feature = "http")]
+        Value::HttpServerRequest(_) => "HttpServerRequest",
         Value::ProcessOutput(_) => "ProcessOutput",
         Value::SqliteConnection(_) => "SqliteConnection",
         Value::Future(_) => "Future",
@@ -856,6 +865,10 @@ fn value_to_display_string(value: &Value) -> String {
         Value::DateTime(dt) => format!("[DateTime {}]", dt.to_rfc3339()),
         Value::HttpRequest(req) => format!("[HttpRequest {} {}]", req.method(), req.url()),
         Value::HttpResponse(res) => format!("[HttpResponse {}]", res.status()),
+        #[cfg(feature = "http")]
+        Value::HttpServerRequest(req) => {
+            format!("[HttpServerRequest {} {}]", req.method, req.path)
+        }
         Value::ProcessOutput(out) => format!("[ProcessOutput exit={}]", out.exit_code),
         Value::SqliteConnection(c) => {
             let status = if c.is_closed() { "closed" } else { "open" };

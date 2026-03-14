@@ -12,6 +12,8 @@ pub mod fs;
 pub mod future;
 #[cfg(feature = "http")]
 pub mod http;
+#[cfg(feature = "http")]
+pub mod http_server;
 pub mod io;
 pub mod json;
 pub mod math;
@@ -1276,6 +1278,25 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             m.insert("httpIsSuccess", |a, s, _, _| http::http_is_success(a, s));
             m.insert("httpCheckPermission", |a, s, sec, _| {
                 http::http_check_permission(a, s, sec)
+            });
+            // HTTP server (http.serve)
+            m.insert("httpServe", |a, s, sec, out| {
+                http_server::http_serve(a, s, sec, out)
+            });
+            m.insert("httpServerRequestMethod", |a, s, _, _| {
+                http_server::http_server_request_method(a, s)
+            });
+            m.insert("httpServerRequestPath", |a, s, _, _| {
+                http_server::http_server_request_path(a, s)
+            });
+            m.insert("httpServerRequestHeaders", |a, s, _, _| {
+                http_server::http_server_request_headers(a, s)
+            });
+            m.insert("httpServerRequestBody", |a, s, _, _| {
+                http_server::http_server_request_body(a, s)
+            });
+            m.insert("httpServerRequestQuery", |a, s, _, _| {
+                http_server::http_server_request_query(a, s)
             });
         }
 
