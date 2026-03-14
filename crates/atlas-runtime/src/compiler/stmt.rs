@@ -580,6 +580,8 @@ impl Compiler {
         self.loops.push(LoopContext {
             start_offset: loop_start,
             break_jumps: Vec::new(),
+            locals_at_body_start: locals_before,
+            phantom_locals: 0,
         });
 
         // Compile condition
@@ -720,10 +722,13 @@ impl Compiler {
         // ── Condition check — patch first_pass_jump here ──────────────────────
         self.bytecode.patch_jump(first_pass_jump);
 
-        // Push loop context with increment_start so `continue` jumps there
+        // Push loop context with increment_start so `continue` jumps there.
+        // locals_at_body_start is set below, after the loop variable is loaded.
         self.loops.push(crate::compiler::LoopContext {
             start_offset: increment_start,
             break_jumps: Vec::new(),
+            locals_at_body_start: 0, // updated below
+            phantom_locals: 0,
         });
 
         // if idx < len → continue; else jump to cleanup
@@ -749,6 +754,10 @@ impl Compiler {
         // ── Compile loop body (H-303: use statement context to compile tail_expr) ──
         // H-304: Track locals before body to clean up body-declared locals before looping
         let locals_before_body = self.locals.len();
+        // H-407: Record body-start locals in loop context so continue/break can clean up.
+        if let Some(lctx) = self.loops.last_mut() {
+            lctx.locals_at_body_start = locals_before_body;
+        }
         self.compile_block_as_statement(&for_in_stmt.body)?;
 
         // H-304: Pop any locals declared inside the for-in body BEFORE looping back.
@@ -1115,32 +1124,49 @@ impl Compiler {
 
     /// Compile a break statement
     fn compile_break(&mut self, span: Span) -> Result<(), Vec<Diagnostic>> {
+        // H-407: Pop body locals accumulated since body start before jumping out.
+        let body_locals = if let Some(loop_ctx) = self.loops.last() {
+            (self.locals.len() as isize
+                - loop_ctx.locals_at_body_start as isize
+                - loop_ctx.phantom_locals as isize)
+                .max(0) as usize
+        } else {
+            return Ok(()); // break outside loop
+        };
+        for _ in 0..body_locals {
+            self.bytecode.emit(Opcode::Pop, span);
+        }
         if let Some(loop_ctx) = self.loops.last_mut() {
-            // Emit jump and save offset to patch later
             self.bytecode.emit(Opcode::Jump, span);
             let jump_offset = self.bytecode.current_offset();
             self.bytecode.emit_u16(0xFFFF); // Placeholder
             loop_ctx.break_jumps.push(jump_offset);
-            Ok(())
-        } else {
-            // Error: break outside loop (should be caught by typechecker)
-            Ok(())
         }
+        Ok(())
     }
 
     /// Compile a continue statement
     fn compile_continue(&mut self, span: Span) -> Result<(), Vec<Diagnostic>> {
-        if let Some(loop_ctx) = self.loops.last() {
-            // Jump back to loop start
-            // Offset needs to account for the Loop instruction (1 byte) + offset operand (2 bytes) = 3 bytes
-            let offset = loop_ctx.start_offset as i32 - (self.bytecode.current_offset() as i32 + 3);
+        // H-407: Pop body locals accumulated since body start before jumping back.
+        let (start_offset, body_locals) = if let Some(loop_ctx) = self.loops.last() {
+            let bl = (self.locals.len() as isize
+                - loop_ctx.locals_at_body_start as isize
+                - loop_ctx.phantom_locals as isize)
+                .max(0) as usize;
+            (Some(loop_ctx.start_offset), bl)
+        } else {
+            (None, 0) // continue outside loop
+        };
+        if let Some(start) = start_offset {
+            for _ in 0..body_locals {
+                self.bytecode.emit(Opcode::Pop, span);
+            }
+            // Offset accounts for Loop instruction (1 byte) + operand (2 bytes) = 3 bytes
+            let offset = start as i32 - (self.bytecode.current_offset() as i32 + 3);
             self.bytecode.emit(Opcode::Loop, span);
             self.bytecode.emit_i16(offset as i16);
-            Ok(())
-        } else {
-            // Error: continue outside loop (should be caught by typechecker)
-            Ok(())
         }
+        Ok(())
     }
 
     /// Compile a defer statement

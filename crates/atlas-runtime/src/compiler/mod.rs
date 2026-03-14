@@ -36,6 +36,13 @@ pub(super) struct Local {
 pub(super) struct LoopContext {
     pub(super) start_offset: usize,
     pub(super) break_jumps: Vec<usize>,
+    /// Number of compile-time locals at the start of the loop body.
+    /// Used by break/continue to pop body locals before jumping.
+    pub(super) locals_at_body_start: usize,
+    /// Phantom local count: compile-time locals whose corresponding stack slot
+    /// has been consumed at runtime (e.g. `$match_scrutinee` for last-arm
+    /// consuming patterns like `None => continue`).
+    pub(super) phantom_locals: usize,
 }
 
 /// How an upvalue is sourced when building a closure.

@@ -85,3 +85,42 @@ fn test_h303_tail_expr_in_if_else() {
     "#;
     assert_eq!(vm_eval(code), Some(Value::Number(99.0)));
 }
+
+/// H-407: `continue` inside a match arm within a for loop skips remaining iterations.
+/// Root cause: compile_continue jumped back to loop increment without popping
+/// body locals (e.g. the `opt` variable and the $match_scrutinee phantom slot).
+#[test]
+fn test_h407_continue_in_match_arm_for_loop() {
+    // None => continue: scrutinee consumed by pattern check ($match_scrutinee is phantom)
+    let code = r#"
+        let items: string[] = ["a", "b", "c"];
+        let mut found = "";
+        for item in items {
+            let opt: Option<string> = if item == "b" { Some(item) } else { None };
+            match opt {
+                Some(v) => { found = v; },
+                None => continue,
+            }
+        }
+        found;
+    "#;
+    assert_eq!(vm_eval(code), Some(Value::string("b")));
+}
+
+/// H-407 variant: continue in Some arm (pattern var present)
+#[test]
+fn test_h407_continue_in_some_arm() {
+    let code = r#"
+        let mut count = 0;
+        for i in [1, 2, 3, 4, 5] {
+            let opt: Option<number> = if i % 2 == 0 { Some(i) } else { None };
+            match opt {
+                None => { count = count + 10; },
+                Some(_) => continue,
+            }
+        }
+        count;
+    "#;
+    // Odd numbers (1,3,5) hit None arm: count += 10 each = 30
+    assert_eq!(vm_eval(code), Some(Value::Number(30.0)));
+}

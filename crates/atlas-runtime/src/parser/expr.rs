@@ -1531,7 +1531,26 @@ impl Parser {
         self.consume(TokenKind::FatArrow, "Expected '=>' after pattern")?;
 
         // H-114: allow `return expr` as a match arm body by wrapping it in a Block expression
-        let body = if self.check(TokenKind::Return) {
+        // H-407: also allow `continue` and `break` as match arm bodies
+        let body = if self.check(TokenKind::Continue) {
+            let span = self.peek().span;
+            self.advance(); // consume `continue`
+                            // No semicolon: match arm delimiter is `,` or `}`
+            Expr::Block(Block {
+                statements: vec![Stmt::Continue(span)],
+                tail_expr: None,
+                span,
+            })
+        } else if self.check(TokenKind::Break) {
+            let span = self.peek().span;
+            self.advance(); // consume `break`
+                            // No semicolon: match arm delimiter is `,` or `}`
+            Expr::Block(Block {
+                statements: vec![Stmt::Break(span)],
+                tail_expr: None,
+                span,
+            })
+        } else if self.check(TokenKind::Return) {
             let ret_start = self.peek().span;
             self.advance(); // consume `return`
             let value = if !self.check(TokenKind::Comma) && !self.check(TokenKind::RightBrace) {

@@ -1133,8 +1133,25 @@ impl Compiler {
                 None
             };
 
+            // H-407: For the last arm with scrutinee-consuming pattern (extras == 0),
+            // the $match_scrutinee local slot has no corresponding runtime stack value.
+            // Notify any enclosing loop so continue/break can compute the correct pop count.
+            let pre_body_pattern_var_count = self.locals.len() - locals_before;
+            let is_scrutinee_phantom = is_last_arm && pre_body_pattern_var_count == 0;
+            if is_scrutinee_phantom {
+                if let Some(lctx) = self.loops.last_mut() {
+                    lctx.phantom_locals += 1;
+                }
+            }
+
             // Compile arm body (result on top of stack)
             self.compile_expr(&arm.body)?;
+
+            if is_scrutinee_phantom {
+                if let Some(lctx) = self.loops.last_mut() {
+                    lctx.phantom_locals -= 1;
+                }
+            }
 
             // Cleanup: remove extras (pattern vars + scrutinee for non-last) from
             // below the body result. Save result to temp global, pop extras, restore.
