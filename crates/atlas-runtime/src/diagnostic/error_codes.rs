@@ -1412,7 +1412,7 @@ pub const GENERIC_WARNING: DiagnosticDescriptor = DiagnosticDescriptor {
 // ── Const Errors ───────────────────────────────────────────────────────────────
 
 pub const CONST_NOT_COMPILE_TIME: DiagnosticDescriptor = DiagnosticDescriptor {
-    code: "AT3060",
+    code: "AT3065",
     level: DiagnosticLevel::Error,
     title: "const value must be compile-time evaluable",
     message_template: "const `{name}` initializer is not a compile-time constant",
