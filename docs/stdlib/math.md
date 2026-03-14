@@ -27,7 +27,7 @@ let base = Math.E();
 
 ## Basic Operations
 
-### `Math.abs(x: number) -> number`
+### `Math.abs(x: number): number`
 
 Returns the absolute value of `x`. Preserves signed zero: `abs(-0) = +0`. `abs(NaN) = NaN`, `abs(±∞) = +∞`.
 
@@ -41,7 +41,7 @@ let z = Math.abs(-0);
 
 ---
 
-### `Math.floor(x: number) -> number`
+### `Math.floor(x: number): number`
 
 Returns the largest integer less than or equal to `x`. `floor(-1.1) = -2`.
 
@@ -55,7 +55,7 @@ let n2 = Math.floor(-1.1);
 
 ---
 
-### `Math.ceil(x: number) -> number`
+### `Math.ceil(x: number): number`
 
 Returns the smallest integer greater than or equal to `x`. `ceil(-1.9) = -1`.
 
@@ -69,7 +69,7 @@ let n2 = Math.ceil(-1.9);
 
 ---
 
-### `Math.round(x: number) -> number`
+### `Math.round(x: number): number`
 
 Rounds to the nearest integer using **banker's rounding** (ties-to-even). `round(2.5) = 2`, `round(3.5) = 4`.
 
@@ -86,7 +86,7 @@ let n3 = Math.round(2.7);
 
 ---
 
-### `Math.trunc(x: number) -> number`
+### `Math.trunc(x: number): number`
 
 Returns the integer part of `x` by removing the fractional digits (truncates toward zero). `trunc(-1.9) = -1`.
 
@@ -100,7 +100,7 @@ let n2 = Math.trunc(-1.9);
 
 ---
 
-### `Math.min(a: number, b: number) -> number`
+### `Math.min(a: number, b: number): number`
 
 Returns the smaller of two numbers. If either is NaN, returns NaN.
 
@@ -114,7 +114,7 @@ let n2 = Math.min(-5, 0);
 
 ---
 
-### `Math.max(a: number, b: number) -> number`
+### `Math.max(a: number, b: number): number`
 
 Returns the larger of two numbers. If either is NaN, returns NaN.
 
@@ -125,7 +125,7 @@ let n = Math.max(3, 7);
 
 ---
 
-### `Math.sign(x: number) -> number`
+### `Math.sign(x: number): number`
 
 Returns the sign of `x`: `-1` for negative, `1` for positive, `0`/`-0` for zero. Preserves signed zero. `sign(NaN) = NaN`.
 
@@ -144,7 +144,7 @@ let s3 = Math.sign(0);
 
 ## Exponential and Logarithmic
 
-### `Math.sqrt(x: number) -> Result<number, string>`
+### `Math.sqrt(x: number): Result<number, string>`
 
 Returns `Ok(√x)` for non-negative `x`, or `Err("sqrt() domain error: ...")` for negative or NaN input. `sqrt(+∞) = Ok(+∞)`.
 
@@ -161,7 +161,7 @@ let bad = Math.sqrt(-1);
 
 ---
 
-### `Math.cbrt(x: number) -> number`
+### `Math.cbrt(x: number): number`
 
 Returns the cube root of `x`. Unlike `sqrt`, `cbrt` accepts negative values. `cbrt(-8) = -2`.
 
@@ -175,7 +175,7 @@ let n2 = Math.cbrt(-8);
 
 ---
 
-### `Math.pow(base: number, exponent: number) -> number`
+### `Math.pow(base: number, exponent: number): number`
 
 Returns `base` raised to the power of `exponent`. `pow(x, 0) = 1` for any `x` (including NaN). `pow(1, y) = 1` for any `y`.
 
@@ -189,7 +189,7 @@ let n2 = Math.pow(4, 0.5);
 
 ---
 
-### `Math.exp(x: number) -> number`
+### `Math.exp(x: number): number`
 
 Returns `e^x`. `exp(0) = 1`, `exp(+∞) = +∞`, `exp(-∞) = 0`.
 
@@ -200,7 +200,7 @@ let n = Math.exp(1);
 
 ---
 
-### `Math.log(x: number) -> Result<number, string>`
+### `Math.log(x: number): Result<number, string>`
 
 Returns `Ok(ln(x))` (natural logarithm) for positive `x`, or `Err` for zero, negative, or NaN input.
 
@@ -214,7 +214,7 @@ let bad = Math.log(0);
 
 ---
 
-### `Math.log2(x: number) -> Result<number, string>`
+### `Math.log2(x: number): Result<number, string>`
 
 Returns `Ok(log₂(x))` for positive `x`, or `Err` for non-positive or NaN input.
 
@@ -225,7 +225,7 @@ let r = Math.log2(8);
 
 ---
 
-### `Math.log10(x: number) -> Result<number, string>`
+### `Math.log10(x: number): Result<number, string>`
 
 Returns `Ok(log₁₀(x))` for positive `x`, or `Err` for non-positive or NaN input.
 
@@ -236,7 +236,7 @@ let r = Math.log10(1000);
 
 ---
 
-### `Math.hypot(x: number, y: number) -> number`
+### `Math.hypot(x: number, y: number): number`
 
 Returns `√(x² + y²)` without intermediate overflow or underflow. `hypot(±∞, y) = +∞` even if `y` is NaN.
 
@@ -251,7 +251,7 @@ let h = Math.hypot(3, 4);
 
 All trigonometric functions use **radians**.
 
-### `Math.sin(x: number) -> number`
+### `Math.sin(x: number): number`
 
 Returns the sine of `x` in radians. `sin(±∞) = NaN`, `sin(NaN) = NaN`.
 
@@ -262,7 +262,7 @@ let s = Math.sin(Math.PI() / 2);
 
 ---
 
-### `Math.cos(x: number) -> number`
+### `Math.cos(x: number): number`
 
 Returns the cosine of `x` in radians. `cos(±∞) = NaN`.
 
@@ -273,7 +273,7 @@ let c = Math.cos(0);
 
 ---
 
-### `Math.tan(x: number) -> number`
+### `Math.tan(x: number): number`
 
 Returns the tangent of `x` in radians. `tan(±∞) = NaN`.
 
@@ -284,7 +284,7 @@ let t = Math.tan(Math.PI() / 4);
 
 ---
 
-### `Math.asin(x: number) -> Result<number, string>`
+### `Math.asin(x: number): Result<number, string>`
 
 Returns `Ok(asin(x))` in radians for `x` in `[-1, 1]`, or `Err` for out-of-domain input. Output range: `[-π/2, π/2]`.
 
@@ -298,7 +298,7 @@ let bad = Math.asin(2);
 
 ---
 
-### `Math.acos(x: number) -> Result<number, string>`
+### `Math.acos(x: number): Result<number, string>`
 
 Returns `Ok(acos(x))` in radians for `x` in `[-1, 1]`, or `Err` for out-of-domain input. Output range: `[0, π]`.
 
@@ -309,7 +309,7 @@ let r = Math.acos(1);
 
 ---
 
-### `Math.atan(x: number) -> number`
+### `Math.atan(x: number): number`
 
 Returns the arctangent of `x` in radians. Output range: `(-π/2, π/2)`. `atan(±∞) = ±π/2`.
 
@@ -320,7 +320,7 @@ let a = Math.atan(1);
 
 ---
 
-### `Math.atan2(y: number, x: number) -> number`
+### `Math.atan2(y: number, x: number): number`
 
 Returns the angle in radians between the positive x-axis and the point `(x, y)`. Output range: `(-π, π]`. Handles quadrant determination correctly using the signs of both arguments.
 
@@ -336,7 +336,7 @@ let angle2 = Math.atan2(1, -1);
 
 ## Utility
 
-### `Math.clamp(value: number, min: number, max: number) -> Result<number, string>`
+### `Math.clamp(value: number, min: number, max: number): Result<number, string>`
 
 Restricts `value` to the range `[min, max]`. Returns `Err` if `min > max` or any argument is NaN.
 
@@ -353,7 +353,7 @@ let bad = Math.clamp(5, 10, 0);
 
 ---
 
-### `Math.random() -> number`
+### `Math.random(): number`
 
 Returns a pseudo-random floating-point number in the range `[0, 1)` with uniform distribution. Uses a thread-local RNG.
 

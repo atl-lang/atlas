@@ -212,7 +212,7 @@ map = map.clear();
 ### `.forEach(fn)`
 
 ```atlas
-.forEach(fn: (K, V) -> void): void
+.forEach(fn: (K, V): void): void
 ```
 
 Calls the provided function once for each key-value pair. Order is not guaranteed.
@@ -228,7 +228,7 @@ map.forEach(fn(k, v): void {
 ### `.map(fn)`
 
 ```atlas
-.map(fn: (K, V) -> W): Map<K, W>
+.map(fn: (K, V): W): Map<K, W>
 ```
 
 Returns a new map with each value transformed by `fn`. Keys are preserved.
@@ -242,7 +242,7 @@ let doubled = scores.map(fn(k, v): number { return v * 2; });
 ### `.filter(fn)`
 
 ```atlas
-.filter(fn: (K, V) -> bool): Map<K, V>
+.filter(fn: (K, V): bool): Map<K, V>
 ```
 
 Returns a new map containing only the entries for which `fn` returns `true`.

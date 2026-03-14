@@ -16,14 +16,13 @@ Quick reference for locating source, docs, decisions, and tooling.
 | Bytecode definitions | `crates/atlas-runtime/src/bytecode/` |
 | Value enum (all runtime types) | `crates/atlas-runtime/src/value.rs` |
 | Type system structures | `crates/atlas-runtime/src/types.rs` |
-| Stdlib (all 23 modules) | `crates/atlas-runtime/src/stdlib/` |
+| Stdlib (all modules) | `crates/atlas-runtime/src/stdlib/` |
 | Stdlib registration | `crates/atlas-runtime/src/stdlib/mod.rs` |
 | Method dispatch | `crates/atlas-runtime/src/method_dispatch.rs` |
 | Module loader | `crates/atlas-runtime/src/module_loader.rs` |
-| Async runtime | `crates/atlas-runtime/src/async_runtime/` |
+| Async runtime | `crates/atlas-runtime/src/async_vm.rs` |
 | FFI | `crates/atlas-runtime/src/ffi/` |
 | Security / sandbox | `crates/atlas-runtime/src/security/` |
-| JIT (Cranelift) | `crates/atlas-jit/src/` |
 | LSP server | `crates/atlas-lsp/src/` |
 | Formatter | `crates/atlas-formatter/src/` |
 | Package manager | `crates/atlas-package/src/` |
@@ -62,6 +61,7 @@ Quick reference for locating source, docs, decisions, and tooling.
 | Math | `docs/stdlib/math.md` |
 | Map / Set / Queue / Stack | `docs/stdlib/collections/` |
 | File system | `docs/stdlib/file.md` |
+| I/O (read/write/append) | `docs/stdlib/io.md` |
 | Path | `docs/stdlib/path.md` |
 | HTTP | `docs/stdlib/http.md` |
 | Net (TCP/UDP/TLS) | `docs/stdlib/net.md` |
@@ -80,7 +80,6 @@ Quick reference for locating source, docs, decisions, and tooling.
 | Console | `docs/stdlib/console.md` |
 | Compiler pipeline | `docs/architecture/compiler-pipeline.md` |
 | VM architecture | `docs/architecture/vm.md` |
-| JIT | `docs/architecture/jit.md` |
 | Concurrency architecture | `docs/architecture/concurrency/` |
 | LSP capabilities | `docs/tooling/lsp.md` |
 | Package manager | `docs/tooling/package-manager.md` |
@@ -131,3 +130,11 @@ pt ci-status             # last CI run results
 
 **"Where do I add tests for X?"**
 → `crates/atlas-runtime/src/CLAUDE.md` — test file routing table
+
+**"Where is basic file read/write?"**
+→ `docs/stdlib/io.md` — `io.readText`, `io.writeText`, `io.appendText`, `io.exists`
+→ `docs/stdlib/file.md` — directory ops, metadata, symlinks, temp files
+
+**"What is the correct file namespace?"**
+→ `file.readText`, `file.writeText`, `file.exists` — NOT `fs.readFile`
+→ See `docs/stdlib/file.md` and `docs/stdlib/io.md`

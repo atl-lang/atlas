@@ -16,7 +16,7 @@ No import required. `Regex` is a built-in namespace.
 
 ## Pattern Compilation
 
-### `Regex.new(pattern: string) -> Result<Regex, string>`
+### `Regex.new(pattern: string): Result<Regex, string>`
 
 Compile a regular expression pattern. Returns `Ok(Regex)` if the pattern is valid, or
 `Err(string)` with an error description if the pattern is invalid.
@@ -38,7 +38,7 @@ let pattern = Regex.new("\\d+").unwrap();
 
 ---
 
-### `Regex.newWithFlags(pattern: string, flags: string) -> Result<Regex, string>`
+### `Regex.newWithFlags(pattern: string, flags: string): Result<Regex, string>`
 
 Compile a regular expression with modifier flags. The `flags` string may contain any
 combination of:
@@ -62,7 +62,7 @@ let multi = Regex.newWithFlags("^line", "m").unwrap();
 
 ---
 
-### `Regex.escape(text: string) -> string`
+### `Regex.escape(text: string): string`
 
 Escape all regex metacharacters in a string so it can be safely used as a literal pattern.
 Escaped characters: `. * + ? ^ $ ( ) [ ] { } | \`
@@ -76,7 +76,7 @@ let pattern = Regex.new(literal).unwrap();
 
 ---
 
-### `Regex.test(pattern: string, text: string) -> bool`
+### `Regex.test(pattern: string, text: string): bool`
 
 Convenience function: compile a pattern and test a string in one call. Returns `false` on
 compile error instead of propagating an error. Useful for quick one-off checks.
@@ -90,7 +90,7 @@ let bad = Regex.test("[invalid", "test");       // false (compile error)
 
 ## Matching Functions
 
-### `Regex.isMatch(regex: Regex, text: string) -> bool`
+### `Regex.isMatch(regex: Regex, text: string): bool`
 
 Test whether the pattern matches anywhere in the text. Returns `true` if there is at least
 one match.
@@ -103,7 +103,7 @@ let none = Regex.isMatch(pattern, "no digits here");  // false
 
 ---
 
-### `Regex.find(regex: Regex, text: string) -> Option<{text: string, start: number, end: number}>`
+### `Regex.find(regex: Regex, text: string): Option<{text: string, start: number, end: number}>`
 
 Find the first match in the text. Returns `Some(map)` with the match details, or `None`
 if no match is found.
@@ -126,7 +126,7 @@ if m.isSome() {
 
 ---
 
-### `Regex.findAll(regex: Regex, text: string) -> {text: string, start: number, end: number}[]`
+### `Regex.findAll(regex: Regex, text: string): {text: string, start: number, end: number}[]`
 
 Find all non-overlapping matches in the text. Returns an array of match maps. Returns an
 empty array if no matches are found.
@@ -143,7 +143,7 @@ let matches = Regex.findAll(pattern, "a1 b22 c333");
 
 ---
 
-### `Regex.matchIndices(regex: Regex, text: string) -> number[][]`
+### `Regex.matchIndices(regex: Regex, text: string): number[][]`
 
 Get the byte-index positions of all matches as `[start, end]` pairs. Returns an array of
 two-element arrays.
@@ -158,7 +158,7 @@ let indices = Regex.matchIndices(pattern, "a1b22c");
 
 ## Capture Groups
 
-### `Regex.captures(regex: Regex, text: string) -> Option<string[]>`
+### `Regex.captures(regex: Regex, text: string): Option<string[]>`
 
 Extract indexed capture groups from the first match. Returns `Some(array)` where:
 - Index `0` is the full match
@@ -180,7 +180,7 @@ if groups.isSome() {
 
 ---
 
-### `Regex.capturesNamed(regex: Regex, text: string) -> Option<HashMap<string, string>>`
+### `Regex.capturesNamed(regex: Regex, text: string): Option<HashMap<string, string>>`
 
 Extract named capture groups from the first match. Named groups use the syntax
 `(?P<name>pattern)`. Returns `Some(map)` with group name → matched string, or `None` if
@@ -201,7 +201,7 @@ if groups.isSome() {
 
 ## Replacement Functions
 
-### `Regex.replace(regex: Regex, text: string, replacement: string) -> string`
+### `Regex.replace(regex: Regex, text: string, replacement: string): string`
 
 Replace the **first** match with a replacement string. The replacement may reference
 capture groups:
@@ -221,7 +221,7 @@ let result = Regex.replace(pattern, "a1b2c3", "[$1]");
 
 ---
 
-### `Regex.replaceAll(regex: Regex, text: string, replacement: string) -> string`
+### `Regex.replaceAll(regex: Regex, text: string, replacement: string): string`
 
 Replace **all** matches with a replacement string. Uses the same capture group reference
 syntax as `Regex.replace()`.
@@ -236,7 +236,7 @@ let result = Regex.replaceAll(pattern, "a1b2c3", "[$1]");
 
 ## Splitting Functions
 
-### `Regex.split(regex: Regex, text: string) -> string[]`
+### `Regex.split(regex: Regex, text: string): string[]`
 
 Split a string at all positions where the pattern matches. Empty strings between adjacent
 matches are preserved.
@@ -249,7 +249,7 @@ let parts = Regex.split(pattern, "a,b,,c");
 
 ---
 
-### `Regex.splitN(regex: Regex, text: string, limit: number) -> string[]`
+### `Regex.splitN(regex: Regex, text: string, limit: number): string[]`
 
 Split a string at pattern matches with a maximum split count. `limit` is the maximum
 number of splits — the resulting array has at most `limit + 1` elements. Passing `limit`

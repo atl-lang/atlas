@@ -19,7 +19,7 @@ No import required. `Encoding` is a built-in namespace.
 
 ## Base64 Functions
 
-### `Encoding.base64Encode(data: string) -> string`
+### `Encoding.base64Encode(data: string): string`
 
 Encode a UTF-8 string to standard Base64 (RFC 4648, using `+` and `/`, with `=` padding).
 
@@ -30,7 +30,7 @@ let encoded = Encoding.base64Encode("Hello, Atlas!");
 
 ---
 
-### `Encoding.base64Decode(encoded: string) -> string`
+### `Encoding.base64Decode(encoded: string): string`
 
 Decode a standard Base64 string back to a UTF-8 string. Panics (runtime error) if the
 input is not valid Base64 or if the decoded bytes are not valid UTF-8.
@@ -46,7 +46,7 @@ let decoded = Encoding.base64Decode("SGVsbG8sIEF0bGFzIQ==");
 
 ---
 
-### `Encoding.base64UrlEncode(data: string) -> string`
+### `Encoding.base64UrlEncode(data: string): string`
 
 Encode a UTF-8 string to URL-safe Base64 (RFC 4648, using `-` and `_` instead of `+`
 and `/`). Suitable for embedding in URLs and filenames.
@@ -57,7 +57,7 @@ let token = Encoding.base64UrlEncode("user:pass?key=1&v=2");
 
 ---
 
-### `Encoding.base64UrlDecode(encoded: string) -> string`
+### `Encoding.base64UrlDecode(encoded: string): string`
 
 Decode a URL-safe Base64 string back to a UTF-8 string. Errors on invalid input or
 non-UTF-8 decoded bytes.
@@ -70,7 +70,7 @@ let raw = Encoding.base64UrlDecode(token);
 
 ## Hex Functions
 
-### `Encoding.hexEncode(data: string) -> string`
+### `Encoding.hexEncode(data: string): string`
 
 Encode the raw bytes of a UTF-8 string as lowercase hexadecimal. Each byte becomes two
 hex characters.
@@ -82,7 +82,7 @@ let hex = Encoding.hexEncode("ABC");
 
 ---
 
-### `Encoding.hexDecode(hex: string) -> string`
+### `Encoding.hexDecode(hex: string): string`
 
 Decode a hexadecimal string back to a UTF-8 string. The input must be a valid hex string
 with an even number of characters. Errors if input is not valid hex or decoded bytes are
@@ -103,7 +103,7 @@ let text = Encoding.hexDecode("414243");
 
 These functions require the `http` feature flag.
 
-### `Encoding.urlEncode(data: string) -> string`
+### `Encoding.urlEncode(data: string): string`
 
 Percent-encode a string for use in URLs. Encodes characters outside the URL-safe set.
 
@@ -114,7 +114,7 @@ let encoded = Encoding.urlEncode("hello world & more");
 
 ---
 
-### `Encoding.urlDecode(encoded: string) -> string`
+### `Encoding.urlDecode(encoded: string): string`
 
 Decode a percent-encoded URL string back to a plain string. Errors if the input contains
 invalid percent-encoding sequences.

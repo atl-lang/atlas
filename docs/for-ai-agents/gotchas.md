@@ -2,30 +2,122 @@
 
 These are the most common mistakes. Read this before generating any Atlas code.
 
-## 1. No Interpreter
+## 1. Wrong Return Type Syntax — Use `:` Not `->`
+
+```atlas
+// WRONG — Rust-style arrow
+fn add(x: number, y: number) -> number { x + y }
+
+// RIGHT — TypeScript-style colon
+fn add(x: number, y: number): number { x + y }
+```
+
+Method docs also use `:`:
+```
+// WRONG:  .push(value: T) -> T[]
+// RIGHT:  .push(value: T): T[]
+```
+
+## 2. Using `print()` Instead of `console.log()`
+
+```atlas
+// WRONG — print/println don't exist
+print("hello");
+println!("hello");
+
+// RIGHT
+console.log("hello");
+console.log(`value: ${x}`);
+```
+
+## 3. Using `arrayPush(arr, x)` Instead of `arr.push(x)`
+
+```atlas
+// WRONG — bare function forms were removed
+arrayPush(arr, 4);
+arrayPop(arr);
+
+// RIGHT — method syntax
+arr.push(4);
+arr.pop();
+```
+
+## 4. Using `fs.readFile()` Instead of `file.readText()`
+
+```atlas
+// WRONG — fs namespace doesn't exist
+let text = fs.readFile("file.txt");
+fs.writeFile("out.txt", content);
+fs.readdir("./src");
+
+// RIGHT — file namespace, different method names
+let text = file.readText("file.txt");
+file.writeText("out.txt", content);
+file.readdir("./src");
+```
+
+Read/write lives in `io` and `file` namespaces. Basic text I/O: `file.readText`, `file.writeText`.
+
+## 5. Using `fn main()` as Entry Point
+
+```atlas
+// WRONG — fn main does NOT auto-execute
+fn main(): void {
+    console.log("hello");
+}
+
+// RIGHT — top-level code runs directly
+console.log("hello");
+```
+
+Atlas has no magic entry point. Code at the top level of a file runs when the file is executed.
+
+## 6. Using `{}` in Template Strings Instead of `${}`
+
+```atlas
+// WRONG — {} does not interpolate
+let msg = `Hello {name}`;
+
+// RIGHT — ${} interpolates
+let msg = `Hello ${name}`;
+```
+
+## 7. Using `JSON.parse()` Instead of `json.parse()`
+
+```atlas
+// WRONG — capitalized JSON from JavaScript
+let data = JSON.parse(text);
+let text = JSON.stringify(value);
+
+// RIGHT — lowercase j in Atlas
+let data = json.parse(text);
+let text = json.stringify(value);
+```
+
+## 8. No Interpreter
 
 **Wrong:** "The Atlas interpreter evaluates..."
 **Right:** Atlas compiles to bytecode and runs on the VM. There is no interpreter. Use "compiler," "VM," "runtime" — never "interpreter."
 
-## 2. Semicolons Are Required
+## 9. Semicolons Are Required
 
 ```atlas
 // WRONG — will fail to parse
 fn process(x: number): number {
-  let y = x * 2
-  y + 1
+    let y = x * 2
+    y + 1
 }
 
 // RIGHT
 fn process(x: number): number {
-  let y = x * 2;
-  y + 1  // last expression — no semicolon needed (implicit return)
+    let y = x * 2;
+    y + 1  // last expression — no semicolon (implicit return)
 }
 ```
 
 Every statement needs `;`. The last expression in a block is the implicit return — it does NOT need `;`.
 
-## 3. CoW Collections — Always Capture Return Values
+## 10. CoW Collections — Always Capture Return Values
 
 ```atlas
 // WRONG — mutation is discarded
@@ -39,9 +131,9 @@ let m = m.set("a", 1);   // rebind (shadowing OK)
 m.get("a");              // Some(1)
 ```
 
-This applies to ALL collection types: Map, Set, Queue, Stack.
+This applies to ALL collection types: Map, Set, Queue, Stack, and Array.
 
-## 4. Map/Set Construction
+## 11. Map/Set Construction
 
 ```atlas
 // WRONG
@@ -52,22 +144,21 @@ let m = HashMap<string, number>();  // not valid
 // RIGHT
 let m = new Map<string, number>();
 let s = new Set<string>();
-let q = new Queue<number>();
-let k = new Stack<number>();
 ```
 
-## 5. No `undefined` — Use Option
+## 12. `fn` Parameters Default to `borrow` — No Annotation Needed
 
 ```atlas
-// WRONG — undefined doesn't exist in Atlas
-let x: string | undefined = undefined;
+// These are equivalent for everyday code
+fn process(data: string): string { data.toUpperCase() }
+fn process(borrow data: string): string { data.toUpperCase() }
 
-// RIGHT
-let x: Option<string> = None;
-let x: Option<string> = Some("value");
+// Only annotate explicitly when you need own or share semantics:
+fn consume(own data: string): string { ... }
+fn share(share data: string): string { ... }
 ```
 
-## 6. `bool` Not `boolean`
+## 13. `bool` Not `boolean`
 
 ```atlas
 // WRONG
@@ -77,7 +168,7 @@ let flag: boolean = true;
 let flag: bool = true;
 ```
 
-## 7. Tuple Syntax — Parens, Not Brackets
+## 14. Tuple Syntax — Parens, Not Brackets
 
 ```atlas
 // WRONG
@@ -87,7 +178,7 @@ let pair: [string, number] = ["hello", 42];
 let pair: (string, number) = ("hello", 42);
 ```
 
-## 8. Trait Inheritance — Comma Style
+## 15. Trait Inheritance — Comma Style
 
 ```atlas
 // WRONG (Rust style)
@@ -97,7 +188,7 @@ trait MyTrait: TraitA + TraitB {}
 trait MyTrait extends TraitA, TraitB {}
 ```
 
-## 9. Generic Bounds — `&` Not `+` At Type Level
+## 16. Generic Bounds — `&` Not `+` At Type Level
 
 ```atlas
 // WRONG
@@ -107,21 +198,21 @@ fn process<T: Foo + Bar>(x: T): void {}
 fn generic<T extends Foo & Bar>(x: T): void {}
 ```
 
-## 10. No `loop` Keyword — Use `while true`
+## 17. No `loop` Keyword — Use `while true`
 
 ```atlas
 // WRONG — loop keyword doesn't exist
 loop {
-  if done { break; }
+    if done { break; }
 }
 
 // RIGHT
 while true {
-  if done { break; }
+    if done { break; }
 }
 ```
 
-## 11. No Arrow Function Shorthand
+## 18. No Arrow Function Shorthand
 
 ```atlas
 // WRONG — arrow functions don't exist as standalone expressions
@@ -131,41 +222,7 @@ let double = (x: number) => x * 2;
 let double = fn(x: number): number { x * 2 };
 ```
 
-## 12. Queue/Stack Pop Returns a Tuple
-
-```atlas
-// WRONG — pop doesn't return the value directly
-let value = queue.dequeue();
-
-// RIGHT — returns [Option<T>, Queue<T>]
-let [value, queue] = queue.dequeue();
-let [top, stack] = stack.pop();
-```
-
-## 13. No Re-exports
-
-```atlas
-// WRONG — not supported
-export { foo } from "./other";
-
-// RIGHT — import then export
-import { foo } from "./other";
-export fn wrapFoo(): void { foo(); }
-```
-
-## 14. HashMap/HashSet Type Names Are Gone
-
-```atlas
-// WRONG — old names
-let m: HashMap<string, number> = ...;
-let s: HashSet<string> = ...;
-
-// RIGHT
-let m: Map<string, number> = new Map<string, number>();
-let s: Set<string> = new Set<string>();
-```
-
-## 15. `Future<T>` Not `Promise<T>`
+## 19. `Future<T>` Not `Promise<T>`
 
 ```atlas
 // WRONG
@@ -173,48 +230,8 @@ async fn fetch(): Promise<string> { ... }
 
 // RIGHT
 async fn fetch(): Future<string> { ... }
-// or just let Atlas infer it
+// or let Atlas infer it
 async fn fetch(): string { ... }
-```
-
-## 16. No Default Exports
-
-```atlas
-// WRONG — Atlas has no default exports
-export default fn main(): void { ... }
-
-// RIGHT
-export fn main(): void { ... }
-```
-
-## 17. Enum Variant Access Is Qualified
-
-```atlas
-// WRONG
-let d = North;       // bare variant
-
-// RIGHT
-let d = Direction::North;   // qualified
-```
-
-## 18. `null` Is a Type and Value
-
-```atlas
-// In Atlas, null is both a type keyword and a value
-let x: string | null = null;   // union with null
-let y: Option<string> = None;  // prefer Option over | null
-```
-
-## 19. Method Calls on stdlib Use Namespace Syntax
-
-```atlas
-// WRONG — bare globals were removed (B20-B35)
-let parsed = parseJSON(text);
-let encoded = base64Encode(data);
-
-// RIGHT — namespace.method() syntax
-let parsed = Json.parse(text);
-let encoded = Encoding.base64Encode(data);
 ```
 
 ## 20. `if` Has No Parens

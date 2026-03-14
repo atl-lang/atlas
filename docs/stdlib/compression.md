@@ -16,7 +16,7 @@ The compression module is implemented in
 All `Gzip` functions work with **byte arrays** (`number[]` where each element is 0–255).
 Strings are accepted as input to `Gzip.compress()` directly.
 
-### `Gzip.compress(data: string | number[], level?: number) -> number[]`
+### `Gzip.compress(data: string | number[], level?: number): number[]`
 
 Compress `data` using gzip. Returns the compressed bytes as a `number[]`.
 
@@ -31,7 +31,7 @@ console.log(bytes.length().toString() + " compressed bytes");
 
 ---
 
-### `Gzip.decompress(compressed: number[]) -> number[]`
+### `Gzip.decompress(compressed: number[]): number[]`
 
 Decompress gzip data. Takes a byte array and returns the uncompressed bytes as a
 `number[]`. Validates the gzip magic header before decompressing.
@@ -46,7 +46,7 @@ let original = Gzip.decompress(compressedBytes);
 
 ---
 
-### `Gzip.decompressString(compressed: number[]) -> string`
+### `Gzip.decompressString(compressed: number[]): string`
 
 Decompress gzip data and interpret the result as a UTF-8 string.
 
@@ -60,7 +60,7 @@ console.log(text);
 
 ---
 
-### `Gzip.isGzip(data: number[]) -> bool`
+### `Gzip.isGzip(data: number[]): bool`
 
 Check if a byte array starts with the gzip magic header (`0x1f 0x8b`). Does not validate
 the full stream — only checks the first two bytes.
@@ -74,7 +74,7 @@ let check2 = Gzip.isGzip(raw); // false
 
 ---
 
-### `Gzip.compressionRatio(originalSize: number, compressedSize: number) -> number`
+### `Gzip.compressionRatio(originalSize: number, compressedSize: number): number`
 
 Calculate the compression ratio as `originalSize / compressedSize`. Returns `0.0` if
 `compressedSize` is zero.

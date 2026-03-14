@@ -16,7 +16,7 @@ No import required. `reflect` is a built-in namespace.
 
 ## Type Query Functions
 
-### `reflect.typeOf(value: any) -> string`
+### `reflect.typeOf(value: any): string`
 
 Return the runtime type name of a value as a string. Equivalent to the top-level `typeof`
 builtin.
@@ -49,7 +49,7 @@ Type name reference:
 
 ---
 
-### `reflect.typeDescribe(value: any) -> string`
+### `reflect.typeDescribe(value: any): string`
 
 Return a human-readable description of the type. More verbose than `typeOf`.
 
@@ -60,7 +60,7 @@ console.log(reflect.typeDescribe([1, 2]));   // "array type"
 
 ---
 
-### `reflect.isPrimitive(value: any) -> bool`
+### `reflect.isPrimitive(value: any): bool`
 
 Returns `true` if the value is a primitive type: `number`, `string`, `bool`, or `null`.
 
@@ -74,7 +74,7 @@ reflect.isPrimitive([1, 2]);   // false
 
 ---
 
-### `reflect.sameType(a: any, b: any) -> bool`
+### `reflect.sameType(a: any, b: any): bool`
 
 Returns `true` if both values have the same runtime type.
 
@@ -86,7 +86,7 @@ reflect.sameType([], [1, 2]);   // true  (both array)
 
 ---
 
-### `reflect.isCallable(value: any) -> bool`
+### `reflect.isCallable(value: any): bool`
 
 Returns `true` if the value is a function (user-defined or native).
 
@@ -100,7 +100,7 @@ reflect.isCallable(42);   // false
 
 ## Collection Introspection
 
-### `reflect.getLength(value: string | any[]) -> number`
+### `reflect.getLength(value: string | any[]): number`
 
 Return the length of a string (number of Unicode characters) or an array. Raises a
 `TypeError` for other types.
@@ -112,7 +112,7 @@ reflect.getLength([1, 2, 3]);  // 3
 
 ---
 
-### `reflect.isEmpty(value: string | any[]) -> bool`
+### `reflect.isEmpty(value: string | any[]): bool`
 
 Returns `true` if a string or array has zero elements. Raises a `TypeError` for other
 types.
@@ -126,7 +126,7 @@ reflect.isEmpty([1]);      // false
 
 ---
 
-### `reflect.fields(value: any) -> string[]`
+### `reflect.fields(value: any): string[]`
 
 Return the field/key names of a value as an array of strings:
 - For `HashMap` (including struct instances): returns all key names.
@@ -145,7 +145,7 @@ let keys = reflect.fields(m); // ["a", "b"]
 
 ---
 
-### `reflect.hasMethod(value: any, name: string) -> bool`
+### `reflect.hasMethod(value: any, name: string): bool`
 
 Returns `true` if the runtime type of `value` has a method with the given name.
 Uses the method dispatch table to check — does not check user-defined methods.
@@ -163,7 +163,7 @@ reflect.hasMethod(m, "get");       // true
 
 ## Function Metadata
 
-### `reflect.getFunctionName(fn: function) -> string`
+### `reflect.getFunctionName(fn: function): string`
 
 Return the declared name of a function. Returns `"<native function>"` for built-in native
 functions.
@@ -175,7 +175,7 @@ reflect.getFunctionName(add); // "add"
 
 ---
 
-### `reflect.getFunctionArity(fn: function) -> number`
+### `reflect.getFunctionArity(fn: function): number`
 
 Return the number of parameters a function accepts. Not supported for native functions
 (raises `TypeError`).
@@ -189,7 +189,7 @@ reflect.getFunctionArity(add); // 2
 
 ## Equality and Cloning
 
-### `reflect.deepEquals(a: any, b: any) -> bool`
+### `reflect.deepEquals(a: any, b: any): bool`
 
 Perform a deep structural equality comparison. Unlike `==` (which uses reference equality
 for arrays and collections), `deepEquals` recursively compares contents.
@@ -210,7 +210,7 @@ comparison and return `false`.
 
 ---
 
-### `reflect.clone(value: any) -> any`
+### `reflect.clone(value: any): any`
 
 Return a copy of a value. For primitives, this is a value copy. For arrays, this performs
 a shallow clone of the array (each element is not recursively deep-cloned).
@@ -222,7 +222,7 @@ let arr2 = reflect.clone(arr);
 
 ---
 
-### `reflect.valueToString(value: any) -> string`
+### `reflect.valueToString(value: any): string`
 
 Convert any value to its string representation, including arrays and functions. Unlike
 `str()` or `.toString()`, this works uniformly on all value types.
