@@ -298,6 +298,20 @@ impl SymbolIndex {
                 ExportItem::Enum(e) => {
                     self.add_definition(&e.name.name, &e.name.span, SymbolKind::Enum, None, ctx);
                 }
+                ExportItem::ReExport { names, .. } => {
+                    // Re-exported names are defined in the source module.
+                    // Register them in the index so go-to-definition can resolve them.
+                    for spec in names {
+                        let exported_name = spec.alias.as_ref().unwrap_or(&spec.name);
+                        self.add_definition(
+                            &exported_name.name,
+                            &exported_name.span,
+                            SymbolKind::Variable,
+                            None,
+                            ctx,
+                        );
+                    }
+                }
             },
             Item::Extern(_) => {
                 // Extern indexing handled in Block 3

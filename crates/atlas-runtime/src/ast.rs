@@ -138,6 +138,23 @@ pub enum ExportItem {
     Struct(StructDecl),
     /// Export enum: `export enum Status { Active, Inactive }`
     Enum(EnumDecl),
+    /// Re-export from another module: `export { X, Y } from "./module"`
+    ReExport {
+        names: Vec<ReExportSpecifier>,
+        source: String,
+        span: Span,
+    },
+}
+
+/// A single name in a re-export list.
+///
+/// `export { Foo }` → `name = "Foo"`, `alias = None`
+/// `export { Foo as Bar }` → `name = "Foo"`, `alias = Some("Bar")`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ReExportSpecifier {
+    pub name: Identifier,
+    pub alias: Option<Identifier>,
+    pub span: Span,
 }
 
 /// Extern function declaration (FFI)

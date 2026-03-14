@@ -402,6 +402,12 @@ impl Compiler {
                         self.register_enum_variants(decl);
                         Ok(())
                     }
+                    crate::ast::ExportItem::ReExport { .. } => {
+                        // Re-exports are resolved at module-load time by the module loader.
+                        // The source module's bytecode runs first (per topological order),
+                        // making the re-exported symbols available as globals.
+                        Ok(())
+                    }
                 }
             }
             Item::Extern(_) => {

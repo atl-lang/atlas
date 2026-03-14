@@ -36,7 +36,7 @@ graph LR
     style Atlas fill:#e8f5e9
 ```
 
-**The result:** A language that AI agents can generate, analyze, and debug with unprecedented reliability — and one that is being built to scale all the way to systems programming.
+**The result:** A language that AI agents can generate, analyze, and debug with unprecedented reliability
 
 ### The Long Game
 

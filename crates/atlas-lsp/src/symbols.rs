@@ -409,6 +409,23 @@ fn extract_indexed_symbols(uri: &Url, text: &str, program: &Program) -> Vec<Inde
                         container_name: None,
                     });
                 }
+                ExportItem::ReExport { names, .. } => {
+                    // Re-exported names are defined in another module; register them here
+                    // so workspace symbol search can find them via this file.
+                    for spec in names {
+                        let exported_name = spec.alias.as_ref().unwrap_or(&spec.name);
+                        let range = span_to_range(text, spec.span);
+                        symbols.push(IndexedSymbol {
+                            name: exported_name.name.clone(),
+                            kind: SymbolKind::NAMESPACE,
+                            location: Location {
+                                uri: uri.clone(),
+                                range,
+                            },
+                            container_name: None,
+                        });
+                    }
+                }
             },
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl symbol extraction handled in Block 3
@@ -781,6 +798,23 @@ pub fn extract_document_symbols(text: &str, program: &Program) -> Vec<DocumentSy
                         tags: None,
                         deprecated: None,
                     });
+                }
+                ExportItem::ReExport { names, .. } => {
+                    for spec in names {
+                        let exported_name = spec.alias.as_ref().unwrap_or(&spec.name);
+                        let range = span_to_range(text, spec.span);
+                        #[allow(deprecated)]
+                        symbols.push(DocumentSymbol {
+                            name: exported_name.name.clone(),
+                            detail: Some("re-export".to_string()),
+                            kind: SymbolKind::NAMESPACE,
+                            range,
+                            selection_range: range,
+                            children: None,
+                            tags: None,
+                            deprecated: None,
+                        });
+                    }
                 }
             },
             _ => {}

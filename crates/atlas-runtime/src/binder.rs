@@ -100,13 +100,18 @@ impl Binder {
                     ExportItem::Enum(decl) => {
                         self.symbol_table.add_enum_export(decl.clone());
                     }
+                    ExportItem::ReExport { .. } => {
+                        // Re-exports are satisfied by the source module; no symbol marking needed.
+                    }
                     _ => {
                         let name = match &export_decl.item {
                             ExportItem::Function(func) => &func.name.name,
                             ExportItem::Variable(var) => &var.name.name,
                             ExportItem::TypeAlias(alias) => &alias.name.name,
                             ExportItem::Const(decl) => &decl.name.name,
-                            ExportItem::Struct(_) | ExportItem::Enum(_) => unreachable!(),
+                            ExportItem::Struct(_)
+                            | ExportItem::Enum(_)
+                            | ExportItem::ReExport { .. } => unreachable!(),
                         };
 
                         let mut exported = self.symbol_table.mark_exported(name);
@@ -163,10 +168,36 @@ impl Binder {
         // Phase 0c: Collect const declarations (so they can be used in expressions)
         self.collect_consts(program);
 
-        // Bind imports early to support aliases in signatures
+        // Bind imports early to support aliases in signatures.
+        // Also bind re-exports — they are implicit imports from the source module.
         for item in &program.items {
-            if let Item::Import(import_decl) = item {
-                self.bind_import(import_decl, module_path, registry);
+            match item {
+                Item::Import(import_decl) => {
+                    self.bind_import(import_decl, module_path, registry);
+                }
+                Item::Export(export_decl) => {
+                    if let ExportItem::ReExport {
+                        names,
+                        source,
+                        span,
+                    } = &export_decl.item
+                    {
+                        // Synthesize an ImportDecl so bind_import resolves the symbols.
+                        let synthetic = ImportDecl {
+                            specifiers: names
+                                .iter()
+                                .map(|s| ImportSpecifier::Named {
+                                    name: s.name.clone(),
+                                    span: s.span,
+                                })
+                                .collect(),
+                            source: source.clone(),
+                            span: *span,
+                        };
+                        self.bind_import(&synthetic, module_path, registry);
+                    }
+                }
+                _ => {}
             }
         }
 
@@ -199,13 +230,26 @@ impl Binder {
                     ExportItem::Enum(decl) => {
                         self.symbol_table.add_enum_export(decl.clone());
                     }
+                    ExportItem::ReExport { names, .. } => {
+                        // The symbols were bound as imports above; now mark each one exported.
+                        for spec in names {
+                            let exported_name = spec
+                                .alias
+                                .as_ref()
+                                .map(|a| &a.name)
+                                .unwrap_or(&spec.name.name);
+                            self.symbol_table.mark_exported(exported_name);
+                        }
+                    }
                     _ => {
                         let name = match &export_decl.item {
                             ExportItem::Function(func) => &func.name.name,
                             ExportItem::Variable(var) => &var.name.name,
                             ExportItem::TypeAlias(alias) => &alias.name.name,
                             ExportItem::Const(decl) => &decl.name.name,
-                            ExportItem::Struct(_) | ExportItem::Enum(_) => unreachable!(),
+                            ExportItem::Struct(_)
+                            | ExportItem::Enum(_)
+                            | ExportItem::ReExport { .. } => unreachable!(),
                         };
 
                         let mut exported = self.symbol_table.mark_exported(name);
@@ -509,6 +553,9 @@ impl Binder {
                     crate::ast::ExportItem::Struct(_) | crate::ast::ExportItem::Enum(_) => {
                         // Struct/enum type declarations are type-system only
                     }
+                    crate::ast::ExportItem::ReExport { .. } => {
+                        // Re-exports are resolved by the module loader; no binding needed here
+                    }
                 }
             }
             Item::Extern(_) => {
@@ -560,6 +607,9 @@ impl Binder {
                     }
                     crate::ast::ExportItem::Struct(_) | crate::ast::ExportItem::Enum(_) => {
                         // Struct/enum type declarations are type-system only
+                    }
+                    crate::ast::ExportItem::ReExport { .. } => {
+                        // Re-exports are resolved by the module loader; no binding needed here
                     }
                 }
             }

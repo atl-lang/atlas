@@ -202,6 +202,8 @@ mod generics;
 
 #[path = "frontend_syntax/modules_warnings_part1.rs"]
 mod modules_warnings_part1;
+#[path = "frontend_syntax/modules_warnings_part2.rs"]
+mod modules_warnings_part2;
 
 #[path = "frontend_syntax/warnings_part2.rs"]
 mod warnings_part2;

@@ -619,14 +619,17 @@ impl Parser {
             ExportItem::Struct(self.parse_struct(crate::ast::Visibility::Public)?)
         } else if self.check(TokenKind::Enum) {
             ExportItem::Enum(self.parse_enum(crate::ast::Visibility::Public)?)
+        } else if self.check(TokenKind::LeftBrace) {
+            // Re-export: `export { X, Y } from "./module"`
+            self.parse_reexport(export_span)?
         } else {
             let span = self.peek().span;
             self.emit_descriptor(
                 SYNTAX_ERROR
                     .emit(span)
                     .arg("detail", "unexpected token after `export`")
-                    .with_help("valid export targets: `export fn`, `export let`, `export const`, `export type`, `export struct`, `export enum`")
-                    .with_note("`export` must be followed by a declaration keyword"),
+                    .with_help("valid export targets: `export fn`, `export let`, `export const`, `export type`, `export struct`, `export enum`, `export { X } from \"./module\"`")
+                    .with_note("`export` must be followed by a declaration keyword or a re-export list"),
             );
             return Err(());
         };
@@ -635,6 +638,62 @@ impl Parser {
 
         Ok(ExportDecl {
             item,
+            span: export_span.merge(end_span),
+        })
+    }
+
+    /// Parse a re-export list: `{ X, Y as Z } from "./module"`
+    ///
+    /// Called after `export` has been consumed and `{` is the next token.
+    /// Returns the `ExportItem::ReExport` variant.
+    fn parse_reexport(&mut self, export_span: crate::span::Span) -> Result<ExportItem, ()> {
+        self.consume(TokenKind::LeftBrace, "Expected '{'")?;
+
+        let mut names = Vec::new();
+        loop {
+            if self.check(TokenKind::RightBrace) {
+                break;
+            }
+
+            let name_token = self.consume_identifier("re-export name")?;
+            let name = crate::ast::Identifier {
+                name: name_token.lexeme.clone(),
+                span: name_token.span,
+            };
+
+            let alias = if self.match_token(TokenKind::As) {
+                let alias_token = self.consume_identifier("re-export alias")?;
+                Some(crate::ast::Identifier {
+                    name: alias_token.lexeme.clone(),
+                    span: alias_token.span,
+                })
+            } else {
+                None
+            };
+
+            let spec_span = name.span;
+            names.push(crate::ast::ReExportSpecifier {
+                name,
+                alias,
+                span: spec_span,
+            });
+
+            if !self.match_token(TokenKind::Comma) {
+                break;
+            }
+        }
+
+        self.consume(TokenKind::RightBrace, "Expected '}' after re-export list")?;
+        self.consume(TokenKind::From, "Expected 'from' after re-export list")?;
+        let source_token = self.consume(TokenKind::String, "Expected module path string")?;
+        let source = source_token.lexeme.clone();
+        let end_span = self
+            .consume(TokenKind::Semicolon, "Expected ';' after re-export")?
+            .span;
+
+        Ok(ExportItem::ReExport {
+            names,
+            source,
             span: export_span.merge(end_span),
         })
     }

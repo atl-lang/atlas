@@ -527,6 +527,38 @@ impl<'a> TypeChecker<'a> {
 
         for item in &program.items {
             if let Item::Export(export_decl) = item {
+                // Re-exports expose names from another module — duplicate-check each one.
+                if let crate::ast::ExportItem::ReExport { names, .. } = &export_decl.item {
+                    for spec in names {
+                        let exported_name = spec
+                            .alias
+                            .as_ref()
+                            .map(|a| &a.name)
+                            .unwrap_or(&spec.name.name);
+                        if exported_names.contains(exported_name) {
+                            self.diagnostics.push(
+                                error_codes::DUPLICATE_EXPORT
+                                    .emit(spec.span)
+                                    .arg(
+                                        "detail",
+                                        format!(
+                                            "Duplicate export: '{}' is exported more than once",
+                                            exported_name
+                                        ),
+                                    )
+                                    .build()
+                                    .with_label("duplicate export")
+                                    .with_help(format!(
+                                        "remove one of the export statements for '{}'",
+                                        exported_name
+                                    )),
+                            );
+                        } else {
+                            exported_names.insert(exported_name.clone());
+                        }
+                    }
+                    continue;
+                }
                 let name = match &export_decl.item {
                     crate::ast::ExportItem::Function(func) => &func.name.name,
                     crate::ast::ExportItem::Variable(var) => &var.name.name,
@@ -534,6 +566,7 @@ impl<'a> TypeChecker<'a> {
                     crate::ast::ExportItem::Const(decl) => &decl.name.name,
                     crate::ast::ExportItem::Struct(s) => &s.name.name,
                     crate::ast::ExportItem::Enum(e) => &e.name.name,
+                    crate::ast::ExportItem::ReExport { .. } => unreachable!(),
                 };
 
                 if exported_names.contains(name) {
@@ -594,6 +627,10 @@ impl<'a> TypeChecker<'a> {
                     crate::ast::ExportItem::Struct(s) => self.validate_struct_decl(s),
                     crate::ast::ExportItem::Enum(_) => {
                         // Enum declarations are validated in collect_enum_names pre-pass
+                    }
+                    crate::ast::ExportItem::ReExport { .. } => {
+                        // Re-exports delegate to the source module's type info.
+                        // Full cross-module type checking is handled at load time.
                     }
                 }
             }

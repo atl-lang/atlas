@@ -1171,6 +1171,24 @@ impl FormatVisitor {
             ExportItem::Enum(e) => {
                 self.visit_enum_decl(e);
             }
+            ExportItem::ReExport { names, source, .. } => {
+                // export { X, Y as Z } from "./module";
+                self.write("{ ");
+                for (i, spec) in names.iter().enumerate() {
+                    if i > 0 {
+                        self.write(", ");
+                    }
+                    self.write(&spec.name.name);
+                    if let Some(alias) = &spec.alias {
+                        self.write(" as ");
+                        self.write(&alias.name);
+                    }
+                }
+                self.write(" } from \"");
+                self.write(source);
+                self.write("\";");
+                self.writeln();
+            }
         }
     }
 

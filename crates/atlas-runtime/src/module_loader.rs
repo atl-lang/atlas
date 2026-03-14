@@ -265,15 +265,45 @@ impl ModuleLoader {
         for item in &ast.items {
             match item {
                 Item::Export(export_decl) => {
-                    let name = match &export_decl.item {
-                        crate::ast::ExportItem::Function(func) => func.name.name.clone(),
-                        crate::ast::ExportItem::Variable(var) => var.name.name.clone(),
-                        crate::ast::ExportItem::TypeAlias(alias) => alias.name.name.clone(),
-                        crate::ast::ExportItem::Const(decl) => decl.name.name.clone(),
-                        crate::ast::ExportItem::Struct(s) => s.name.name.clone(),
-                        crate::ast::ExportItem::Enum(e) => e.name.name.clone(),
-                    };
-                    exports.push(name);
+                    match &export_decl.item {
+                        crate::ast::ExportItem::ReExport { names, source, .. } => {
+                            // Re-export: treat source as an implicit import so the module
+                            // loader follows it as a dependency.
+                            let span = export_decl.span;
+                            imports.push(crate::ast::ImportDecl {
+                                specifiers: names
+                                    .iter()
+                                    .map(|s| crate::ast::ImportSpecifier::Named {
+                                        name: s.alias.as_ref().unwrap_or(&s.name).clone(),
+                                        span: s.span,
+                                    })
+                                    .collect(),
+                                source: source.clone(),
+                                span,
+                            });
+                            // Also register each re-exported name in this module's exports.
+                            for spec in names {
+                                let exported_name = spec
+                                    .alias
+                                    .as_ref()
+                                    .map(|a| a.name.clone())
+                                    .unwrap_or_else(|| spec.name.name.clone());
+                                exports.push(exported_name);
+                            }
+                        }
+                        _ => {
+                            let name = match &export_decl.item {
+                                crate::ast::ExportItem::Function(func) => func.name.name.clone(),
+                                crate::ast::ExportItem::Variable(var) => var.name.name.clone(),
+                                crate::ast::ExportItem::TypeAlias(alias) => alias.name.name.clone(),
+                                crate::ast::ExportItem::Const(decl) => decl.name.name.clone(),
+                                crate::ast::ExportItem::Struct(s) => s.name.name.clone(),
+                                crate::ast::ExportItem::Enum(e) => e.name.name.clone(),
+                                crate::ast::ExportItem::ReExport { .. } => unreachable!(),
+                            };
+                            exports.push(name);
+                        }
+                    }
                 }
                 Item::Import(import_decl) => {
                     imports.push(import_decl.clone());
