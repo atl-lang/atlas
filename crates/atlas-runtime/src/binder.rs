@@ -278,6 +278,36 @@ impl Binder {
             }
         }
 
+        // Phase 4: H-406 — Export inherent impl method signatures for exported structs.
+        // Collected here (not typechecker) so they are available to importers before typechecking.
+        let exported_struct_names: std::collections::HashSet<String> = self
+            .symbol_table
+            .get_struct_exports()
+            .keys()
+            .cloned()
+            .collect();
+        for item in &program.items {
+            let impl_block = match item {
+                Item::Impl(b) => b,
+                _ => continue,
+            };
+            // Only inherent impls (no trait_name) for exported structs
+            if impl_block.trait_name.is_some() {
+                continue;
+            }
+            let struct_name = &impl_block.type_name.name;
+            if !exported_struct_names.contains(struct_name) {
+                continue;
+            }
+            for method in &impl_block.methods {
+                self.symbol_table.add_impl_method_export(
+                    struct_name.clone(),
+                    method.name.name.clone(),
+                    method.clone(),
+                );
+            }
+        }
+
         (
             std::mem::take(&mut self.symbol_table),
             std::mem::take(&mut self.diagnostics),
@@ -688,6 +718,8 @@ impl Binder {
         let type_alias_exports = source_symbols.get_type_alias_exports();
         let struct_exports = source_symbols.get_struct_exports().clone();
         let enum_exports = source_symbols.get_enum_exports().clone();
+        // H-406: impl method exports for cross-module inherent method visibility
+        let impl_method_exports = source_symbols.get_impl_method_exports().clone();
         // H-313: Get all symbols for visibility checking (emit better error for private access)
         let all_symbols = source_symbols.get_all_top_level_symbols();
 
@@ -737,6 +769,17 @@ impl Binder {
                             } else if let Some(struct_decl) = struct_exports.get(&name.name) {
                                 // Exported struct type — inject into this module's symbol table
                                 self.symbol_table.add_struct_export(struct_decl.clone());
+                                // H-406: also import impl methods for this struct
+                                let struct_name = &name.name;
+                                for ((sn, mn), method) in &impl_method_exports {
+                                    if sn == struct_name {
+                                        self.symbol_table.add_impl_method_export(
+                                            sn.clone(),
+                                            mn.clone(),
+                                            method.clone(),
+                                        );
+                                    }
+                                }
                             } else if let Some(enum_decl) = enum_exports.get(&name.name) {
                                 // Exported enum type — inject into this module's symbol table
                                 self.symbol_table.add_enum_export(enum_decl.clone());

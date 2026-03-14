@@ -783,6 +783,13 @@ impl<'a> TypeChecker<'a> {
                 .entry(name.clone())
                 .or_insert_with(|| decl.clone());
         }
+        // H-406: Import inherent impl methods from imported modules.
+        // Local impl blocks (processed later in check_item) will overwrite these if they conflict.
+        for ((struct_name, method_name), method) in self.symbol_table.get_impl_method_exports() {
+            self.inherent_registry
+                .entry((struct_name.clone(), method_name.clone()))
+                .or_insert_with(|| method.clone());
+        }
         for item in &program.items {
             match item {
                 Item::Struct(struct_decl) => {

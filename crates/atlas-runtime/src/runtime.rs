@@ -338,6 +338,10 @@ impl Atlas {
                 .collect();
             all_errors.extend(bind_errors);
 
+            // H-406: Record exported struct names BEFORE creating type_checker (borrow conflict).
+            let exported_struct_names: std::collections::HashSet<String> =
+                symbol_table.get_struct_exports().keys().cloned().collect();
+
             // Type-check even if bind had errors — collect ALL diagnostics
             let mut type_checker = TypeChecker::new(&mut symbol_table);
             let type_diags = type_checker.check(&expanded);
@@ -347,6 +351,19 @@ impl Atlas {
                 .cloned()
                 .collect();
             all_errors.extend(type_errors);
+
+            // H-406: Export inherent impl methods for exported struct types.
+            // Clone before dropping type_checker (which holds &mut symbol_table).
+            let inherent_for_export: Vec<((String, String), crate::ast::ImplMethod)> = type_checker
+                .inherent_registry
+                .iter()
+                .filter(|((sn, _), _)| exported_struct_names.contains(sn))
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect();
+            drop(type_checker); // release &mut borrow of symbol_table
+            for ((struct_name, method_name), method) in inherent_for_export {
+                symbol_table.add_impl_method_export(struct_name, method_name, method);
+            }
 
             // Register this module's symbol table for subsequent imports
             // (even if it had errors — partial symbols help downstream modules)

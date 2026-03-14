@@ -1,6 +1,6 @@
 //! Symbol table and name binding
 
-use crate::ast::{ConstDecl, EnumDecl, StructDecl, TypeAliasDecl, Visibility};
+use crate::ast::{ConstDecl, EnumDecl, ImplMethod, StructDecl, TypeAliasDecl, Visibility};
 use crate::span::Span;
 use crate::types::Type;
 use std::collections::{HashMap, HashSet};
@@ -54,6 +54,9 @@ pub struct SymbolTable {
     struct_exports: HashMap<String, StructDecl>,
     /// Exported enum declarations (name -> EnumDecl)
     enum_exports: HashMap<String, EnumDecl>,
+    /// Exported inherent impl method signatures: (struct_name, method_name) -> ImplMethod.
+    /// Populated after typechecking; imported by consuming modules' typecheckers.
+    impl_method_exports: HashMap<(String, String), ImplMethod>,
     /// Compile-time constant declarations (name -> ConstDecl)
     const_decls: HashMap<String, ConstDecl>,
     /// Exported const names
@@ -70,6 +73,7 @@ impl SymbolTable {
             type_alias_exports: HashSet::new(),
             struct_exports: HashMap::new(),
             enum_exports: HashMap::new(),
+            impl_method_exports: HashMap::new(),
             const_decls: HashMap::new(),
             const_exports: HashSet::new(),
         }
@@ -176,6 +180,22 @@ impl SymbolTable {
     /// Get all exported enum declarations
     pub fn get_enum_exports(&self) -> &HashMap<String, EnumDecl> {
         &self.enum_exports
+    }
+
+    /// Add an exported inherent impl method (populated after typechecking).
+    pub fn add_impl_method_export(
+        &mut self,
+        struct_name: String,
+        method_name: String,
+        method: ImplMethod,
+    ) {
+        self.impl_method_exports
+            .insert((struct_name, method_name), method);
+    }
+
+    /// Get all exported impl method signatures.
+    pub fn get_impl_method_exports(&self) -> &HashMap<(String, String), ImplMethod> {
+        &self.impl_method_exports
     }
 
     /// Get exported type aliases
