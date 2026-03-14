@@ -178,9 +178,11 @@ impl MethodTable {
         self.register("number", "toString", vec![], Type::String);
         self.register("number", "toFixed", vec![Type::Number], Type::String);
         self.register("number", "toInt", vec![], Type::Number);
+        self.register("number", "toBool", vec![], Type::Bool);
 
         // bool instance methods (H-260 — D-021 TypeScript parity)
         self.register("bool", "toString", vec![], Type::String);
+        self.register("bool", "toBool", vec![], Type::Bool);
 
         // String methods
         // Core methods
@@ -277,15 +279,17 @@ impl MethodTable {
                 type_args: vec![Type::Number, Type::String],
             },
         );
+        // toInt accepts optional radix (2-36); trailing Unknown = optional arg
         self.register(
             "string",
             "toInt",
-            vec![],
+            vec![Type::Unknown],
             Type::Generic {
                 name: "Result".to_string(),
                 type_args: vec![Type::Number, Type::String],
             },
         );
+        self.register("string", "toBool", vec![], Type::Bool);
 
         // H-231: DateTime instance methods
         let datetime_ty = Type::Generic {
@@ -507,6 +511,7 @@ impl MethodTable {
                 vec![],
                 Type::Array(Box::new(Type::Tuple(vec![Type::Number, elem_norm.clone()]))),
             ),
+            "toBool" => (vec![], Type::Bool),
             _ => return None,
         };
 
