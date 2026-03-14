@@ -7,6 +7,7 @@
 pub mod build_order;
 pub mod cache;
 pub mod downloader;
+pub mod fetcher;
 pub mod lockfile;
 pub mod manifest;
 pub mod registry;
@@ -16,6 +17,7 @@ pub mod validator;
 pub use build_order::{BuildOrderComputer, BuildOrderError, BuildOrderResult};
 pub use cache::PackageCache;
 pub use downloader::Downloader;
+pub use fetcher::{FetchError, FetchResult, GitFetcher};
 pub use lockfile::{LockedPackage, LockedSource, Lockfile, LockfileMetadata};
 pub use manifest::{
     Dependency, DependencySource, Feature, PackageManifest, VersionConstraint, Workspace,
@@ -56,6 +58,9 @@ pub enum PackageError {
 
     #[error("Invalid field value: {field} - {reason}")]
     InvalidField { field: String, reason: String },
+
+    #[error("Fetch error: {0}")]
+    Fetch(#[from] fetcher::FetchError),
 }
 
 pub type Result<T> = std::result::Result<T, PackageError>;
