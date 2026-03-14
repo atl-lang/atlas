@@ -1,1 +1,1 @@
-Parse error: Circular dependency detected
+Parse error: circular module dependency detected: /Users/proxikal/dev/projects/atlas/crates/atlas-runtime/tests/corpus/fail/modules/circular_import/a.atl

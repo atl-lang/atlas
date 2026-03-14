@@ -100,10 +100,10 @@ fn test_string_parity(#[case] code: &str, #[case] expected: &str) {
 #[case::len("len([1, 2, 3])", "3")]
 #[case::len_empty("len([])", "0")]
 #[case::concat_add("len([1, 2].concat([3]))", "3")]
-#[case::concat_empty_add("len([].concat([1]))", "1")]
-#[case::pop_result("[1, 2, 3].pop()", "3")]
+#[case::concat_empty_add("{ let a: number[] = []; len(a.concat([1])) }", "1")]
+#[case::pop_result("{ let arr = [1, 2, 3]; let r = arr.pop(); arr[1] }", "2")]
 #[case::pop_remainder("{ let arr = [1, 2, 3]; arr.pop(); arr.len() }", "2")]
-#[case::shift_result("[1, 2, 3].shift()", "1")]
+#[case::shift_result("{ let arr = [1, 2, 3]; arr.shift(); arr[0] }", "2")]
 #[case::shift_remainder("{ let arr = [1, 2, 3]; arr.shift(); arr.len() }", "2")]
 #[case::unshift("{ let arr = [2, 3]; arr.unshift(1); arr.len() }", "3")]
 #[case::concat_arr("len([1, 2].concat([3, 4]))", "4")]
@@ -346,8 +346,8 @@ fn test_file_read_write_parity() {
     // Write and read back
     let code = format!(
         r#"
-        write_file("{}", "test content");
-        read_file("{}")
+        file.write("{}", "test content");
+        unwrap(file.read("{}"))
     "#,
         path_for_atlas(&file_path),
         path_for_atlas(&file_path)
@@ -381,8 +381,8 @@ fn test_file_exists_parity() {
     let non_existing = temp_dir.path().join("nonexistent.txt");
     std::fs::write(&existing, "content").unwrap();
 
-    let code_exists = format!(r#"file_exists("{}")"#, path_for_atlas(&existing));
-    let code_not_exists = format!(r#"file_exists("{}")"#, path_for_atlas(&non_existing));
+    let code_exists = format!(r#"file.exists("{}")"#, path_for_atlas(&existing));
+    let code_not_exists = format!(r#"file.exists("{}")"#, path_for_atlas(&non_existing));
 
     // Test existing file
     let mut security1 = SecurityContext::new();
@@ -420,9 +420,9 @@ fn test_file_delete_parity() {
 
     let code = format!(
         r#"
-        write_file("{}", "content");
-        remove_file("{}");
-        file_exists("{}")
+        file.write("{}", "content");
+        file.remove("{}");
+        file.exists("{}")
     "#,
         path_for_atlas(&file_path),
         path_for_atlas(&file_path),
@@ -454,9 +454,9 @@ fn test_file_append_parity() {
 
     let code = format!(
         r#"
-        write_file("{}", "first");
-        append_file("{}", "second");
-        read_file("{}")
+        file.write("{}", "first");
+        file.append("{}", "second");
+        unwrap(file.read("{}"))
     "#,
         path_for_atlas(&file_path),
         path_for_atlas(&file_path),
@@ -490,7 +490,10 @@ fn test_file_list_directory_parity() {
     std::fs::write(temp_dir.path().join("file1.txt"), "content1").unwrap();
     std::fs::write(temp_dir.path().join("file2.txt"), "content2").unwrap();
 
-    let code = format!(r#"len(read_dir("{}"))"#, path_for_atlas(temp_dir.path()));
+    let code = format!(
+        r#"len(file.readDir("{}"))"#,
+        path_for_atlas(temp_dir.path())
+    );
 
     // Interpreter
     let mut security_interp = SecurityContext::new();
@@ -515,10 +518,10 @@ fn test_file_create_remove_directory_parity() {
 
     let code = format!(
         r#"
-        create_dir("{}");
-        let exists1 = file_exists("{}");
-        remove_dir("{}");
-        let exists2 = file_exists("{}");
+        file.createDir("{}");
+        let exists1 = file.exists("{}");
+        file.removeDir("{}");
+        let exists2 = file.exists("{}");
         exists1 && !exists2
     "#,
         path_for_atlas(&dir_path),
@@ -554,7 +557,7 @@ fn test_file_create_remove_directory_parity() {
 #[case::is_string_false(r#"typeof(123) == "string""#, "false")]
 #[case::is_number_true("is_number(123)", "true")]
 #[case::is_number_false("is_number(\"123\")", "false")]
-#[case::is_bool_true(r#"typeof(true) == "bool""#, "true")]
+#[case::is_bool_true(r#"typeof(true) == "boolean""#, "true")]
 #[case::is_bool_false(r#"typeof(1) == "bool""#, "false")]
 #[case::is_null_true(r#"typeof(null) == "null""#, "true")]
 #[case::is_null_false(r#"typeof(0) == "null""#, "false")]

@@ -1,10 +1,10 @@
-console.log(is_number(42));
-console.log(is_number("hello"));
+console.log(typeof(42) == "number");
+console.log(typeof("hello") == "number");
 console.log(typeof("hello") == "string");
 console.log(typeof(42) == "string");
-console.log(typeof(true) == "bool");
-console.log(typeof(1) == "bool");
+console.log(typeof(true) == "boolean");
+console.log(typeof(1) == "boolean");
 console.log(typeof(null) == "null");
 console.log(typeof(0) == "null");
-console.log(is_array([1, 2, 3]));
-console.log(is_array(42));
+console.log(typeof([1, 2, 3]) == "array");
+console.log(typeof(42) == "array");

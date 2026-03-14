@@ -205,8 +205,9 @@ fn test_error_code_has_help_text(#[case] code: &str) {
 }
 
 #[test]
-fn test_generic_error_has_no_help() {
-    assert!(error_codes::help_for("AT9999").is_none());
+fn test_generic_error_has_help() {
+    // GENERIC_ERROR (AT9999) has static_help since B17
+    assert!(error_codes::help_for("AT9999").is_some());
 }
 
 // ============================================================

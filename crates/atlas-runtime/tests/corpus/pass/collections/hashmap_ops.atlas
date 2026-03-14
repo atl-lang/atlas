@@ -1,4 +1,4 @@
-let hm = Map();
+let hm = new Map<string, string>();
 hm.set("name", "Alice");
 hm.set("age", "30");
 hm.set("city", "Paris");

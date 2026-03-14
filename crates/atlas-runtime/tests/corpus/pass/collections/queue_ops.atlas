@@ -1,10 +1,10 @@
-let q = queueNew();
-queueEnqueue(q, "first");
-queueEnqueue(q, "second");
-queueEnqueue(q, "third");
+let q = new Queue<string>();
+q.enqueue("first");
+q.enqueue("second");
+q.enqueue("third");
 
-console.log(queueSize(q));
+console.log(q.size());
 
-let item: string = unwrap(queueDequeue(q));
+let item: string = unwrap(q.dequeue());
 console.log(item);
-console.log(queueSize(q));
+console.log(q.size());

@@ -392,7 +392,7 @@ impl TypeInfo {
             .map(|r| r.name.clone())
             .unwrap_or_else(|| "void".to_string());
 
-        Some(format!("({}) -> {}", params, return_name))
+        Some(format!("({}): {}", params, return_name))
     }
 
     /// Get a detailed description of this type

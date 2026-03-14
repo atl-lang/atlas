@@ -53,7 +53,15 @@ fn parse_errors(source: &str) -> Vec<atlas_runtime::diagnostic::Diagnostic> {
 fn is_parser_error_code(code: &str) -> bool {
     matches!(
         code,
-        "AT1000" | "AT1001" | "AT1002" | "AT1003" | "AT1004" | "AT1005"
+        "AT1000"
+            | "AT1001"
+            | "AT1002"
+            | "AT1003"
+            | "AT1004"
+            | "AT1005"
+            | "AT1020"
+            | "AT1021"
+            | "AT1022"
     )
 }
 

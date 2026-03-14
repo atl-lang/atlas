@@ -135,7 +135,7 @@ fn test_rank1_polymorphism_inferred() {
     // Simple rank-1 polymorphism: T is inferred from the argument
     let diags = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
         let _n = identity(42);
@@ -174,7 +174,7 @@ fn test_callback_with_typed_parameter() {
 fn test_generic_callback_applied() {
     let diags = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
         fn use_identity(borrow n: number): number {

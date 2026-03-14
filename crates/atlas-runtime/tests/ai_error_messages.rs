@@ -326,13 +326,7 @@ let s: string = u.naem;
     );
     let full = diags
         .iter()
-        .map(|d| {
-            format!(
-                "{} {}",
-                d.message,
-                d.help.first().map(|s| s.as_str()).unwrap_or("")
-            )
-        })
+        .map(|d| format!("{} {}", d.message, d.help.join(" ")))
         .collect::<Vec<_>>()
         .join(" ");
     // Should suggest "name"

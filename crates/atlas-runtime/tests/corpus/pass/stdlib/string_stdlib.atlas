@@ -1,5 +1,5 @@
 let s: string = "Hello, World!";
-console.log(substring(s, 7, 12));
-console.log(replace(s, "World", "Atlas"));
+console.log(s.substring(7, 12));
+console.log(s.replace("World", "Atlas"));
 console.log(unwrap(s.indexOf("o")));
 console.log(len(s));

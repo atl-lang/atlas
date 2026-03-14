@@ -1,4 +1,4 @@
-let hs = Set();
+let hs = new Set<string>();
 hs.add("apple");
 hs.add("banana");
 hs.add("cherry");

@@ -1,1 +1,2 @@
-Type error: Cannot assign to immutable variable 'x'Unused variable 'x'
+Type error: cannot assign to `{name}` — it is not declared `let mut`
+  `x` is declared but never used

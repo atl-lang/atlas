@@ -673,7 +673,7 @@ fn test_parse_int_then_to_string() {
 fn test_type_guards_all_false_for_null() {
     let code = r#"
         let val = null;
-        !typeof(val) == "string" && !typeof(val) == "number" && !typeof(val) == "boolean" && !typeof(val) == "array" && !(typeof(val) == "function")
+        !(typeof(val) == "string") && !(typeof(val) == "number") && !(typeof(val) == "boolean") && !(typeof(val) == "array") && !(typeof(val) == "function")
     "#;
     assert_eval_bool(code, true);
 }

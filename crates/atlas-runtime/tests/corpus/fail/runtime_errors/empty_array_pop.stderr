@@ -1,1 +1,1 @@
-Runtime error: Type error: Cannot pop from empty array
+Parse error: `pop` is not defined

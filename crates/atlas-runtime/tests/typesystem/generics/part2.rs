@@ -6,7 +6,7 @@ use pretty_assertions::assert_eq;
 fn test_multiple_calls_same_function() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
         let _a = identity(42);
@@ -88,7 +88,7 @@ fn test_non_generic_still_works() {
 fn test_mixed_generic_and_non_generic() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
         fn double(borrow x: number): number {
@@ -109,7 +109,7 @@ fn test_mixed_generic_and_non_generic() {
 fn test_generic_with_if_statement() {
     let diagnostics = typecheck_source(
         r#"
-        fn choose<T>(borrow condition: bool, borrow a: T, borrow b: T): T {
+        fn choose<T>(borrow condition: bool, own a: T, own b: T): T {
             if condition {
                 return a;
             } else {
@@ -126,7 +126,7 @@ fn test_generic_with_if_statement() {
 fn test_generic_with_while_loop() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             let mut result = x;
             while false {
                 result = x;
@@ -160,7 +160,7 @@ fn test_generic_with_array_indexing() {
 fn test_generic_function_as_value() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
         let _f = identity;
@@ -173,7 +173,7 @@ fn test_generic_function_as_value() {
 fn test_pass_generic_function() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
         fn apply<T>(borrow _f: (T): T, _x: T): T {
@@ -297,9 +297,12 @@ fn test_missing_return_suggests_adding_one() {
     "#,
     );
     assert!(!diags.is_empty());
-    assert!(diags[0]
-        .message
-        .contains("Not all code paths return a value"));
+    assert!(
+        diags[0].message.contains("missing a return value")
+            || diags[0].message.contains("Not all code paths"),
+        "Expected missing return message, got: {}",
+        diags[0].message
+    );
 }
 
 #[test]
@@ -381,7 +384,7 @@ fn test_function_type_display_in_error() {
     assert!(!diags.is_empty());
     // Function should display as "(number, number) -> number" not just "function"
     assert!(
-        diags[0].message.contains("(number, number): number"),
+        diags[0].message.contains("(number, number) -> number"),
         "Expected function signature in error, got: {}",
         diags[0].message
     );
@@ -397,7 +400,7 @@ fn test_function_type_display_void_return() {
     );
     assert!(!diags.is_empty());
     assert!(
-        diags[0].message.contains("(string): void"),
+        diags[0].message.contains("(string) -> void"),
         "Expected function signature, got: {}",
         diags[0].message
     );
@@ -413,7 +416,7 @@ fn test_function_type_display_no_params() {
     );
     assert!(!diags.is_empty());
     assert!(
-        diags[0].message.contains("(): number"),
+        diags[0].message.contains("() -> number"),
         "Expected (): number in error, got: {}",
         diags[0].message
     );

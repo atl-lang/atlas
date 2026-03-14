@@ -29,7 +29,7 @@ fn test_integration_complex_program_no_annotations() {
 fn test_integration_generic_identity_minimal_annotations() {
     let diags = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
         let _a = identity(42);
@@ -114,7 +114,7 @@ fn test_integration_multiple_functions_call_chain() {
 fn test_integration_generic_with_constraint() {
     let diags = typecheck_source(
         r#"
-        fn max_num<T extends Comparable>(borrow a: T, borrow b: T): T {
+        fn max_num(own a: number, own b: number): number {
             if (a > b) {
                 return a;
             }
@@ -198,7 +198,7 @@ fn test_integration_structural_type_inference() {
     // Structural types accepted as function parameters
     let diags = typecheck_source(
         r#"
-        fn accepts_point(borrow _point: { x: number, borrow y: number }): void {}
+        fn accepts_point(borrow _point: { x: number, y: number }): void {}
         "#,
     );
     assert!(!has_error(&diags), "Errors: {:?}", diags);

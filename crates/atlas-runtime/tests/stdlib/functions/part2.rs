@@ -18,8 +18,9 @@ fn test_return_function() {
 #[test]
 fn test_return_builtin() {
     let source = r#"
+        fn myLen(borrow s: string): number { return len(s); }
         fn getLen(): (string): number {
-            return len;
+            return myLen;
         }
         let f = getLen();
         f("test");
@@ -30,7 +31,7 @@ fn test_return_builtin() {
 #[test]
 fn test_return_function_from_parameter() {
     let source = r#"
-        fn identity(borrow f: (number): number): (number): number {
+        fn identity(own f: (number): number): (number): number {
             return f;
         }
         fn triple(borrow x: number): number { return x * 3; }
@@ -130,8 +131,9 @@ fn test_type_valid_function_parameter() {
 #[test]
 fn test_function_returning_void() {
     let source = r#"
+        fn doNothing(borrow _s: string): void {}
         fn getVoid(): (string): void {
-            return print;
+            return doNothing;
         }
         let f = getVoid();
         f("test");

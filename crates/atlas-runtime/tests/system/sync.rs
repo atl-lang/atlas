@@ -29,11 +29,10 @@ fn test_sync_semaphore_create() {
 
 #[test]
 fn test_atomic_get_set() {
-    // sync.atomic(10) creates handle; atomicLoad returns initial value
     let result = eval_ok(
         r#"
         let a = sync.atomic(10);
-        atomicLoad(a)
+        a.get()
     "#,
     );
     assert_eq!(result, Value::Number(10.0));
@@ -44,7 +43,7 @@ fn test_atomic_add_returns_previous() {
     let result = eval_ok(
         r#"
         let a = sync.atomic(5);
-        atomicAdd(a, 3)
+        a.add(3)
     "#,
     );
     // fetch_add returns previous value (5)
@@ -56,7 +55,7 @@ fn test_atomic_sub_returns_previous() {
     let result = eval_ok(
         r#"
         let a = sync.atomic(10);
-        atomicSub(a, 4)
+        a.sub(4)
     "#,
     );
     assert_eq!(result, Value::Number(10.0));
@@ -67,8 +66,8 @@ fn test_atomic_store() {
     let result = eval_ok(
         r#"
         let a = sync.atomic(0);
-        atomicStore(a, 99);
-        atomicLoad(a)
+        a.set(99);
+        a.get()
     "#,
     );
     assert_eq!(result, Value::Number(99.0));
@@ -79,7 +78,7 @@ fn test_atomic_compare_exchange_success() {
     let result = eval_ok(
         r#"
         let a = sync.atomic(5);
-        atomicCompareExchange(a, 5, 10)
+        a.compareSwap(5, 10)
     "#,
     );
     assert_eq!(result, Value::Bool(true));
@@ -90,7 +89,7 @@ fn test_atomic_compare_exchange_fail() {
     let result = eval_ok(
         r#"
         let a = sync.atomic(5);
-        atomicCompareExchange(a, 99, 10)
+        a.compareSwap(99, 10)
     "#,
     );
     assert_eq!(result, Value::Bool(false));
@@ -105,7 +104,7 @@ fn test_rwlock_read_returns_value() {
     let result = eval_ok(
         r#"
         let lock = sync.rwLock(42);
-        rwLockRead(lock)
+        lock.read()
     "#,
     );
     assert_eq!(result, Value::Number(42.0));
@@ -116,8 +115,8 @@ fn test_rwlock_write_updates_value() {
     let result = eval_ok(
         r#"
         let lock = sync.rwLock(1);
-        rwLockWrite(lock, 99);
-        rwLockRead(lock)
+        lock.write(99);
+        lock.read()
     "#,
     );
     assert_eq!(result, Value::Number(99.0));
@@ -128,7 +127,7 @@ fn test_rwlock_try_read_returns_option() {
     let result = eval_ok(
         r#"
         let lock = sync.rwLock("hello");
-        rwLockTryRead(lock)
+        lock.tryRead()
     "#,
     );
     assert!(matches!(result, Value::Option(Some(_))));
@@ -139,7 +138,7 @@ fn test_rwlock_try_write_returns_bool() {
     let result = eval_ok(
         r#"
         let lock = sync.rwLock(0);
-        rwLockTryWrite(lock, 5)
+        lock.tryWrite(5)
     "#,
     );
     assert_eq!(result, Value::Bool(true));
@@ -154,7 +153,7 @@ fn test_semaphore_available_initial() {
     let result = eval_ok(
         r#"
         let s = sync.semaphore(3);
-        semaphoreAvailable(s)
+        s.available()
     "#,
     );
     assert_eq!(result, Value::Number(3.0));
@@ -165,7 +164,7 @@ fn test_semaphore_try_acquire_success() {
     let result = eval_ok(
         r#"
         let s = sync.semaphore(2);
-        semaphoreTryAcquire(s)
+        s.tryAcquire()
     "#,
     );
     assert_eq!(result, Value::Bool(true));
@@ -176,8 +175,8 @@ fn test_semaphore_try_acquire_fail_when_zero() {
     let result = eval_ok(
         r#"
         let s = sync.semaphore(1);
-        semaphoreTryAcquire(s);
-        semaphoreTryAcquire(s)
+        s.tryAcquire();
+        s.tryAcquire()
     "#,
     );
     assert_eq!(result, Value::Bool(false));
@@ -188,9 +187,9 @@ fn test_semaphore_release_restores_permit() {
     let result = eval_ok(
         r#"
         let s = sync.semaphore(1);
-        semaphoreTryAcquire(s);
-        semaphoreRelease(s);
-        semaphoreAvailable(s)
+        s.tryAcquire();
+        s.release();
+        s.available()
     "#,
     );
     assert_eq!(result, Value::Number(1.0));
@@ -201,8 +200,8 @@ fn test_semaphore_acquire_and_release() {
     let result = eval_ok(
         r#"
         let s = sync.semaphore(2);
-        semaphoreAcquire(s);
-        semaphoreAvailable(s)
+        s.acquire();
+        s.available()
     "#,
     );
     assert_eq!(result, Value::Number(1.0));

@@ -17,7 +17,7 @@ use super::*;
 #[test]
 fn test_split_basic() {
     let code = r#"
-    let result: string[] = split("a,b,c", ",");
+    let result: string[] = "a,b,c".split(",");
     len(result)
 "#;
     assert_eval_number(code, 3.0);
@@ -26,7 +26,7 @@ fn test_split_basic() {
 #[test]
 fn test_split_empty_separator() {
     let code = r#"
-    let result: string[] = split("abc", "");
+    let result: string[] = "abc".split("");
     len(result)
 "#;
     assert_eval_number(code, 3.0);
@@ -35,7 +35,7 @@ fn test_split_empty_separator() {
 #[test]
 fn test_split_no_match() {
     let code = r#"
-    let result: string[] = split("hello", ",");
+    let result: string[] = "hello".split(",");
     len(result)
 "#;
     assert_eval_number(code, 1.0);
@@ -44,7 +44,7 @@ fn test_split_no_match() {
 #[test]
 fn test_split_unicode() {
     let code = r#"
-    let result: string[] = split("🎉,🔥,✨", ",");
+    let result: string[] = "🎉,🔥,✨".split(",");
     len(result)
 "#;
     assert_eval_number(code, 3.0);
@@ -106,10 +106,20 @@ fn test_trim_end() {
 // ============================================================================
 
 fn eval_vm(code: &str) -> Value {
-    let bytecode = compile_source(code).expect("compile");
-    run_bytecode(bytecode)
-        .expect("vm run")
-        .unwrap_or(Value::Null)
+    use atlas_runtime::{Binder, Compiler, Lexer, Parser, TypeChecker, VM};
+    let mut lexer = Lexer::new(code.to_string());
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    let (ast, _) = parser.parse();
+    let mut binder = Binder::new();
+    let (mut symbol_table, _) = binder.bind(&ast);
+    let mut typechecker = TypeChecker::new(&mut symbol_table);
+    let _ = typechecker.check(&ast);
+    let mut compiler = Compiler::new();
+    let bytecode = compiler.compile(&ast).expect("compile");
+    let security = atlas_runtime::SecurityContext::allow_all();
+    let mut vm = VM::new(bytecode);
+    vm.run(&security).expect("vm run").unwrap_or(Value::Null)
 }
 
 #[test]
@@ -244,37 +254,37 @@ fn test_char_at_out_of_bounds() {
 
 #[test]
 fn test_repeat_basic() {
-    let code = r#"repeat("ha", 3)"#;
+    let code = r#""ha".repeat(3)"#;
     assert_eval_string(code, "hahaha");
 }
 
 #[test]
 fn test_repeat_zero() {
-    let code = r#"repeat("ha", 0)"#;
+    let code = r#""ha".repeat(0)"#;
     assert_eval_string(code, "");
 }
 
 #[test]
 fn test_repeat_negative() {
-    let code = r#"repeat("ha", -1)"#;
+    let code = r#""ha".repeat(-1)"#;
     assert_has_error(code);
 }
 
 #[test]
 fn test_replace_basic() {
-    let code = r#"replace("hello", "l", "L")"#;
+    let code = r#""hello".replace("l", "L")"#;
     assert_eval_string(code, "heLlo");
 }
 
 #[test]
 fn test_replace_not_found() {
-    let code = r#"replace("hello", "x", "y")"#;
+    let code = r#""hello".replace("x", "y")"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_replace_empty_search() {
-    let code = r#"replace("hello", "", "x")"#;
+    let code = r#""hello".replace("", "x")"#;
     assert_eval_string(code, "hello");
 }
 
@@ -284,31 +294,31 @@ fn test_replace_empty_search() {
 
 #[test]
 fn test_pad_start_basic() {
-    let code = r#"pad_start("5", 3, "0")"#;
+    let code = r#""5".padStart(3, "0")"#;
     assert_eval_string(code, "005");
 }
 
 #[test]
 fn test_pad_start_already_long() {
-    let code = r#"pad_start("hello", 3, "0")"#;
+    let code = r#""hello".padStart(3, "0")"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_pad_start_multichar_fill() {
-    let code = r#"pad_start("x", 5, "ab")"#;
+    let code = r#""x".padStart(5, "ab")"#;
     assert_eval_string(code, "ababx");
 }
 
 #[test]
 fn test_pad_end_basic() {
-    let code = r#"pad_end("5", 3, "0")"#;
+    let code = r#""5".padEnd(3, "0")"#;
     assert_eval_string(code, "500");
 }
 
 #[test]
 fn test_pad_end_already_long() {
-    let code = r#"pad_end("hello", 3, "0")"#;
+    let code = r#""hello".padEnd(3, "0")"#;
     assert_eval_string(code, "hello");
 }
 

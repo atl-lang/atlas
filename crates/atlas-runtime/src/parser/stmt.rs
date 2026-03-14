@@ -71,10 +71,12 @@ impl Parser {
                 }))
             }
             TokenKind::Match => {
-                // Match at statement position — no trailing semicolon required
+                // Match at statement position — trailing semicolon is optional
                 // (consistent with if/while/for which also end with `}`)
                 let expr = self.parse_expression()?;
                 let span = expr.span();
+                // Optionally consume a trailing `;` if present
+                self.match_token(TokenKind::Semicolon);
                 Ok(Stmt::Expr(ExprStmt { expr, span }))
             }
             TokenKind::Fn => Ok(Stmt::FunctionDecl(self.parse_function()?)),

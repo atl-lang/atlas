@@ -78,7 +78,7 @@ fn docs_to_bool_nonzero() {
 fn docs_split_basic() {
     assert_eval_bool(
         r#"
-        let parts = split("a,b,c", ",");
+        let parts = "a,b,c".split(",");
         len(parts) == 3 && parts[0] == "a" && parts[2] == "c"
         "#,
         true,
@@ -541,8 +541,8 @@ fn docs_hashset_deduplication() {
 fn docs_hashset_union() {
     assert_eval_number(
         r#"
-        let a = new Set<number>(); a.add(1); a.add(2); a.add(3);
-        let b = new Set<number>(); b.add(3); b.add(4); b.add(5);
+        let a = new Set<number>(); let a = a.add(1); let a = a.add(2); let a = a.add(3);
+        let b = new Set<number>(); let b = b.add(3); let b = b.add(4); let b = b.add(5);
         a.union(b).size()
         "#,
         5.0,
@@ -553,8 +553,8 @@ fn docs_hashset_union() {
 fn docs_hashset_intersection() {
     assert_eval_number(
         r#"
-        let a = new Set<number>(); a.add(1); a.add(2); a.add(3);
-        let b = new Set<number>(); b.add(2); b.add(3); b.add(4);
+        let a = new Set<number>(); let a = a.add(1); let a = a.add(2); let a = a.add(3);
+        let b = new Set<number>(); let b = b.add(2); let b = b.add(3); let b = b.add(4);
         a.intersection(b).size()
         "#,
         2.0,

@@ -245,25 +245,14 @@ fn test_empty_program_typecheck_dump() {
 
     assert_eq!(dump.typecheck_version, TYPECHECK_VERSION);
 
-    // Empty program has only prelude builtin constants (E, LN10, LN2, PI, SQRT2)
+    // Empty program has no user-defined symbols in the binder symbol table
+    // (prelude constants like E, PI etc. are registered at VM runtime, not by the binder)
     assert_eq!(
         dump.symbols.len(),
-        5,
-        "Empty program should have 5 prelude constants"
+        0,
+        "Empty program should have 0 symbols from binder, got: {:?}",
+        dump.symbols
     );
-
-    // All symbols should be builtins
-    for symbol in &dump.symbols {
-        assert_eq!(symbol.kind, "builtin", "All symbols should be builtins");
-        assert_eq!(
-            symbol.ty, "number",
-            "All builtin constants should be numbers"
-        );
-    }
-
-    // Should have number type from the constants
-    assert_eq!(dump.types.len(), 1, "Empty program should have number type");
-    assert_eq!(dump.types[0].name, "number");
 }
 
 #[test]

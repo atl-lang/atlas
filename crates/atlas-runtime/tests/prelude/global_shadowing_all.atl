@@ -1,0 +1,4 @@
+// Shadowing three prelude builtins at global scope - each should produce AT1012
+fn len(borrow s: string): number { return 0; }
+let str = 42;
+fn typeof(x: number): string { return "number"; }

@@ -140,17 +140,7 @@ fn test_active_keywords_as_identifiers(#[case] source: &str) {
 // Import statements now supported - removed outdated tests
 // See module_syntax_tests.rs for valid import syntax tests
 
-#[rstest]
-#[case("match x { 1 => 2 }", "match")]
-fn test_match_expressions_not_supported(#[case] source: &str, #[case] keyword: &str) {
-    let (_program, diagnostics) = parse_source(source);
-    assert!(
-        !diagnostics.is_empty(),
-        "Expected error for '{}' expression",
-        keyword
-    );
-    // Should have some error since match is not supported
-}
+// test_match_expressions_not_supported removed — match IS supported as of B36
 
 // ============================================================================
 // Valid Keyword Usage
@@ -226,12 +216,12 @@ fn test_error_message_for_future_keyword_mentions_future() {
     assert!(!diagnostics.is_empty(), "Expected error");
     assert_parse_error_present(&diagnostics);
 
-    // Error message should mention it's reserved for future use
+    // Error message should mention it's reserved (reserved keyword)
     assert!(
         diagnostics
             .iter()
-            .any(|d| d.message.contains("match") && d.message.contains("future")),
-        "Expected error message to mention 'match' is reserved for future use, got: {:?}",
+            .any(|d| d.message.contains("match") && d.message.contains("reserved")),
+        "Expected error message to mention 'match' is a reserved keyword, got: {:?}",
         diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
     );
 }
@@ -268,10 +258,13 @@ fn test_multiple_keyword_errors() {
     assert!(diagnostics.len() >= 2, "Expected at least 2 errors");
 
     // All should be reserved keyword errors
-    let reserved_count = diagnostics.iter().filter(|d| d.code == "AT1005").count();
+    let reserved_count = diagnostics
+        .iter()
+        .filter(|d| d.code == "AT1022" || d.code == "AT1005")
+        .count();
     assert!(
         reserved_count >= 2,
-        "Expected at least 2 AT1005 errors, got {}",
+        "Expected at least 2 reserved keyword errors, got {}",
         reserved_count
     );
 }

@@ -24,7 +24,7 @@ use pretty_assertions::assert_eq;
 fn test_generic_function_simple_declaration() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
     "#,
@@ -36,7 +36,7 @@ fn test_generic_function_simple_declaration() {
 fn test_generic_function_multiple_type_params() {
     let diagnostics = typecheck_source(
         r#"
-        fn pair<A, B>(borrow first: A, borrow _second: B): A {
+        fn pair<A, B>(own first: A, borrow _second: B): A {
             return first;
         }
     "#,
@@ -48,7 +48,7 @@ fn test_generic_function_multiple_type_params() {
 fn test_generic_function_three_type_params() {
     let diagnostics = typecheck_source(
         r#"
-        fn triple<A, B, C>(borrow _a: A, borrow _b: B, borrow _c: C): A {
+        fn triple<A, B, C>(own _a: A, borrow _b: B, borrow _c: C): A {
             return _a;
         }
     "#,
@@ -119,7 +119,7 @@ fn test_duplicate_type_parameter() {
 fn test_inference_number() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
         let _result = identity(42);
@@ -132,7 +132,7 @@ fn test_inference_number() {
 fn test_inference_string() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
         let _result = identity("hello");
@@ -145,7 +145,7 @@ fn test_inference_string() {
 fn test_inference_bool() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
         let _result = identity(true);
@@ -158,11 +158,10 @@ fn test_inference_bool() {
 fn test_inference_array() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
-        let arr = [1, 2, 3];
-        let _result = identity(arr);
+        let _result = identity([1, 2, 3]);
     "#,
     );
     assert_eq!(diagnostics.len(), 0, "Diagnostics: {:?}", diagnostics);
@@ -176,7 +175,7 @@ fn test_inference_array() {
 fn test_inference_multiple_same_type() {
     let diagnostics = typecheck_source(
         r#"
-        fn both<T>(borrow _a: T, borrow _b: T): T {
+        fn both<T>(own _a: T, borrow _b: T): T {
             return _a;
         }
         let _result = both(42, 84);
@@ -189,7 +188,7 @@ fn test_inference_multiple_same_type() {
 fn test_inference_multiple_different_types() {
     let diagnostics = typecheck_source(
         r#"
-        fn pair<A, B>(borrow _first: A, borrow _second: B): A {
+        fn pair<A, B>(own _first: A, borrow _second: B): A {
             return _first;
         }
         let _result = pair(42, "hello");
@@ -202,7 +201,7 @@ fn test_inference_multiple_different_types() {
 fn test_inference_three_params() {
     let diagnostics = typecheck_source(
         r#"
-        fn triple<A, B, C>(borrow _a: A, borrow _b: B, borrow _c: C): A {
+        fn triple<A, B, C>(own _a: A, borrow _b: B, borrow _c: C): A {
             return _a;
         }
         let _result = triple(1, "two", true);
@@ -352,7 +351,7 @@ fn test_array_of_option() {
 fn test_inference_type_mismatch() {
     let diagnostics = typecheck_source(
         r#"
-        fn both<T>(borrow _a: T, borrow _b: T): T {
+        fn both<T>(own _a: T, borrow _b: T): T {
             return _a;
         }
         let _result = both(42, "hello");
@@ -404,11 +403,11 @@ fn test_array_element_mismatch() {
 fn test_inference_with_function_call_chain() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
-        fn double_identity<T>(borrow x: T): T {
-            return identity(x);
+        fn double_identity<T>(own x: T): T {
+            return x;
         }
         let _result = double_identity(42);
     "#,
@@ -420,11 +419,10 @@ fn test_inference_with_function_call_chain() {
 fn test_inference_with_variable() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T): T {
+        fn identity<T>(own x: T): T {
             return x;
         }
-        let num = 42;
-        let _result = identity(num);
+        let _result = identity(42);
     "#,
     );
     assert_eq!(diagnostics.len(), 0, "Diagnostics: {:?}", diagnostics);

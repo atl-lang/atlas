@@ -1,1 +1,1 @@
-Parse error: unknown identifier 'nonexistent_function'
+Parse error: `nonexistent_function` is not defined

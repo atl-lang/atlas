@@ -1,2 +1,2 @@
-warning[AT2002]: Unreachable code
-warning[AT2002]: Unreachable code
+warning[AT2002]: this code is unreachable
+warning[AT2002]: this code is unreachable

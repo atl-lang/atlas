@@ -1,0 +1,2 @@
+// Shadowing prelude builtin 'str' at global scope should produce AT1012
+let str = 42;

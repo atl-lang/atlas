@@ -1,2 +1,2 @@
-warning[AT2001]: Unused variable 'unused1'
-warning[AT2001]: Unused variable 'unused2'
+warning[AT2001]: `unused1` is declared but never used
+warning[AT2001]: `unused2` is declared but never used

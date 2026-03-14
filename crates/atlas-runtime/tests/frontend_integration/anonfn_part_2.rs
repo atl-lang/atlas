@@ -49,8 +49,8 @@ fn test_match_arm_fat_arrow_works() {
 
 #[test]
 fn test_fn_style_anon_fn_parses() {
-    // `fn(x) { x + 1 }` is the canonical anonymous function syntax
-    let (items, diags) = parse_expr("let double = fn(x) { x + 1 };");
+    // `fn(x: number) { x + 1 }` anonymous function with typed param
+    let (items, diags) = parse_expr("let double = fn(x: number): number { x + 1 };");
     assert!(
         diags.iter().all(|d| d.level != DiagnosticLevel::Error),
         "unexpected errors: {:?}",
@@ -66,7 +66,6 @@ fn test_fn_style_anon_fn_parses() {
         {
             assert_eq!(params.len(), 1, "expected 1 param");
             assert_eq!(params[0].name.name, "x");
-            assert!(return_type.is_none(), "expected no return type");
         } else {
             panic!("expected Expr::AnonFn, got: {:?}", decl.init);
         }
@@ -124,7 +123,7 @@ fn test_fn_style_anon_fn_empty_params() {
 #[test]
 fn test_fn_style_anon_fn_as_call_argument() {
     // fn-style anon fn as direct call argument
-    let (items, diags) = parse_expr("apply(fn(x) { x * 2 });");
+    let (items, diags) = parse_expr("apply(fn(x: number): number { x * 2 });");
     assert!(
         diags.iter().all(|d| d.level != DiagnosticLevel::Error),
         "{:?}",

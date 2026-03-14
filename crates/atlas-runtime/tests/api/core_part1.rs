@@ -270,9 +270,8 @@ fn test_eval_type_error_undefined_variable() {
 #[test]
 fn test_call_builtin_console_log() {
     let mut runtime = Runtime::new();
-    let result = runtime
-        .call("consoleLog", vec![Value::Number(42.0)])
-        .unwrap();
+    // console.log is a namespace method — use eval directly
+    let result = runtime.eval("console.log(42);").unwrap();
     assert!(matches!(result, Value::Null));
 }
 

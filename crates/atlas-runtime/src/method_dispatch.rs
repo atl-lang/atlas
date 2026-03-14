@@ -181,6 +181,18 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         | "isOk" | "isErr" | "isSome" | "isNone"
         // Core utilities (print is console.log, not a bare global)
         | "len" | "typeof" | "type_of" | "toString" | "str"
+        // Type guard predicates (both snake_case and camelCase; registered in VM stdlib)
+        | "is_string" | "isString"
+        | "is_number" | "isNumber"
+        | "is_bool" | "isBool"
+        | "is_null" | "isNull"
+        | "is_array" | "isArray"
+        | "is_function" | "isFunction"
+        | "is_object" | "isObject"
+        | "is_type" | "isType"
+        | "has_field" | "hasField"
+        | "has_method" | "hasMethod"
+        | "has_tag" | "hasTag"
         // Type constructors
         | "Map" | "Set" | "Queue" | "Stack"
         // Future bare globals (namespace equivalent: future.resolve(), future.all(), etc.)
@@ -202,6 +214,23 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         // File async bare globals — kept for backwards compat in test code only
         // Canonical form: file.readAsync(), file.writeAsync(), file.appendAsync()
         | "appendFileAsync"
+        // Duration bare globals — available until Duration namespace is implemented
+        | "durationFromSeconds" | "durationFromMinutes" | "durationFromHours" | "durationFromDays"
+        | "durationFormat"
+        // Collection constructor/operation bare globals (bridge until namespace migration)
+        | "setNew" | "setAdd" | "setRemove" | "setHas" | "setSize" | "setIsEmpty" | "setClear"
+        | "setUnion" | "setIntersection" | "setDifference" | "setSymmetricDifference"
+        | "setIsSubset" | "setIsSuperset" | "setToArray"
+        | "queueNew" | "queueEnqueue" | "queueDequeue" | "queuePeek" | "queueSize"
+        | "queueIsEmpty" | "queueClear" | "queueToArray"
+        | "stackNew" | "stackPush" | "stackPop" | "stackPeek" | "stackSize"
+        | "stackIsEmpty" | "stackClear" | "stackToArray"
+        | "hashMapCopy" | "regex_replace_with"
+        // Result conversion helpers — no namespace equivalent; bare forms are canonical
+        | "result_ok" | "result_err"
+        // Reflection bare globals — also available as reflect.typeOf() etc.
+        | "reflect_typeof" | "reflect_is_primitive" | "reflect_deep_equals"
+        | "reflect_same_type" | "reflect_is_empty"
     )
 }
 
@@ -372,6 +401,7 @@ fn resolve_hashmap_method(method_name: &str) -> Option<String> {
         "set" | "put" => "mapSet",
         "remove" | "delete" => "mapDelete",
         "clear" => "mapClear",
+        "copy" => "mapCopy",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -387,11 +417,15 @@ fn resolve_hashset_method(method_name: &str) -> Option<String> {
         "isEmpty" => "setIsEmpty",
         "toArray" => "setToArray",
         "forEach" => "setForEach",
+        "map" => "setMap",
+        "filter" => "setFilter",
         "clear" => "setClear",
         "union" => "setUnion",
         "intersection" => "setIntersection",
         "difference" => "setDifference",
         "symmetricDifference" => "setSymmetricDifference",
+        "isSubset" => "setIsSubset",
+        "isSuperset" => "setIsSuperset",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -640,6 +674,7 @@ fn resolve_datetime_ns_method(method_name: &str) -> Option<String> {
         "parse" => "dateTimeParse",
         "parseRfc3339" => "dateTimeParseRfc3339",
         "parseRfc2822" => "dateTimeParseRfc2822",
+        "tryParse" => "dateTimeTryParse",
         "utc" => "dateTimeUtc",
         _ => return None,
     };
@@ -678,6 +713,7 @@ fn resolve_http_ns_method(method_name: &str) -> Option<String> {
         "put" => "httpNsPut",
         "delete" => "httpNsDelete",
         "patch" => "httpNsPatch",
+        "checkPermission" => "httpCheckPermission",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -757,19 +793,22 @@ fn resolve_encoding_ns_method(method_name: &str) -> Option<String> {
 }
 
 /// Resolve Regex.method() → stdlib function name.
-/// Note: Regex.new() returns Result<Regex>. Methods like test/isMatch/find take the compiled Regex.
-/// Regex.test(r, s) and Regex.isMatch(r, s) both map to regexIsMatch (compiled Regex, string).
+/// Note: Regex.new() returns Result<Regex>. Methods like isMatch/find take the compiled Regex.
+/// Regex.test(pattern_str, text) is a convenience that compiles + tests in one call → regexTest.
 /// Regex.escape(s) maps to regexEscape (string pattern only, no Regex arg).
 fn resolve_regex_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         "new" => "regexNew",
-        "test" | "isMatch" => "regexIsMatch",
+        // Convenience: takes a string pattern, not a Regex instance
+        "test" => "regexTest",
+        "isMatch" => "regexIsMatch",
         "find" => "regexFind",
         "findAll" => "regexFindAll",
         "replace" => "regexReplace",
         "replaceAll" => "regexReplaceAll",
         "split" => "regexSplit",
         "captures" => "regexCaptures",
+        "capturesNamed" => "regexCapturesNamed",
         "escape" => "regexEscape",
         _ => return None,
     };
@@ -1151,9 +1190,16 @@ fn resolve_datetime_instance_method(method_name: &str) -> Option<String> {
         "compare" => "dateTimeCompare",
         "toIso" => "dateTimeToIso",
         "format" => "dateTimeFormat",
+        "toCustom" => "dateTimeToCustom",
         "toRfc3339" => "dateTimeToRfc3339",
         "toRfc2822" => "dateTimeToRfc2822",
-        "timestamp" => "dateTimeTimestamp",
+        "timestamp" | "toTimestamp" => "dateTimeToTimestamp",
+        "toUtc" => "dateTimeToUtc",
+        "toLocal" => "dateTimeToLocal",
+        "toTimezone" => "dateTimeToTimezone",
+        "inTimezone" => "dateTimeInTimezone",
+        "getTimezone" => "dateTimeGetTimezone",
+        "getOffset" => "dateTimeGetOffset",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -1163,12 +1209,14 @@ fn resolve_datetime_instance_method(method_name: &str) -> Option<String> {
 /// These take the Regex value as the first argument (receiver).
 fn resolve_regex_instance_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
-        "test" | "isMatch" => "regexTest",
+        "test" | "isMatch" => "regexIsMatch",
         "find" => "regexFind",
         "findAll" => "regexFindAll",
         "replace" => "regexReplace",
         "replaceAll" => "regexReplaceAll",
         "split" => "regexSplit",
+        "splitN" => "regexSplitN",
+        "matchIndices" => "regexMatchIndices",
         _ => return None,
     };
     Some(func_name.to_string())

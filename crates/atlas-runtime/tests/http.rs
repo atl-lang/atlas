@@ -66,7 +66,7 @@ fn test_http_patch_invalid_url() {
 
 #[test]
 fn test_http_check_permission_placeholder() {
-    let code = r#"httpCheckPermission("https://example.com")"#;
+    let code = r#"http.checkPermission("https://example.com")"#;
     // Always returns true in current placeholder implementation
     assert_eq!(eval_ok(code), "true");
 }

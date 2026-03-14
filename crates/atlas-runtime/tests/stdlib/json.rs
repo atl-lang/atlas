@@ -346,7 +346,7 @@ fn test_prettify_json_object() {
     let code = r#"
         let compact: string = "{\"name\":\"Alice\",\"age\":30}";
         let pretty: string = Json.prettify(compact, 2);
-        includes(pretty, "  ")
+        pretty.includes("  ")
     "#;
     assert_eval_bool(code, true);
 }
@@ -376,7 +376,7 @@ fn test_prettify_json_indent_four() {
     let code = r#"
         let compact: string = "{\"a\":1}";
         let pretty: string = Json.prettify(compact, 4);
-        includes(pretty, "    ")
+        pretty.includes("    ")
     "#;
     assert_eval_bool(code, true);
 }

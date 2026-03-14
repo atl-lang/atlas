@@ -5,11 +5,11 @@ expression: diagnostics
 - diag_version: 1
   level: error
   code: AT1012
-  message: "Cannot shadow prelude builtin 'print' in global scope"
+  message: "Cannot shadow prelude builtin 'len' in global scope"
   file: "../../tests/prelude/global_shadowing_function.atl"
   line: 2
   column: 4
-  length: 5
-  snippet: "fn print() : void {}"
+  length: 3
+  snippet: "fn len(borrow s: string): number { return 0; }"
   label: shadows prelude builtin
   help: Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope.

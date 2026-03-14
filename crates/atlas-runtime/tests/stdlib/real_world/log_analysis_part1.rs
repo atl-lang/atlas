@@ -9,10 +9,10 @@ fn test_log_parse_basic() {
 
     let code = format!(
         r#"
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
         let first: string = lines[0];
-        includes(first, "INFO")
+        first.includes("INFO")
     "#,
         path_for_atlas(&log_path)
     );
@@ -32,11 +32,11 @@ fn test_log_filter_errors() {
     let code = format!(
         r#"
         fn isError(borrow line: string): bool {{
-            return includes(line, "ERROR");
+            return line.includes("ERROR");
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
         let errors: string[] = filter(lines, isError);
         len(errors)
     "#,
@@ -54,11 +54,11 @@ fn test_log_extract_timestamps() {
     let code = format!(
         r#"
         fn getTimestamp(borrow line: string): string {{
-            return substring(line, 0.0, 10.0);
+            return line.substring(0.0, 10.0);
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
         let line1: string = lines[0];
         getTimestamp(line1)
     "#,
@@ -80,12 +80,12 @@ fn test_log_count_by_level() {
     let code = format!(
         r#"
         fn isInfo(borrow line: string): bool {{
-            return includes(line, "INFO");
+            return line.includes("INFO");
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
+        let dataLines: string[] = lines.slice(0.0, len(lines) - 1.0);
         let infos: string[] = filter(dataLines, isInfo);
         len(infos)
     "#,
@@ -102,10 +102,10 @@ fn test_log_extract_error_messages() {
 
     let code = format!(
         r#"
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
         let line: string = lines[0];
-        let parts: string[] = split(line, "ERROR: ");
+        let parts: string[] = line.split("ERROR: ");
         let mut msg: string = "";
         if (len(parts) >= 2.0) {{
             msg = parts[1];
@@ -130,13 +130,13 @@ fn test_log_filter_by_date() {
     let code = format!(
         r#"
         fn isAfterJan10(borrow line: string): bool {{
-            let date: string = substring(line, 0.0, 10.0);
-            return !starts_with(date, "2024-01-0");
+            let date: string = line.substring(0.0, 10.0);
+            return !date.startsWith("2024-01-0");
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
+        let dataLines: string[] = lines.slice(0.0, len(lines) - 1.0);
         let recent: string[] = filter(dataLines, isAfterJan10);
         len(recent)
     "#,
@@ -154,12 +154,12 @@ fn test_log_severity_ordering() {
     let code = format!(
         r#"
         fn isHighSeverity(borrow line: string): bool {{
-            return includes(line, "ERROR") || includes(line, "WARN");
+            return line.includes("ERROR") || line.includes("WARN");
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
+        let dataLines: string[] = lines.slice(0.0, len(lines) - 1.0);
         let high: string[] = filter(dataLines, isHighSeverity);
         len(high)
     "#,
@@ -180,11 +180,11 @@ fn test_log_multi_line_error() {
 
     let code = format!(
         r#"
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
         let first: string = lines[0];
         let second: string = lines[1];
-        includes(first, "ERROR") && includes(second, "Stack")
+        first.includes("ERROR") && second.includes("Stack")
     "#,
         path_for_atlas(&log_path)
     );
@@ -203,8 +203,8 @@ fn test_log_empty_lines_filter() {
             return len(line) > 0.0;
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
         let nonEmpty: string[] = filter(lines, isNotEmpty);
         len(nonEmpty)
     "#,
@@ -226,12 +226,12 @@ fn test_log_contains_pattern() {
     let code = format!(
         r#"
         fn mentionsAlice(borrow line: string): bool {{
-            return includes(line, "alice");
+            return line.includes("alice");
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
+        let dataLines: string[] = lines.slice(0.0, len(lines) - 1.0);
         let aliceLogs: string[] = filter(dataLines, mentionsAlice);
         len(aliceLogs)
     "#,
@@ -250,12 +250,12 @@ fn test_log_case_insensitive_search() {
         r#"
         fn hasError(borrow line: string): bool {{
             let lower: string = line.toLowerCase();
-            return includes(lower, "error");
+            return lower.includes("error");
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
+        let dataLines: string[] = lines.slice(0.0, len(lines) - 1.0);
         let errors: string[] = filter(dataLines, hasError);
         len(errors)
     "#,
@@ -277,14 +277,14 @@ fn test_log_extract_user_actions() {
     let code = format!(
         r#"
         fn extractUser(borrow line: string): string {{
-            let parts: string[] = split(line, " ");
+            let parts: string[] = line.split(" ");
             let userPart: string = parts[0];
-            let userFields: string[] = split(userPart, ":");
+            let userFields: string[] = userPart.split(":");
             return userFields[1];
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
         let line1: string = lines[0];
         extractUser(line1)
     "#,
@@ -305,9 +305,9 @@ fn test_log_count_occurrences() {
             return line == "login";
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
+        let dataLines: string[] = lines.slice(0.0, len(lines) - 1.0);
         let logins: string[] = filter(dataLines, isLogin);
         len(logins)
     "#,
@@ -328,8 +328,8 @@ fn test_log_trim_whitespace() {
             return line.trim();
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
         let line1: string = lines[0];
         let cleaned: string = cleanLine(line1);
         cleaned
@@ -348,12 +348,12 @@ fn test_log_starts_with_timestamp() {
     let code = format!(
         r#"
         fn hasTimestamp(borrow line: string): bool {{
-            return starts_with(line, "2024");
+            return line.startsWith("2024");
         }}
 
-        let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
+        let logs: string = file.read("{}").unwrap();
+        let lines: string[] = logs.split("\n");
+        let dataLines: string[] = lines.slice(0.0, len(lines) - 1.0);
         let timestamped: string[] = filter(dataLines, hasTimestamp);
         len(timestamped)
     "#,

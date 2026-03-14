@@ -14,6 +14,8 @@ fn test_error_code_ranges() {
             // Warnings
         } else if code.starts_with("AT3") {
             // Semantic errors
+        } else if code.starts_with("AT4") {
+            // Async/await errors
         } else if code.starts_with("AT5") {
             // Module errors
         } else if code.starts_with("AT9") || code.starts_with("AW") {

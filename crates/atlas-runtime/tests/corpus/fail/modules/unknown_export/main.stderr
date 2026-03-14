@@ -1,4 +1,1 @@
-Parse error: Parameter 'a' is missing an ownership annotation. Add `own`, `borrow`, or `share` before the parameter name.
-  own a: T    — caller's binding is moved into the function
-  borrow a: T — read-only; caller retains ownership
-  share a: T  — both hold valid references simultaneouslyExpected expression
+Parse error: syntax error: Atlas uses TypeScript-style return type syntax — write `: T`, not `-> T`

@@ -1,0 +1,5 @@
+// Shadowing prelude builtins in nested scope is allowed (no AT1012)
+fn doSomething(): number {
+    let myLen: number = 42;
+    return myLen;
+}

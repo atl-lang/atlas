@@ -114,18 +114,19 @@ fn test_path_absolute_already_absolute() {
 fn test_path_parent_basic() {
     let result = call_fn("pathParent", &[Value::string("/foo/bar/baz.txt")]).unwrap();
     match result {
-        Value::String(s) => assert_eq!(s.as_str(), "/foo/bar"),
-        _ => panic!("Expected string result"),
+        Value::Option(Some(inner)) => match *inner {
+            Value::String(s) => assert_eq!(s.as_str(), "/foo/bar"),
+            _ => panic!("Expected string inside Option"),
+        },
+        _ => panic!("Expected Some(string) result"),
     }
 }
 
 #[test]
 fn test_path_parent_no_parent() {
     let result = call_fn("pathParent", &[Value::string("file.txt")]).unwrap();
-    match result {
-        Value::String(s) => assert_eq!(s.as_str(), ""),
-        _ => panic!("Expected string result"),
-    }
+    // "file.txt" has no parent dir component → returns None
+    assert_eq!(result, Value::Option(None));
 }
 
 // ============================================================================

@@ -401,7 +401,7 @@ fn run_vm(source: &str) -> Result<Value, String> {
 )]
 fn test_full_ffi_flow_interpreter() {
     let source = r#"
-        extern "m" fn sqrt(borrow x: CDouble): CDouble;
+        extern "m" fn sqrt(x: CDouble): CDouble;
         sqrt(16.0);
     "#;
 
@@ -425,7 +425,7 @@ fn test_full_ffi_flow_interpreter() {
 )]
 fn test_full_ffi_flow_vm() {
     let source = r#"
-        extern "m" fn sqrt(borrow x: CDouble): CDouble;
+        extern "m" fn sqrt(x: CDouble): CDouble;
         sqrt(25.0);
     "#;
 
@@ -449,7 +449,7 @@ fn test_full_ffi_flow_vm() {
 )]
 fn test_parity_extern_call_basic() {
     let source = r#"
-        extern "m" fn pow(borrow base: CDouble, borrow exp: CDouble): CDouble;
+        extern "m" fn pow(base: CDouble, exp: CDouble): CDouble;
         pow(2.0, 8.0);
     "#;
 
@@ -549,7 +549,7 @@ fn test_error_propagation_symbol_not_found() {
 )]
 fn test_extern_with_user_functions() {
     let source = r#"
-        extern "m" fn sqrt(borrow x: CDouble): CDouble;
+        extern "m" fn sqrt(x: CDouble): CDouble;
 
         fn distance(borrow x1: number, borrow y1: number, borrow x2: number, borrow y2: number): number {
             let dx = x2 - x1;
@@ -577,8 +577,8 @@ fn test_extern_with_user_functions() {
 )]
 fn test_multiple_extern_functions() {
     let source = r#"
-        extern "m" fn sin(borrow x: CDouble): CDouble;
-        extern "m" fn cos(borrow x: CDouble): CDouble;
+        extern "m" fn sin(x: CDouble): CDouble;
+        extern "m" fn cos(x: CDouble): CDouble;
 
         let x = 0.0;
         let s = sin(x);
@@ -603,7 +603,7 @@ fn test_multiple_extern_functions() {
 )]
 fn test_ffi_multiple_calls() {
     let source = r#"
-        extern "m" fn sqrt(borrow x: CDouble): CDouble;
+        extern "m" fn sqrt(x: CDouble): CDouble;
 
         fn sum_of_roots(): number {
             let mut total = 0;
@@ -769,7 +769,7 @@ fn test_ffi_platform_compatibility() {
 fn test_library_loading_platform_specific() {
     // Tests that library names resolve correctly on current platform
     let source = r#"
-        extern "m" fn sqrt(borrow x: CDouble): CDouble;
+        extern "m" fn sqrt(x: CDouble): CDouble;
         sqrt(4.0);
     "#;
 
@@ -796,7 +796,7 @@ fn parse_program(source: &str) -> (Vec<Item>, Vec<atlas_runtime::diagnostic::Dia
 
 #[test]
 fn test_extern_basic_declaration() {
-    let source = r#"extern "libm" fn pow(borrow base: CDouble, borrow exp: CDouble): CDouble;"#;
+    let source = r#"extern "libm" fn pow(base: CDouble, exp: CDouble): CDouble;"#;
     let (items, diagnostics) = parse_program(source);
 
     assert_eq!(diagnostics.len(), 0, "Parse errors: {:?}", diagnostics);
@@ -877,7 +877,7 @@ fn test_extern_no_params() {
 
 #[test]
 fn test_extern_void_return() {
-    let source = r#"extern "libc" fn exit(borrow code: CInt): CVoid;"#;
+    let source = r#"extern "libc" fn exit(code: CInt): CVoid;"#;
     let (items, diagnostics) = parse_program(source);
 
     assert_eq!(diagnostics.len(), 0, "Parse errors: {:?}", diagnostics);
@@ -904,9 +904,9 @@ fn test_extern_void_return() {
 #[test]
 fn test_extern_multiple_declarations() {
     let source = r#"
-        extern "libm" fn sin(borrow x: CDouble): CDouble;
-        extern "libm" fn cos(borrow x: CDouble): CDouble;
-        extern "libm" fn tan(borrow x: CDouble): CDouble;
+        extern "libm" fn sin(x: CDouble): CDouble;
+        extern "libm" fn cos(x: CDouble): CDouble;
+        extern "libm" fn tan(x: CDouble): CDouble;
     "#;
     let (items, diagnostics) = parse_program(source);
 
@@ -930,12 +930,12 @@ fn test_extern_multiple_declarations() {
 #[test]
 fn test_extern_all_types() {
     let source = r#"
-        extern "test" fn test_int(borrow x: CInt): CInt;
-        extern "test" fn test_long(borrow x: CLong): CLong;
-        extern "test" fn test_double(borrow x: CDouble): CDouble;
-        extern "test" fn test_charptr(borrow x: CCharPtr): CCharPtr;
-        extern "test" fn test_void(borrow x: CInt): CVoid;
-        extern "test" fn test_bool(borrow x: CBool): CBool;
+        extern "test" fn test_int(x: CInt): CInt;
+        extern "test" fn test_long(x: CLong): CLong;
+        extern "test" fn test_double(x: CDouble): CDouble;
+        extern "test" fn test_charptr(x: CCharPtr): CCharPtr;
+        extern "test" fn test_void(x: CInt): CVoid;
+        extern "test" fn test_bool(x: CBool): CBool;
     "#;
     let (items, diagnostics) = parse_program(source);
 
@@ -950,7 +950,7 @@ fn test_extern_all_types() {
 
 #[test]
 fn test_extern_invalid_type_error() {
-    let source = r#"extern "lib" fn bad(borrow x: InvalidType): CInt;"#;
+    let source = r#"extern "lib" fn bad(x: InvalidType): CInt;"#;
     let (_items, diagnostics) = parse_program(source);
 
     // Should have a parse error for unknown type
@@ -963,9 +963,9 @@ fn test_extern_invalid_type_error() {
 #[test]
 fn test_extern_mixed_with_functions() {
     let source = r#"
-        extern "libm" fn sqrt(borrow x: CDouble): CDouble;
+        extern "libm" fn sqrt(x: CDouble): CDouble;
         fn double(borrow x: number): number { return x * 2; }
-        extern "libc" fn strlen(borrow s: CCharPtr): CLong;
+        extern "libc" fn strlen(s: CCharPtr): CLong;
     "#;
     let (items, diagnostics) = parse_program(source);
 

@@ -21,8 +21,8 @@ fn test_string_literals_valid(#[case] input: &str, #[case] expected: &str) {
 }
 
 #[rstest]
-#[case(r#""unterminated string"#, "Unterminated")]
-#[case(r#""invalid\xescape""#, "Invalid escape")]
+#[case(r#""unterminated string"#, "unterminated")]
+#[case(r#""invalid\xescape""#, "invalid escape")]
 fn test_string_literals_errors(#[case] input: &str, #[case] error_message: &str) {
     let (tokens, diagnostics) = lex(input);
 
@@ -145,24 +145,26 @@ fn test_complex_expression() {
 
     // Verify token sequence
     let expected_kinds = vec![
-        TokenKind::Fn,
-        TokenKind::Identifier,
+        TokenKind::Fn,         // fn
+        TokenKind::Identifier, // add
         TokenKind::LeftParen,
-        TokenKind::Identifier,
+        TokenKind::Borrow,     // borrow
+        TokenKind::Identifier, // a
         TokenKind::Colon,
-        TokenKind::Identifier,
+        TokenKind::Identifier, // number
         TokenKind::Comma,
-        TokenKind::Identifier,
+        TokenKind::Borrow,     // borrow
+        TokenKind::Identifier, // b
         TokenKind::Colon,
-        TokenKind::Identifier,
+        TokenKind::Identifier, // number
         TokenKind::RightParen,
-        TokenKind::Arrow,
-        TokenKind::Identifier,
+        TokenKind::Colon,
+        TokenKind::Identifier, // number
         TokenKind::LeftBrace,
         TokenKind::Return,
-        TokenKind::Identifier,
+        TokenKind::Identifier, // a
         TokenKind::Plus,
-        TokenKind::Identifier,
+        TokenKind::Identifier, // b
         TokenKind::Semicolon,
         TokenKind::RightBrace,
         TokenKind::Eof,
