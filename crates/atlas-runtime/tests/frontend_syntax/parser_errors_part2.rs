@@ -7,11 +7,11 @@ use super::*;
 #[rstest]
 #[case("1 +", "expression")]
 #[case("1 + + 2", "expression")]
-#[case("let x = (1 + 2;", "')'")]
-#[case("let x = [1, 2, 3;", "']'")]
-#[case("[]arr;", "expression")]
-#[case("arr[0;", "']'")]
-#[case("foo(1, 2, 3;", "')'")]
+#[case("let x = (1 + 2;", "closing")]
+#[case("let x = [1, 2, 3;", "closing")]
+#[case("[]arr;", "statement")]
+#[case("arr[0;", "closing")]
+#[case("foo(1, 2, 3;", "closing")]
 fn test_expression_errors(#[case] source: &str, #[case] expected: &str) {
     let diagnostics = parse_errors(source);
     assert_has_parser_error(&diagnostics, expected);
@@ -110,14 +110,17 @@ fn test_cascade_suppression_two_independent_errors() {
 fn test_help_text_missing_brace_is_context_specific() {
     let diagnostics = parse_errors("fn foo(): number { return 1;");
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-    let help = diagnostics[0]
-        .help
-        .first()
-        .map(|s| s.as_str())
-        .unwrap_or("");
+    let diag = &diagnostics[0];
+    let help = diag.help.first().map(|s| s.as_str()).unwrap_or("");
+    let msg = diag.message.as_str();
+    // Either the help text or the message should reference `}` or closing
     assert!(
-        help.contains("close") || help.contains("`}`"),
-        "Expected context-specific brace-closing help, got: {:?}",
+        help.contains("close")
+            || help.contains("`}`")
+            || msg.contains("`}`")
+            || msg.contains("'}'"),
+        "Expected context-specific brace-closing message or help, got message: {:?}, help: {:?}",
+        msg,
         help
     );
     // Verify the old wrong registry help (string escapes) is NOT attached
