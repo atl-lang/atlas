@@ -97,68 +97,104 @@ pub enum TypeTag {
 
 /// Resolve a method call to its stdlib function name.
 /// Returns None if the type/method combination is not registered.
-pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
+pub fn resolve_method(
+    type_tag: TypeTag,
+    method_name: &str,
+) -> Option<std::borrow::Cow<'static, str>> {
     match type_tag {
-        TypeTag::JsonValue => Some(format!("json{}", capitalize_first(method_name))),
-        TypeTag::Array => resolve_array_method(method_name),
-        TypeTag::HttpResponse => resolve_http_response_method(method_name),
-        TypeTag::String => resolve_string_method(method_name),
-        TypeTag::Map => resolve_hashmap_method(method_name),
-        TypeTag::Set => resolve_hashset_method(method_name),
-        TypeTag::Queue => resolve_queue_method(method_name),
-        TypeTag::Stack => resolve_stack_method(method_name),
-        TypeTag::Option => resolve_option_method(method_name),
-        TypeTag::Result => resolve_result_method(method_name),
-        TypeTag::JsonNs => resolve_json_ns_method(method_name),
-        TypeTag::MathNs => resolve_math_ns_method(method_name),
-        TypeTag::EnvNs => resolve_env_ns_method(method_name),
-        TypeTag::FileNs => resolve_file_ns_method(method_name),
-        TypeTag::ProcessNs => resolve_process_ns_method(method_name),
-        TypeTag::DateTimeNs => resolve_datetime_ns_method(method_name),
-        TypeTag::PathNs => resolve_path_ns_method(method_name),
-        TypeTag::HttpNs => resolve_http_ns_method(method_name),
-        TypeTag::NetNs => resolve_net_ns_method(method_name),
-        TypeTag::CryptoNs => resolve_crypto_ns_method(method_name),
-        TypeTag::EncodingNs => resolve_encoding_ns_method(method_name),
-        TypeTag::RegexNs => resolve_regex_ns_method(method_name),
-        TypeTag::IoNs => resolve_io_ns_method(method_name),
-        TypeTag::ConsoleNs => resolve_console_ns_method(method_name),
-        TypeTag::ReflectNs => resolve_reflect_ns_method(method_name),
-        TypeTag::SqliteNs => resolve_sqlite_ns_method(method_name),
-        TypeTag::SqliteConnection => resolve_sqlite_connection_method(method_name),
-        TypeTag::DateTime => resolve_datetime_instance_method(method_name),
-        TypeTag::RegexValue => resolve_regex_instance_method(method_name),
-        TypeTag::ProcessOutput => resolve_process_output_method(method_name),
-        TypeTag::GzipNs => resolve_gzip_ns_method(method_name),
-        TypeTag::TarNs => resolve_tar_ns_method(method_name),
-        TypeTag::ZipNs => resolve_zip_ns_method(method_name),
-        TypeTag::TaskNs => resolve_task_ns_method(method_name),
-        TypeTag::ChannelSender => resolve_channel_sender_method(method_name),
-        TypeTag::ChannelReceiver => resolve_channel_receiver_method(method_name),
-        TypeTag::AsyncMutexValue => resolve_async_mutex_method(method_name),
-        TypeTag::SyncNs => resolve_sync_ns_method(method_name),
-        TypeTag::AtomicValue => resolve_atomic_method(method_name),
-        TypeTag::RwLockValue => resolve_rwlock_method(method_name),
-        TypeTag::SemaphoreValue => resolve_semaphore_method(method_name),
-        TypeTag::FutureNs => resolve_future_ns_method(method_name),
-        TypeTag::FutureValue => resolve_future_instance_method(method_name),
-        TypeTag::TestNs => resolve_test_ns_method(method_name),
-        TypeTag::Number => resolve_number_method(method_name),
-        TypeTag::Bool => resolve_bool_method(method_name),
-        TypeTag::ArrayNs => resolve_array_ns_method(method_name),
+        TypeTag::JsonValue => Some(std::borrow::Cow::Owned(format!(
+            "json{}",
+            capitalize_first(method_name)
+        ))),
+        TypeTag::Array => resolve_array_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::HttpResponse => {
+            resolve_http_response_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::String => resolve_string_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::Map => resolve_hashmap_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::Set => resolve_hashset_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::Queue => resolve_queue_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::Stack => resolve_stack_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::Option => resolve_option_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::Result => resolve_result_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::JsonNs => resolve_json_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::MathNs => resolve_math_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::EnvNs => resolve_env_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::FileNs => resolve_file_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::ProcessNs => {
+            resolve_process_ns_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::DateTimeNs => {
+            resolve_datetime_ns_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::PathNs => resolve_path_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::HttpNs => resolve_http_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::NetNs => resolve_net_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::CryptoNs => resolve_crypto_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::EncodingNs => {
+            resolve_encoding_ns_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::RegexNs => resolve_regex_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::IoNs => resolve_io_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::ConsoleNs => {
+            resolve_console_ns_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::ReflectNs => {
+            resolve_reflect_ns_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::SqliteNs => resolve_sqlite_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::SqliteConnection => {
+            resolve_sqlite_connection_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::DateTime => {
+            resolve_datetime_instance_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::RegexValue => {
+            resolve_regex_instance_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::ProcessOutput => {
+            resolve_process_output_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::GzipNs => resolve_gzip_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::TarNs => resolve_tar_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::ZipNs => resolve_zip_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::TaskNs => resolve_task_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::ChannelSender => {
+            resolve_channel_sender_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::ChannelReceiver => {
+            resolve_channel_receiver_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::AsyncMutexValue => {
+            resolve_async_mutex_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::SyncNs => resolve_sync_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::AtomicValue => resolve_atomic_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::RwLockValue => resolve_rwlock_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::SemaphoreValue => {
+            resolve_semaphore_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::FutureNs => resolve_future_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::FutureValue => {
+            resolve_future_instance_method(method_name).map(std::borrow::Cow::Borrowed)
+        }
+        TypeTag::TestNs => resolve_test_ns_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::Number => resolve_number_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::Bool => resolve_bool_method(method_name).map(std::borrow::Cow::Borrowed),
+        TypeTag::ArrayNs => resolve_array_ns_method(method_name).map(std::borrow::Cow::Borrowed),
     }
 }
 
-fn resolve_array_ns_method(method_name: &str) -> Option<String> {
+fn resolve_array_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         // D-062: Array.isArray(x) — mirrors TypeScript, acts as typeof(x) == 'array'
         "isArray" => "arrayIsArray",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
-fn resolve_number_method(method_name: &str) -> Option<String> {
+fn resolve_number_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "toString" => "numberToString",
         "toFixed" => "numberToFixed",
@@ -167,17 +203,17 @@ fn resolve_number_method(method_name: &str) -> Option<String> {
         "toNumber" => "numberToNumber",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
-fn resolve_bool_method(method_name: &str) -> Option<String> {
+fn resolve_bool_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "toString" => "boolToString",
         "toBool" => "toBool",
         "toNumber" => "boolToNumber",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Check if a name is a fundamental stdlib function that remains as a bare global.
@@ -294,7 +330,7 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
 }
 
 /// Resolve an HttpResponse method call to its stdlib function name.
-fn resolve_http_response_method(method_name: &str) -> Option<String> {
+fn resolve_http_response_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "status" => "httpStatus",
         "body" => "httpBody",
@@ -304,11 +340,11 @@ fn resolve_http_response_method(method_name: &str) -> Option<String> {
         "isSuccess" => "httpIsSuccess",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve a string method call to its stdlib function name.
-fn resolve_string_method(method_name: &str) -> Option<String> {
+fn resolve_string_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         // Core methods
         "len" | "length" => "len",
@@ -339,11 +375,11 @@ fn resolve_string_method(method_name: &str) -> Option<String> {
         "toBool" => "toBool",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve an array method call to its stdlib function name.
-fn resolve_array_method(method_name: &str) -> Option<String> {
+fn resolve_array_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         // Mutating methods — CoW write-back to receiver
         "push" => "arrayPush",
@@ -376,12 +412,12 @@ fn resolve_array_method(method_name: &str) -> Option<String> {
         "toBool" => "toBool",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve a HashMap method call to its stdlib function name.
 /// HashMap uses CoW semantics — mutating methods return a new map (write-back required).
-fn resolve_hashmap_method(method_name: &str) -> Option<String> {
+fn resolve_hashmap_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         // Read methods
         "get" => "mapGet",
@@ -401,11 +437,11 @@ fn resolve_hashmap_method(method_name: &str) -> Option<String> {
         "copy" => "mapCopy",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve a HashSet method call to its stdlib function name.
-fn resolve_hashset_method(method_name: &str) -> Option<String> {
+fn resolve_hashset_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "add" => "setAdd",
         "remove" | "delete" => "setRemove",
@@ -425,11 +461,11 @@ fn resolve_hashset_method(method_name: &str) -> Option<String> {
         "isSuperset" => "setIsSuperset",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve a Queue method call to its stdlib function name.
-fn resolve_queue_method(method_name: &str) -> Option<String> {
+fn resolve_queue_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "enqueue" | "push" => "queueEnqueue",
         "dequeue" | "pop" => "queueDequeue",
@@ -440,11 +476,11 @@ fn resolve_queue_method(method_name: &str) -> Option<String> {
         "clear" => "queueClear",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve a Stack method call to its stdlib function name.
-fn resolve_stack_method(method_name: &str) -> Option<String> {
+fn resolve_stack_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "push" => "stackPush",
         "pop" => "stackPop",
@@ -455,11 +491,11 @@ fn resolve_stack_method(method_name: &str) -> Option<String> {
         "clear" => "stackClear",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve an Option<T> method call to its stdlib function name.
-fn resolve_option_method(method_name: &str) -> Option<String> {
+fn resolve_option_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "unwrap" => "unwrap",
         "unwrapOr" => "unwrapOr",
@@ -473,11 +509,11 @@ fn resolve_option_method(method_name: &str) -> Option<String> {
         "unwrapOrElse" => "option_unwrap_or_else",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve a Result<T,E> method call to its stdlib function name.
-fn resolve_result_method(method_name: &str) -> Option<String> {
+fn resolve_result_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "unwrap" => "unwrap",
         "unwrapOr" => "unwrapOr",
@@ -493,12 +529,12 @@ fn resolve_result_method(method_name: &str) -> Option<String> {
         "context" => "result_context",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Json.method() → stdlib function name.
 /// B23: All Json.* methods route through jsonNs* internal keys. No bare globals.
-fn resolve_json_ns_method(method_name: &str) -> Option<String> {
+fn resolve_json_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "parse" => "jsonNsParse",
         "stringify" => "jsonNsStringify",
@@ -514,11 +550,11 @@ fn resolve_json_ns_method(method_name: &str) -> Option<String> {
         "isNull" => "jsonNsIsNull",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Math.method() → stdlib function name.
-fn resolve_math_ns_method(method_name: &str) -> Option<String> {
+fn resolve_math_ns_method(method_name: &str) -> Option<&'static str> {
     // B22: All math functions registered under "math*" keys (no bare globals).
     let func_name = match method_name {
         "sqrt" => "mathSqrt",
@@ -553,11 +589,11 @@ fn resolve_math_ns_method(method_name: &str) -> Option<String> {
         "LN10" => "mathLN10",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Env.method() → stdlib function name.
-fn resolve_env_ns_method(method_name: &str) -> Option<String> {
+fn resolve_env_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "get" => "getEnv",
         "set" => "setEnv",
@@ -565,11 +601,11 @@ fn resolve_env_ns_method(method_name: &str) -> Option<String> {
         "list" => "listEnv",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve File.method() → stdlib function name.
-fn resolve_file_ns_method(method_name: &str) -> Option<String> {
+fn resolve_file_ns_method(method_name: &str) -> Option<&'static str> {
     // B24: all file.* methods map to fileNs* internal keys. Bare globals removed.
     let func_name = match method_name {
         // Core I/O
@@ -620,11 +656,11 @@ fn resolve_file_ns_method(method_name: &str) -> Option<String> {
         "copyAsync" => "fileNsCopyAsync",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Process.method() → stdlib function name.
-fn resolve_process_ns_method(method_name: &str) -> Option<String> {
+fn resolve_process_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "cwd" => "getCwd",
         "pid" => "getPid",
@@ -646,11 +682,11 @@ fn resolve_process_ns_method(method_name: &str) -> Option<String> {
         "output" => "processNsOutput",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve ProcessOutput.method() → stdlib function name.
-fn resolve_process_output_method(method_name: &str) -> Option<String> {
+fn resolve_process_output_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "stdout" => "processOutputStdout",
         "stderr" => "processOutputStderr",
@@ -658,11 +694,11 @@ fn resolve_process_output_method(method_name: &str) -> Option<String> {
         "success" => "processOutputSuccess",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve DateTime.method() → stdlib function name.
-fn resolve_datetime_ns_method(method_name: &str) -> Option<String> {
+fn resolve_datetime_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "now" => "dateTimeNow",
         "fromTimestamp" => "dateTimeFromTimestamp",
@@ -675,11 +711,11 @@ fn resolve_datetime_ns_method(method_name: &str) -> Option<String> {
         "utc" => "dateTimeUtc",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Path.method() → stdlib function name.
-fn resolve_path_ns_method(method_name: &str) -> Option<String> {
+fn resolve_path_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "join" => "pathJoin",
         "dirname" => "pathDirname",
@@ -699,11 +735,11 @@ fn resolve_path_ns_method(method_name: &str) -> Option<String> {
         "separator" => "pathSeparator",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Http.method() → stdlib function name.
-fn resolve_http_ns_method(method_name: &str) -> Option<String> {
+fn resolve_http_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "get" => "httpNsGet",
         "post" => "httpNsPost",
@@ -713,11 +749,11 @@ fn resolve_http_ns_method(method_name: &str) -> Option<String> {
         "checkPermission" => "httpCheckPermission",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Net.method() → stdlib function name.
-fn resolve_net_ns_method(method_name: &str) -> Option<String> {
+fn resolve_net_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         // TCP
         "tcpConnect" => "tcpConnect",
@@ -754,11 +790,11 @@ fn resolve_net_ns_method(method_name: &str) -> Option<String> {
         "wsPing" => "wsPing",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Crypto.method() → stdlib function name.
-fn resolve_crypto_ns_method(method_name: &str) -> Option<String> {
+fn resolve_crypto_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "sha256" => "sha256",
         "sha512" => "sha512",
@@ -770,11 +806,11 @@ fn resolve_crypto_ns_method(method_name: &str) -> Option<String> {
         "blake3" => "cryptoNsBlake3",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Encoding.method() → stdlib function name.
-fn resolve_encoding_ns_method(method_name: &str) -> Option<String> {
+fn resolve_encoding_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "base64Encode" => "encodingNsBase64Encode",
         "base64Decode" => "encodingNsBase64Decode",
@@ -786,14 +822,14 @@ fn resolve_encoding_ns_method(method_name: &str) -> Option<String> {
         "urlDecode" => "encodingNsUrlDecode",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Regex.method() → stdlib function name.
 /// Note: Regex.new() returns Result<Regex>. Methods like isMatch/find take the compiled Regex.
 /// Regex.test(pattern_str, text) is a convenience that compiles + tests in one call → regexTest.
 /// Regex.escape(s) maps to regexEscape (string pattern only, no Regex arg).
-fn resolve_regex_ns_method(method_name: &str) -> Option<String> {
+fn resolve_regex_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "new" => "regexNew",
         // Convenience: takes a string pattern, not a Regex instance
@@ -809,7 +845,7 @@ fn resolve_regex_ns_method(method_name: &str) -> Option<String> {
         "escape" => "regexEscape",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Returns the namespace-qualified replacement for a formerly-bare stdlib global name.
@@ -1098,7 +1134,7 @@ pub fn is_callback_intrinsic(func_name: &str) -> bool {
 }
 
 /// Resolve console.method() → stdlib function name.
-fn resolve_console_ns_method(method_name: &str) -> Option<String> {
+fn resolve_console_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "log" => "consoleLog",
         "println" => "consolePrintln",
@@ -1108,11 +1144,11 @@ fn resolve_console_ns_method(method_name: &str) -> Option<String> {
         "debug" => "consoleDebug",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve reflect.method() → stdlib function name.
-fn resolve_reflect_ns_method(method_name: &str) -> Option<String> {
+fn resolve_reflect_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "typeOf" => "reflectTypeOf",
         "fields" => "reflectFields",
@@ -1130,31 +1166,31 @@ fn resolve_reflect_ns_method(method_name: &str) -> Option<String> {
         "getFunctionArity" => "reflectGetFunctionArity",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve sqlite.method() → stdlib function name.
-fn resolve_sqlite_ns_method(method_name: &str) -> Option<String> {
+fn resolve_sqlite_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "open" => "sqlite_open",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve SqliteConnection instance method → stdlib function name.
-fn resolve_sqlite_connection_method(method_name: &str) -> Option<String> {
+fn resolve_sqlite_connection_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "execute" => "sqlite_execute",
         "query" => "sqlite_query",
         "close" => "sqlite_close",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Io.method() → stdlib function name.
-fn resolve_io_ns_method(method_name: &str) -> Option<String> {
+fn resolve_io_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "readLine" => "ioNsReadLine",
         "readLinePrompt" => "ioNsReadLinePrompt",
@@ -1164,12 +1200,12 @@ fn resolve_io_ns_method(method_name: &str) -> Option<String> {
         "flush" => "ioNsFlush",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve DateTime instance method → stdlib function name.
 /// These take the DateTime value as the first argument (receiver).
-fn resolve_datetime_instance_method(method_name: &str) -> Option<String> {
+fn resolve_datetime_instance_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "year" => "dateTimeYear",
         "month" => "dateTimeMonth",
@@ -1199,12 +1235,12 @@ fn resolve_datetime_instance_method(method_name: &str) -> Option<String> {
         "getOffset" => "dateTimeGetOffset",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Regex instance method → stdlib function name.
 /// These take the Regex value as the first argument (receiver).
-fn resolve_regex_instance_method(method_name: &str) -> Option<String> {
+fn resolve_regex_instance_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "test" | "isMatch" => "regexIsMatch",
         "find" => "regexFind",
@@ -1216,11 +1252,11 @@ fn resolve_regex_instance_method(method_name: &str) -> Option<String> {
         "matchIndices" => "regexMatchIndices",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Gzip.method() → stdlib function name.
-fn resolve_gzip_ns_method(method_name: &str) -> Option<String> {
+fn resolve_gzip_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "compress" => "gzipCompress",
         "decompress" => "gzipDecompress",
@@ -1229,11 +1265,11 @@ fn resolve_gzip_ns_method(method_name: &str) -> Option<String> {
         "compressionRatio" => "gzipCompressionRatio",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Tar.method() → stdlib function name.
-fn resolve_tar_ns_method(method_name: &str) -> Option<String> {
+fn resolve_tar_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "create" => "tarCreate",
         "createGz" => "tarCreateGz",
@@ -1243,11 +1279,11 @@ fn resolve_tar_ns_method(method_name: &str) -> Option<String> {
         "contains" => "tarContains",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve task.method() → stdlib function name (B31).
-fn resolve_task_ns_method(method_name: &str) -> Option<String> {
+fn resolve_task_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "spawn" => "taskNsSpawn",
         "join" => "taskNsJoin",
@@ -1260,41 +1296,41 @@ fn resolve_task_ns_method(method_name: &str) -> Option<String> {
         "interval" => "taskNsInterval",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve ChannelSender instance method → stdlib function name (B31).
-fn resolve_channel_sender_method(method_name: &str) -> Option<String> {
+fn resolve_channel_sender_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "send" => "channelNsSend",
         "close" | "isClosed" => "channelNsClose",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve ChannelReceiver instance method → stdlib function name (B31).
-fn resolve_channel_receiver_method(method_name: &str) -> Option<String> {
+fn resolve_channel_receiver_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "receive" => "channelNsReceive",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve AsyncMutex instance method → stdlib function name (B31).
-fn resolve_async_mutex_method(method_name: &str) -> Option<String> {
+fn resolve_async_mutex_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "lock" | "tryLock" => "asyncMutexNsLock",
         "get" => "asyncMutexNsGet",
         "set" => "asyncMutexNsSet",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Zip.method() → stdlib function name.
-fn resolve_zip_ns_method(method_name: &str) -> Option<String> {
+fn resolve_zip_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "create" => "zipCreate",
         "createWithComment" => "zipCreateWithComment",
@@ -1308,23 +1344,23 @@ fn resolve_zip_ns_method(method_name: &str) -> Option<String> {
         "comment" => "zipComment",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve sync.method() → stdlib function name (factory namespace).
 /// D-049: namespace identifier is lowercase "sync".
-fn resolve_sync_ns_method(method_name: &str) -> Option<String> {
+fn resolve_sync_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "atomic" => "syncNsAtomic",
         "rwLock" => "syncNsRwLock",
         "semaphore" => "syncNsSemaphore",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve atomic instance method → stdlib function name.
-fn resolve_atomic_method(method_name: &str) -> Option<String> {
+fn resolve_atomic_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "get" => "atomicLoad",
         "set" => "atomicStore",
@@ -1333,11 +1369,11 @@ fn resolve_atomic_method(method_name: &str) -> Option<String> {
         "compareSwap" => "atomicCompareExchange",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve rwlock instance method → stdlib function name.
-fn resolve_rwlock_method(method_name: &str) -> Option<String> {
+fn resolve_rwlock_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "read" => "rwLockRead",
         "write" => "rwLockWrite",
@@ -1345,11 +1381,11 @@ fn resolve_rwlock_method(method_name: &str) -> Option<String> {
         "tryWrite" => "rwLockTryWrite",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve semaphore instance method → stdlib function name.
-fn resolve_semaphore_method(method_name: &str) -> Option<String> {
+fn resolve_semaphore_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "acquire" => "semaphoreAcquire",
         "tryAcquire" => "semaphoreTryAcquire",
@@ -1357,12 +1393,12 @@ fn resolve_semaphore_method(method_name: &str) -> Option<String> {
         "available" => "semaphoreAvailable",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve future.method() → stdlib function name (factory namespace).
 /// D-049: namespace identifier is lowercase "future".
-fn resolve_future_ns_method(method_name: &str) -> Option<String> {
+fn resolve_future_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "resolve" => "futureNsResolve",
         "reject" => "futureNsReject",
@@ -1374,11 +1410,11 @@ fn resolve_future_ns_method(method_name: &str) -> Option<String> {
         "delay" => "futureNsDelay",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Resolve Future instance method → stdlib function name (B33).
-fn resolve_future_instance_method(method_name: &str) -> Option<String> {
+fn resolve_future_instance_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "then" => "futureNsThen",
         "catch" => "futureNsCatch",
@@ -1389,7 +1425,7 @@ fn resolve_future_instance_method(method_name: &str) -> Option<String> {
         "isRejected" => "futureNsIsRejected",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
 
 /// Returns the correct namespace name when the user typed a wrong-case variant.
@@ -1406,7 +1442,7 @@ pub fn wrong_case_namespace_hint(name: &str) -> Option<String> {
 }
 
 /// Resolve a test namespace method call to its stdlib function name.
-fn resolve_test_ns_method(method_name: &str) -> Option<String> {
+fn resolve_test_ns_method(method_name: &str) -> Option<&'static str> {
     let func_name = match method_name {
         "assert" => "testNsAssert",
         "equal" => "testNsEqual",
@@ -1420,5 +1456,5 @@ fn resolve_test_ns_method(method_name: &str) -> Option<String> {
         "approx" => "testNsApprox",
         _ => return None,
     };
-    Some(func_name.to_string())
+    Some(func_name)
 }
