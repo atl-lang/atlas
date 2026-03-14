@@ -110,7 +110,7 @@ match result {
 let all = conn.query("SELECT * FROM users");
 
 match all {
-    Ok(rows) => console.log("Found " + rows.length.toString() + " users"),
+    Ok(rows) => console.log("Found " + rows.length().toString() + " users"),
     Err(e)   => console.error(e),
 }
 ```

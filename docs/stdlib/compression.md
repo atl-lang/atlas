@@ -26,7 +26,7 @@ Compress `data` using gzip. Returns the compressed bytes as a `number[]`.
 
 ```atlas
 let bytes = Gzip.compress("Hello, world!", 6);
-console.log(bytes.length.toString() + " compressed bytes");
+console.log(bytes.length().toString() + " compressed bytes");
 ```
 
 ---

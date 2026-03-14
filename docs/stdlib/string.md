@@ -6,15 +6,15 @@ String methods are available as instance methods on any `string` value using dot
 
 ## Instance Methods
 
-### `.length -> number`
+### `.length() -> number`
 
-The number of Unicode characters in the string. Accessed as a property, not a method call.
+Returns the number of Unicode characters in the string. Call as a method.
 
 ```atlas
-let n = "hello".length;
+let n = "hello".length();
 // n == 5
 
-let n2 = "".length;
+let n2 = "".length();
 // n2 == 0
 ```
 

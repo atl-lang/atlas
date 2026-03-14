@@ -164,12 +164,12 @@ let csv = ["a", "b", "c"].join(",");
 
 ---
 
-### `.length -> number`
+### `.length() -> number`
 
-The number of elements in the array. Accessed as a property, not a method call.
+Returns the number of elements in the array. Call as a method.
 
 ```atlas
-let n = [1, 2, 3].length;
+let n = [1, 2, 3].length();
 // n == 3
 ```
 

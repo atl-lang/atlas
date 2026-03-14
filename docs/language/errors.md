@@ -49,7 +49,7 @@ The `?` operator unwraps `Ok`/`Some` or propagates `Err`/`None`.
 
 ```atlas
 fn parse_and_double(borrow s: string): Result<number, string> {
-    let n = parseInt(s)?;  // propagates Err if parsing fails
+    let n = s.toInt()?;  // propagates Err if parsing fails
     return Ok(n * 2);
 }
 
@@ -64,7 +64,10 @@ fn main(): Result<number, string> {
 
 ```atlas
 fn get_first(borrow arr: []number): Option<number> {
-    return arr.get(0);
+    if arr.length() > 0 {
+        return Some(arr[0]);
+    }
+    return None;
 }
 
 fn double_first(borrow arr: []number): Option<number> {

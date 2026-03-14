@@ -195,7 +195,7 @@ document (or range) with the formatted output.
 fn greet(   name:string,   count:number ) ->string{
 let msg="Hello "+name;
 for(let i=0;i<count;i++){
-print(msg)
+console.log(msg)
 }
 return msg
 }
@@ -207,7 +207,7 @@ return msg
 fn greet(name: string, count: number) -> string {
     let msg = "Hello " + name;
     for (let i = 0; i < count; i++) {
-        print(msg);
+        console.log(msg);
     }
     return msg;
 }

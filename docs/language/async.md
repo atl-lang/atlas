@@ -64,7 +64,7 @@ async fn main(): void {
 `await` is an expression — it evaluates to the resolved value of the future. It can be used inline:
 
 ```atlas
-let length = (await readFile("data.txt")).length;
+let length = (await readFile("data.txt")).length();
 ```
 
 `await` is only valid inside `async fn` bodies. Using it outside an async function is a parse error.

@@ -61,7 +61,7 @@ n.toInt();       // 3
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `.length` | property `number` | Number of Unicode characters |
+| `.length()` | `() -> number` | Number of Unicode characters |
 | `.charAt(index)` | `(number) -> Option<string>` | Character at index |
 | `.indexOf(sub)` | `(string) -> Option<number>` | First occurrence, or None |
 | `.lastIndexOf(sub)` | `(string) -> Option<number>` | Last occurrence, or None |
@@ -96,7 +96,7 @@ write-back mechanism.
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `.length` | property `number` | Number of elements |
+| `.length()` | `() -> number` | Number of elements |
 | `.push(value)` | `(T) -> T[]` | Append element |
 | `.pop()` | `() -> T[]` | Remove last element |
 | `.shift()` | `() -> T[]` | Remove first element |

@@ -195,7 +195,7 @@ Asserts that `actual` equals `expected`. Panics with a descriptive message if th
 
 ```atlas
 assertEq(1 + 1, 2);
-assertEq("hello".length, 5);
+assertEq("hello".length(), 5);
 ```
 
 ---
@@ -210,7 +210,7 @@ Asserts that `condition` is `true`. Panics with `message` (or a default message)
 
 ```atlas
 test.assert(1 + 1 == 2, "basic arithmetic");
-test.assert("hello".length == 5);
+test.assert("hello".length() == 5);
 ```
 
 ### `test.assertEq(actual: any, expected: any) -> void`
@@ -219,5 +219,5 @@ Asserts that `actual` equals `expected`. Panics with a message showing both valu
 
 ```atlas
 test.assertEq(Math.abs(-5), 5);
-test.assertEq([1, 2].length, 2);
+test.assertEq([1, 2].length(), 2);
 ```
