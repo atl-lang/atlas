@@ -152,6 +152,7 @@ fn resolve_number_method(method_name: &str) -> Option<String> {
         "toFixed" => "numberToFixed",
         "toInt" => "numberToInt",
         "toBool" => "toBool",
+        "toNumber" => "numberToNumber",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -161,6 +162,7 @@ fn resolve_bool_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         "toString" => "boolToString",
         "toBool" => "toBool",
+        "toNumber" => "boolToNumber",
         _ => return None,
     };
     Some(func_name.to_string())

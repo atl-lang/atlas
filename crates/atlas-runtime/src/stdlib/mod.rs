@@ -712,6 +712,8 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // bool instance methods (H-260 — D-021 TypeScript parity)
         // ====================================================================
         m.insert("boolToString", |a, s, _, _| types::bool_to_string(a, s));
+        m.insert("boolToNumber", |a, s, _, _| types::bool_to_number(a, s));
+        m.insert("numberToNumber", |a, s, _, _| types::number_to_number(a, s));
 
         // ====================================================================
         // Option<T> constructors and helpers

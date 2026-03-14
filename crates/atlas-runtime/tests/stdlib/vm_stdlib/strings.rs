@@ -52,25 +52,25 @@ fn test_split_unicode() {
 
 #[test]
 fn test_join_basic() {
-    let code = r#"join(["a", "b", "c"], ",");"#;
+    let code = r#"["a", "b", "c"].join(",");"#;
     assert_eval_string(code, "a,b,c");
 }
 
 #[test]
 fn test_join_empty_array() {
-    let code = r#"join(slice(["a"], 1, 1), ",")"#;
+    let code = r#"["a"].slice(1, 1).join(",")"#;
     assert_eval_string(code, "");
 }
 
 #[test]
 fn test_join_empty_separator() {
-    let code = r#"join(["a", "b", "c"], "")"#;
+    let code = r#"["a", "b", "c"].join("")"#;
     assert_eval_string(code, "abc");
 }
 
 #[test]
 fn test_join_basic_vm() {
-    let value = eval_vm(r#"join(["a", "b", "c"], ",");"#);
+    let value = eval_vm(r#"["a", "b", "c"].join(",");"#);
     match value {
         Value::String(s) => assert_eq!(s.as_ref(), "a,b,c"),
         other => panic!("Expected String, got {:?}", other),
@@ -168,13 +168,13 @@ fn test_last_index_of_unicode_offset_vm() {
 
 #[test]
 fn test_includes_found() {
-    let code = r#"includes("hello", "ll")"#;
+    let code = r#""hello".includes("ll")"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_includes_not_found() {
-    let code = r#"includes("hello", "x")"#;
+    let code = r#""hello".includes("x")"#;
     assert_eval_bool(code, false);
 }
 

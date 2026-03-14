@@ -973,6 +973,38 @@ pub fn bool_to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError>
     }
 }
 
+/// bool.toNumber() — converts true→Ok(1), false→Ok(0)
+pub fn bool_to_number(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("toNumber", 1, args.len(), span));
+    }
+    match &args[0] {
+        Value::Bool(b) => Ok(Value::Result(Ok(Box::new(Value::Number(if *b {
+            1.0
+        } else {
+            0.0
+        }))))),
+        other => Err(RuntimeError::TypeError {
+            msg: format!("toNumber: expected bool, got {}", other.type_name()),
+            span,
+        }),
+    }
+}
+
+/// number.toNumber() — identity conversion, always returns Ok(n)
+pub fn number_to_number(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("toNumber", 1, args.len(), span));
+    }
+    match &args[0] {
+        Value::Number(n) => Ok(Value::Result(Ok(Box::new(Value::Number(*n))))),
+        other => Err(RuntimeError::TypeError {
+            msg: format!("toNumber: expected number, got {}", other.type_name()),
+            span,
+        }),
+    }
+}
+
 /// Shared number formatting used by number_to_string and str().
 fn fmt_number(n: f64) -> String {
     if n.is_nan() {

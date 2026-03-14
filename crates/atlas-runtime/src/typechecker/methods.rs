@@ -179,10 +179,28 @@ impl MethodTable {
         self.register("number", "toFixed", vec![Type::Number], Type::String);
         self.register("number", "toInt", vec![], Type::Number);
         self.register("number", "toBool", vec![], Type::Bool);
+        self.register(
+            "number",
+            "toNumber",
+            vec![],
+            Type::Generic {
+                name: "Result".to_string(),
+                type_args: vec![Type::Number, Type::String],
+            },
+        );
 
         // bool instance methods (H-260 — D-021 TypeScript parity)
         self.register("bool", "toString", vec![], Type::String);
         self.register("bool", "toBool", vec![], Type::Bool);
+        self.register(
+            "bool",
+            "toNumber",
+            vec![],
+            Type::Generic {
+                name: "Result".to_string(),
+                type_args: vec![Type::Number, Type::String],
+            },
+        );
 
         // String methods
         // Core methods
