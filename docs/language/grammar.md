@@ -92,13 +92,15 @@ ImportSpecifier  ::= IDENTIFIER ( "as" IDENTIFIER )?
                    | "*" "as" IDENTIFIER
 
 ExportDecl ::= "export" ExportItem
-             | "export" "{" IDENTIFIER ( "," IDENTIFIER )* "}"
+             | "export" "{" ReExportSpecifier ( "," ReExportSpecifier )* "}" "from" STRING ";"
 
 ExportItem ::= "async"? "fn" ...      (* function declaration *)
              | "type" ...             (* type alias *)
              | "const" ...            (* constant *)
              | "struct" ...           (* struct declaration *)
              | "enum" ...             (* enum declaration *)
+
+ReExportSpecifier ::= IDENTIFIER ( "as" IDENTIFIER )?
 ```
 
 ### Type aliases and constants
@@ -287,10 +289,10 @@ AnonFn ::= "fn" "(" AnonParams ")" ( ":" TypeRef )? BlockExpr
 
 AnonParams ::= ( AnonParam ( "," AnonParam )* ","? )?
 
-AnonParam  ::= Ownership? IDENTIFIER ":" TypeRef DefaultValue?
+AnonParam  ::= Ownership? IDENTIFIER ( ":" TypeRef )? DefaultValue?
 ```
 
-Return type is optional for anonymous functions. Parameters require a type annotation.
+Return type is optional for anonymous functions. Parameter type annotations are optional (default to `any` when omitted).
 
 ### Match expressions
 
