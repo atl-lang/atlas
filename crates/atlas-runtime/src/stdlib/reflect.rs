@@ -365,6 +365,7 @@ pub fn has_method_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
         Value::Result(_) => Some(TypeTag::Result),
         Value::JsonValue(_) => Some(TypeTag::JsonValue),
         Value::HttpResponse(_) => Some(TypeTag::HttpResponse),
+        Value::HttpServerRequest(_) => Some(TypeTag::HttpServerRequest),
         Value::DateTime(_) => Some(TypeTag::DateTime),
         Value::Regex(_) => Some(TypeTag::RegexValue),
         Value::ProcessOutput(_) => Some(TypeTag::ProcessOutput),

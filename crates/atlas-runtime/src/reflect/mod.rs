@@ -342,6 +342,17 @@ pub fn get_value_type_info(value: &Value) -> TypeInfo {
             type_args: vec![],
             alias_target: None,
         },
+        #[cfg(feature = "http")]
+        Value::HttpServerRequest(_) => TypeInfo {
+            name: "HttpServerRequest".to_string(),
+            kind: TypeKind::Unknown,
+            fields: vec![],
+            parameters: vec![],
+            return_type: None,
+            element_type: None,
+            type_args: vec![],
+            alias_target: None,
+        },
     }
 }
 

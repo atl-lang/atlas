@@ -252,6 +252,10 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
         Value::EnumValue { .. } => {
             panic!("Cannot serialize EnumValue in bytecode constants");
         }
+        #[cfg(feature = "http")]
+        Value::HttpServerRequest(_) => {
+            panic!("Cannot serialize HttpServerRequest in bytecode constants");
+        }
     }
 }
 

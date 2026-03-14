@@ -1249,6 +1249,11 @@ fn value_to_json(
             }
             Ok(format!("{{{}}}", parts.join(",")))
         }
+        #[cfg(feature = "http")]
+        Value::HttpServerRequest(_) => Err(RuntimeError::TypeError {
+            msg: "Cannot serialize HttpServerRequest to JSON".to_string(),
+            span,
+        }),
     }
 }
 

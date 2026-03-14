@@ -12,7 +12,7 @@ license = "MIT OR Apache-2.0"
 # Omit for dev `cargo check` to avoid the C compile chain.
 [features]
 default = ["http", "ffi"]
-http = ["dep:reqwest", "dep:rustls", "dep:webpki-roots", "dep:tungstenite", "dep:urlencoding"]
+http = ["dep:reqwest", "dep:rustls", "dep:webpki-roots", "dep:tungstenite", "dep:urlencoding", "dep:axum"]
 ffi  = ["dep:libloading", "dep:libffi"]
 
 [dependencies]
@@ -62,6 +62,7 @@ urlencoding    = { version = "2.1", optional = true }
 rustls         = { version = "0.23", optional = true }
 webpki-roots   = { version = "0.26", optional = true }
 tungstenite    = { version = "0.26", optional = true }
+axum           = { version = "0.8", optional = true }
 
 # FFI (C build chain — feature-gated)
 libloading = { version = "0.8", optional = true }
