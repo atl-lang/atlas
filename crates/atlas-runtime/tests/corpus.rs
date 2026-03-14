@@ -181,7 +181,11 @@ fn run_warn(source: &str) -> String {
         .collect();
     warnings.sort();
 
-    warnings.join("\n")
+    if warnings.is_empty() {
+        String::new()
+    } else {
+        warnings.join("\n") + "\n"
+    }
 }
 
 // ============================================================================
