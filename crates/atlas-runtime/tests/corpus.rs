@@ -95,8 +95,8 @@ fn run_fail(source: &str) -> String {
         .with_network_allowed(false);
     let mut runtime = Runtime::from_config(config);
     match runtime.eval(source) {
-        Ok(_) => "(no error — expected failure did not occur)".to_string(),
-        Err(e) => format!("{}", e).trim_end_matches('\n').to_string(),
+        Ok(_) => "(no error — expected failure did not occur)\n".to_string(),
+        Err(e) => format!("{}\n", e.to_string().trim_end_matches('\n')),
     }
 }
 
@@ -127,8 +127,8 @@ fn run_fail_file(path: &std::path::Path) -> String {
         .with_network_allowed(false);
     let mut runtime = Runtime::from_config(config);
     match runtime.eval_file(path) {
-        Ok(_) => "(no error — expected failure did not occur)".to_string(),
-        Err(e) => format!("{}", e).trim_end_matches('\n').to_string(),
+        Ok(_) => "(no error — expected failure did not occur)\n".to_string(),
+        Err(e) => format!("{}\n", e.to_string().trim_end_matches('\n')),
     }
 }
 
@@ -151,7 +151,7 @@ fn run_warn(source: &str) -> String {
         .map(|d| format!("error[{}]: {}", d.code, d.message))
         .collect();
     if !lex_errors.is_empty() {
-        return lex_errors.join("\n");
+        return lex_errors.join("\n") + "\n";
     }
 
     let mut parser = Parser::new(tokens);
@@ -163,7 +163,7 @@ fn run_warn(source: &str) -> String {
         .map(|d| format!("error[{}]: {}", d.code, d.message))
         .collect();
     if !parse_errors.is_empty() {
-        return parse_errors.join("\n");
+        return parse_errors.join("\n") + "\n";
     }
 
     let mut binder = Binder::new();
