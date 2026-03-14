@@ -37,9 +37,8 @@ All universal gates apply without exception. Testing-specific reminders:
 |---------------------|-------------|
 | New language feature, end-to-end | `tests/corpus/pass/` (preferred) |
 | Expected error/rejection | `tests/corpus/fail/` |
-| Interpreter behavior | `tests/interpreter/integration/` |
-| VM behavior | `tests/vm/integration.rs` |
-| Parity (interpreter = VM) | `tests/bytecode/parity.rs` OR `assert_parity!` macro |
+| VM behavior | `tests/vm/` subdomain files |
+| Spec parity (output matches spec) | corpus tests — `tests/corpus/pass/` |
 | Stdlib function | `tests/stdlib/` (pick matching subdomain) |
 | Type inference | `tests/typesystem/inference/` |
 | Async/futures | `tests/async_runtime/` |
@@ -66,14 +65,14 @@ For any new language behavior, write a corpus test — not a Rust test:
 echo 'let x = 42; print(str(x));' > crates/atlas-runtime/tests/corpus/pass/my_feature.atlas
 echo '42' > crates/atlas-runtime/tests/corpus/pass/my_feature.stdout
 
-# Generate expected output (runs both engines, auto-verifies parity):
+# Generate expected output (runs compiler+VM, saves stdout snapshot):
 UPDATE_CORPUS=1 cargo nextest run -p atlas-runtime --test corpus
 
 # Verify
 cargo nextest run -p atlas-runtime --test corpus -E 'test(my_feature)'
 ```
 
-Corpus tests automatically verify interpreter/VM parity. Use them for:
+Corpus tests automatically verify compiler+VM output against spec. Use them for:
 - Feature coverage (new syntax, new builtins)
 - Regression tests (a bug was fixed — prove it stays fixed)
 - Documentation (readable Atlas programs showing correct behavior)
@@ -82,27 +81,22 @@ Corpus tests automatically verify interpreter/VM parity. Use them for:
 
 ## Parity Tests
 
-When implementing anything in interpreter or VM:
+D-052: single execution path — compiler + VM only. Parity = compiler output matches spec.
+
+Use `assert_eval_*` helpers (these run the compiler+VM pipeline):
 
 ```rust
-// In any test file — asserts identical output from both engines
-assert_parity!(r#"
-    let x = [1, 2, 3];
-    print(str(len(x)));
-"#, "3");
-
-// Or use the helper directly:
-fn assert_parity(source: &str, expected: &str) {
-    let interp = run_interpreter(source);
-    let vm = run_vm(source);
-    assert_eq!(interp, vm, "parity divergence");
-    assert_eq!(interp.trim(), expected.trim(), "wrong output");
-}
+// In the matching domain test file:
+assert_eval_number(r#"let x = [1, 2, 3]; x.length()"#, 3.0);
+assert_eval_string(r#""hello".toUpperCase()"#, "HELLO");
+assert_eval_bool(r#"Array.isArray([1, 2, 3])"#, true);
 ```
 
-**Full parity sweep (nightly CI handles this — don't run manually):**
+Prefer corpus tests for full programs — they auto-snapshot output and are the easiest to read/review.
+
+**Full suite (nightly CI — don't run manually):**
 ```bash
-cargo nextest run -p atlas-runtime -E 'test(parity)'   # ❌ run via CI only
+pt run-ci   # triggers nightly suite; results via pt ci-status
 ```
 
 ---
@@ -121,7 +115,7 @@ bash battle-test/atlas-full-audit/run.sh   # validates all 47 programs
 ```
 
 Add a new battle test when:
-- A language feature is fully implemented (end-to-end, both engines)
+- A language feature is fully implemented end-to-end
 - A bug was fixed that previously caused a real-world program to fail
 - A new domain needs coverage (new struct in domain dir + Rust harness entry)
 
@@ -144,6 +138,6 @@ tests/corpus/fail/type_mismatch_result.atlas  // what fails, snake_case
 ## Deeper Reference
 - Full domain table: `.claude/rules/atlas-testing.md` (auto-loads on test files)
 - Full test patterns: `memory/testing-patterns.md`
-- Parity contract: `.claude/rules/atlas-parity.md` (auto-loads on interpreter/VM/compiler files)
+- Parity contract: `.claude/rules/atlas-parity.md` (auto-loads on VM/compiler files)
 - Battle test strategy: `memory/compiler-quality/battle-testing.md`
 - AI compiler lessons: `memory/compiler-quality/ai-compiler.md`

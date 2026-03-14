@@ -17,7 +17,7 @@
   - [Metric 2]: [value]
   - [Metric 3]: [value]
   - Quality: Zero warnings, all formatted, all passing
-  - Parity: 100% interpreter/VM identical output
+  - Parity: 100% spec parity (compiler+VM output verified)
 
   ✨ Highlights
 
@@ -59,7 +59,7 @@
   - Lines of Code: ~3,600
   - Test Categories: 6 (CSV, JSON, Logs, Transform, Text, Config)
   - Quality: Zero warnings, all formatted, all passing
-  - Parity: 100% interpreter/VM identical output
+  - Parity: 100% spec parity (compiler+VM output verified)
 
   ✨ Highlights
 

@@ -28,7 +28,7 @@ ls .claude/lazy/git.md .claude/lazy/comms.md .claude/lazy/architecture.md \
    .claude/rules/atlas-ci.md .claude/rules/atlas-testing.md \
    .claude/rules/atlas-parity.md .claude/rules/atlas-syntax.md \
    .claude/rules/atlas-ast.md .claude/rules/atlas-typechecker.md \
-   .claude/rules/atlas-interpreter.md .claude/rules/atlas-vm.md 2>&1 | grep "No such file"
+   .claude/rules/atlas-vm.md 2>&1 | grep "No such file"
 
 # 3. CI test gate — must include pull_request
 grep -c "pull_request" .github/workflows/ci.yml

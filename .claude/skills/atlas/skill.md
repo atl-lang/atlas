@@ -72,8 +72,8 @@ Spec defines it → implement EXACTLY. No shortcuts, no partial implementations.
 **Banned:** `// TODO`, `unimplemented!()`, "MVP for now", partial implementations, stubs
 **Required:** Complete implementations, all edge cases, comprehensive tests
 
-### Interpreter/VM Parity (100%)
-Both engines MUST produce identical output. See `.claude/rules/atlas-parity.md`.
+### Compiler/VM Parity (100%)
+Compiler output MUST match the spec. D-052: single execution path (compiler + VM only). See `.claude/rules/atlas-parity.md`.
 
 ### Testing — Two-Tier System
 
@@ -99,7 +99,7 @@ cargo nextest run -p atlas-runtime -E 'test(my_exact_test_name)'  # ✅
 ### Quality Floor (ALL session types)
 1. **During development** → `cargo check` only. The nightly CI handles the full suite.
 2. **Before any code change** → Read `compiler-quality/ai-compiler.md` from auto-memory
-3. **Dual engine always** → Both interpreter AND VM must work.
+3. **Compiler + VM always** → D-052: single execution path. Interpreter is removed.
 
 ---
 
@@ -116,7 +116,7 @@ The user is architect only. You own all implementation, tracking, and continuity
 
 **Before touching any component — run the decision gate (mandatory, not aspirational):**
 ```bash
-pt decisions <component>   # parser|typechecker|vm|interpreter|stdlib|runtime|lsp|infra
+pt decisions <component>   # parser|typechecker|vm|compiler|stdlib|runtime|lsp|infra
 # Returns 3-8 lines. Takes 2 seconds. Skipping it risks violating a standing decision.
 ```
 Map your task to a component, run it, read it. If a decision covers your change — follow it.

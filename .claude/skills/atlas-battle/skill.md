@@ -19,7 +19,7 @@ All universal gates apply without exception. Battle-specific reminders:
 - **Block tracking if this is the final phase:** `pt phase-done B<N>-P<XX> "outcome"` + `pt complete-block B<N> "47/47 pass, bugs filed H-XXX"`
 - **Handoff:** include pass rate, domains tested, H-XXX filed, failure patterns
 
-**Full audit suite:** `battle-test/atlas-full-audit/` — 47 programs, 10 domains, interpreter+VM parity.
+**Full audit suite:** `battle-test/atlas-full-audit/` — 47 programs, 10 domains, compiler+VM output verified against spec.
 Run: `bash battle-test/atlas-full-audit/run.sh`
 
 ---
@@ -63,7 +63,7 @@ cargo nextest run -p atlas-runtime -E 'test(parity)'
 - `tests/bytecode/parity.rs` — nested functions, strings, closures
 - `tests/stdlib/parity.rs` — stdlib function behavior
 - `tests/modules_cases/parity.rs` — module system
-- `tests/interpreter/integration/parity_basic.rs` — basic operations
+- `tests/stdlib/parity.rs` — stdlib function behavior (see also corpus tests)
 - `tests/typesystem/inference/parity_suite.rs` — type inference
 
 ---
@@ -96,7 +96,7 @@ git commit
 ### Battle Test Design Rules
 - Each test should exercise 3+ language features together
 - Tests should be realistic programs, not contrived examples
-- Must run successfully in both interpreter and VM
+- Must run successfully through the compiler+VM pipeline (D-052: single execution path)
 
 ---
 
@@ -105,7 +105,7 @@ git commit
 When a battle test fails:
 1. Identify which language features the test exercises
 2. Run the specific `.atlas` file with `atlas run --verbose` (if available) or add debug prints
-3. Check if it's a parity issue: run in interpreter-only and VM-only if possible
+3. Check if it's a compiler vs spec issue: run `atlas run file.atlas` and compare output to expected
 4. Write a minimal reproduction as a Rust test case
 5. Fix via TDD (see `atlas-bugfix` skill)
 6. Re-run full battle suite to confirm fix doesn't break others

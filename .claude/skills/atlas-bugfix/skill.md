@@ -121,12 +121,11 @@ All universal gates (session start, pt next, pt decisions, pt claim, pt fix, pt 
 ## When to Use Parity Tests
 
 **Always** if the bug involves:
-- Interpreter behavior
 - VM/compiler behavior
-- Stdlib functions (they run in both engines)
+- Stdlib functions
 - Any runtime output
 
-**Skip parity only for:** LSP, CLI, JIT, formatter, config (single-engine components)
+**Skip parity only for:** LSP, CLI, JIT, formatter, config (not compiler+VM pipeline)
 
 ---
 

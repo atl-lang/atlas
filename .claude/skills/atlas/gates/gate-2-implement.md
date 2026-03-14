@@ -24,7 +24,7 @@
    - Basic functionality
    - Edge cases
    - Error handling
-   - Both interpreter AND VM (if applicable)
+   - Compiler+VM pipeline (D-052: single execution path)
 
 3. **Iterate:** Implement → test → refine
 

@@ -7,12 +7,12 @@
 ## GATE 3 (Parity) — When to Run
 
 **Run:**
-- ✅ Runtime features (both interpreter and VM)
-- ✅ Stdlib functions (identical behavior in both)
-- ✅ VM bytecode changes (must match interpreter)
+- ✅ Runtime features (compiler+VM pipeline — D-052)
+- ✅ Stdlib functions (output must match spec)
+- ✅ VM bytecode changes
 
 **Skip:**
-- ❌ LSP, CLI, Frontend (no dual-engine)
+- ❌ LSP, CLI, Frontend (not compiler+VM pipeline)
 - ❌ Documentation, tests themselves
 
 **How:** `assert_parity(r#"len("hello")"#, "5");`

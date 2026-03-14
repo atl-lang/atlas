@@ -87,7 +87,7 @@ cargo clean && cargo check --workspace
 
 **Minimum test count:** XX tests
 
-**Parity requirement:** All tests run in both interpreter and VM with identical results.
+**Parity requirement:** Compiler+VM output matches spec. D-052: single execution path.
 
 **Test approach:**
 - Use rstest for parameterized tests
@@ -104,7 +104,7 @@ cargo clean && cargo check --workspace
 - ✅ [Feature X] works correctly
 - ✅ [Feature Y] works correctly
 - ✅ XX+ tests pass (specific count)
-- ✅ 100% interpreter/VM parity verified
+- ✅ 100% spec parity verified (compiler+VM output matches spec)
 - ✅ Documentation complete in [location]
 - ✅ No clippy warnings
 - ✅ cargo nextest run --workspace passes
