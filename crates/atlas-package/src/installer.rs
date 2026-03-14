@@ -179,7 +179,12 @@ impl Installer {
     fn populate_cache_from_lockfile(&self, lockfile: &Lockfile) -> Result<()> {
         let fetcher = GitFetcher::new(self.cache_dir.clone());
         for pkg in &lockfile.packages {
-            if let LockedSource::Git { url, rev: _ } = &pkg.source {
+            if let LockedSource::Git {
+                url,
+                rev: _,
+                tag: _,
+            } = &pkg.source
+            {
                 // We only have the rev here, not the original tag.  If the
                 // cache entry is missing we can't re-fetch without the tag, so
                 // we skip silently — the caller (install --force) can fix it.
@@ -206,6 +211,7 @@ impl Installer {
                     source: LockedSource::Git {
                         url,
                         rev: result.rev,
+                        tag: Some(tag.clone()),
                     },
                     checksum: Some(result.checksum),
                     dependencies: Default::default(),

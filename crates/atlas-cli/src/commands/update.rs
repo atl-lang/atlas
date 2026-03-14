@@ -166,6 +166,7 @@ pub fn run(args: UpdateArgs) -> Result<()> {
             source: LockedSource::Git {
                 url: u.url.clone(),
                 rev: fetch_result.rev,
+                tag: Some(u.new_tag.clone()),
             },
             checksum: Some(fetch_result.checksum),
             dependencies: Default::default(),

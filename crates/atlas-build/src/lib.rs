@@ -98,12 +98,17 @@ pub fn validate_packages(project_dir: &std::path::Path) -> Result<(), String> {
             .join("cache")
     };
 
-    // Check each locked package's cache dir exists
+    // Check each locked package's cache dir exists.
+    // Git deps are cached under their tag string; others under their semver version.
     let mut missing_pkgs: Vec<String> = Vec::new();
     for pkg in &lockfile.packages {
-        let pkg_cache = cache_root.join(&pkg.name).join(pkg.version.to_string());
+        let cache_key = match &pkg.source {
+            atlas_package::LockedSource::Git { tag: Some(t), .. } => t.clone(),
+            _ => pkg.version.to_string(),
+        };
+        let pkg_cache = cache_root.join(&pkg.name).join(&cache_key);
         if !pkg_cache.exists() {
-            missing_pkgs.push(format!("{}@{}", pkg.name, pkg.version));
+            missing_pkgs.push(format!("{}@{}", pkg.name, cache_key));
         }
     }
 

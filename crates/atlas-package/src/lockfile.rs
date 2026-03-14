@@ -135,6 +135,9 @@ pub enum LockedSource {
         url: String,
         /// Resolved commit hash
         rev: String,
+        /// Tag used to fetch (e.g. "v1.0.0") — used to locate cache path
+        #[serde(skip_serializing_if = "Option::is_none")]
+        tag: Option<String>,
     },
     /// Path source
     Path {

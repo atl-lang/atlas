@@ -26,9 +26,27 @@ struct MinLockfile {
 }
 
 #[derive(Debug, Deserialize)]
+struct MinLockedSource {
+    #[serde(default)]
+    tag: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 struct MinLockedPackage {
     name: String,
     version: String,
+    #[serde(default)]
+    source: Option<MinLockedSource>,
+}
+
+impl MinLockedPackage {
+    /// The cache subdirectory for this package: the git tag if present, else the semver version.
+    fn cache_key(&self) -> String {
+        self.source
+            .as_ref()
+            .and_then(|s| s.tag.clone())
+            .unwrap_or_else(|| self.version.clone())
+    }
 }
 
 impl MinLockfile {
@@ -299,9 +317,9 @@ impl ModuleResolver {
                     .join("cache")
             });
 
-        // 5. Get version from lockfile entry
-        let version = locked_pkg.version.to_string();
-        let pkg_dir = cache_dir.join(name).join(&version);
+        // 5. Determine cache subdirectory: tag string if available, else semver version
+        let cache_key = locked_pkg.cache_key();
+        let pkg_dir = cache_dir.join(name).join(&cache_key);
 
         // 6. Try entry point candidates: lib.atlas, index.atlas, mod.atlas
         let candidates = ["lib.atlas", "index.atlas", "mod.atlas"];
