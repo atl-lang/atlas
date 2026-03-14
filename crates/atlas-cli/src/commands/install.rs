@@ -1,11 +1,13 @@
 //! Install dependencies command (atlas install)
 
 use anyhow::{bail, Context, Result};
+use atlas_package::installer::Installer;
 use atlas_package::manifest::PackageManifest;
 use std::path::{Path, PathBuf};
 
 /// Arguments for the install command
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // packages + production used in P07 (filter by name, skip dev-deps)
 pub struct InstallArgs {
     /// Specific packages to install (empty = all from manifest)
     pub packages: Vec<String>,
@@ -45,20 +47,61 @@ pub fn run(args: InstallArgs) -> Result<()> {
         println!("Reading manifest from {}", manifest_path.display());
     }
 
-    // Load manifest
     let manifest =
         PackageManifest::from_file(&manifest_path).context("Failed to read atlas.toml")?;
 
-    let _ = (
-        &args.packages,
-        args.production,
-        args.force,
-        args.dry_run,
-        args.quiet,
-        manifest,
-    );
+    if manifest.dependencies.is_empty() && manifest.dev_dependencies.is_empty() {
+        if !args.quiet {
+            println!("Nothing to install.");
+        }
+        return Ok(());
+    }
 
-    bail!("Package registry not yet implemented. Local dependencies via path in atlas.toml are supported.");
+    let cache_dir = get_cache_dir();
+    let project_dir = manifest_path
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."))
+        .to_path_buf();
+    let installer = Installer::new(cache_dir, project_dir);
+
+    if args.dry_run {
+        let plan = installer
+            .plan(&manifest)
+            .context("Failed to build install plan")?;
+        println!("Dry run — would fetch {} package(s):", plan.to_fetch.len());
+        for p in &plan.to_fetch {
+            println!("  {} ({})", p.name, p.source);
+        }
+        if !plan.already_cached.is_empty() {
+            println!("Already cached: {}", plan.already_cached.join(", "));
+        }
+        return Ok(());
+    }
+
+    if !args.quiet {
+        println!("Installing packages...");
+    }
+
+    let lockfile = installer
+        .install(&manifest, args.force)
+        .context("Failed to install packages")?;
+
+    if !args.quiet {
+        println!("Wrote atlas.lock ({} package(s))", lockfile.packages.len());
+    }
+
+    Ok(())
+}
+
+fn get_cache_dir() -> PathBuf {
+    std::env::var("ATLAS_CACHE_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            dirs::home_dir()
+                .unwrap_or_else(|| PathBuf::from("."))
+                .join(".atlas")
+                .join("cache")
+        })
 }
 
 /// Find atlas.toml manifest file
@@ -103,7 +146,7 @@ bar = "^2.0"
 test-utils = "^0.1"
 "#;
         let path = dir.join("atlas.toml");
-        fs::write(&path, manifest).unwrap();
+        fs::write(&path, manifest).expect("write manifest");
         path
     }
 
@@ -117,13 +160,14 @@ version = "0.1.0"
 [dev-dependencies]
 "#;
         let path = dir.join("atlas.toml");
-        fs::write(&path, manifest).unwrap();
+        fs::write(&path, manifest).expect("write manifest");
         path
     }
 
     #[test]
-    fn test_install_errors_when_registry_unimplemented() {
-        let temp = TempDir::new().unwrap();
+    fn test_install_registry_dep_errors() {
+        // Simple string deps are registry deps — must fail with helpful message.
+        let temp = TempDir::new().expect("tempdir");
         create_test_manifest(temp.path());
 
         let args = InstallArgs {
@@ -133,14 +177,16 @@ version = "0.1.0"
         };
 
         let err = run(args).unwrap_err();
-        assert!(err
-            .to_string()
-            .contains("Package registry not yet implemented"));
+        let msg = err.to_string();
+        assert!(
+            msg.contains("registry") || msg.contains("community index") || msg.contains("install"),
+            "unexpected error: {msg}"
+        );
     }
 
     #[test]
-    fn test_install_empty_deps_errors() {
-        let temp = TempDir::new().unwrap();
+    fn test_install_empty_deps_succeeds() {
+        let temp = TempDir::new().expect("tempdir");
         create_empty_manifest(temp.path());
 
         let args = InstallArgs {
@@ -149,15 +195,13 @@ version = "0.1.0"
             ..Default::default()
         };
 
-        let err = run(args).unwrap_err();
-        assert!(err
-            .to_string()
-            .contains("Package registry not yet implemented"));
+        // Empty deps → Ok("Nothing to install.")
+        assert!(run(args).is_ok());
     }
 
     #[test]
     fn test_install_no_manifest() {
-        let temp = TempDir::new().unwrap();
+        let temp = TempDir::new().expect("tempdir");
 
         let args = InstallArgs {
             project_dir: temp.path().to_path_buf(),
