@@ -206,8 +206,10 @@ Condition       ::= Expr   (* no surrounding parens required; parens emit a warn
 ReturnStmt      ::= "return" Expr? ";"
 
 BreakStmt       ::= "break" ";"
+                  | "break"               (* as match arm body, no semicolon *)
 
 ContinueStmt    ::= "continue" ";"
+                  | "continue"            (* as match arm body, no semicolon *)
 
 DeferStmt       ::= "defer" Block
                   | "defer" Expr ";"

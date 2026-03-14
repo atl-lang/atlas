@@ -146,7 +146,7 @@ let category = match score {
 };
 ```
 
-### `return` in match arms
+### `return`, `break`, and `continue` in match arms
 
 `return` is valid as a match arm body to early-exit the enclosing function:
 
@@ -156,6 +156,26 @@ match opt {
     Some(v) => v,
 }
 ```
+
+`break` and `continue` are valid in match arms inside loops to control the loop without requiring a semicolon:
+
+```atlas
+for item in items {
+    match item {
+        Some(v) => { process(v); },
+        None    => continue,  // skip to next iteration
+    }
+}
+
+for i in 0..100 {
+    match classify(i) {
+        Invalid => break,     // exit loop entirely
+        Valid   => { use(i); },
+    }
+}
+```
+
+[Fixed: 6b78ef40]
 
 ---
 
@@ -348,7 +368,7 @@ From lowest to highest:
 
 **Parentheses around conditions emit warnings.** `if (x)` and `for (x in arr)` are parsed but generate a diagnostic asking you to remove the parens.
 
-**`break` and `continue` require semicolons.** `break` alone without `;` is a parse error.
+**`break` and `continue` require semicolons** in statement position. Exception: when used directly as a match arm body (e.g., `None => break`), no semicolon is needed.
 
 **No `loop` keyword.** Use `while true { }` for infinite loops.
 
