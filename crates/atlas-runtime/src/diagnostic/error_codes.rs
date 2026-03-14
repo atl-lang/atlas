@@ -1394,7 +1394,7 @@ pub const GENERIC_ERROR: DiagnosticDescriptor = DiagnosticDescriptor {
     level: DiagnosticLevel::Error,
     title: "Error",
     message_template: "{detail}",
-    static_help: None,
+    static_help: Some("check the error detail message for more information"),
     static_note: None,
     domain: DiagnosticDomain::Runtime,
 };
