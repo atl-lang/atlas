@@ -608,6 +608,11 @@ impl MethodTable {
             "isEmpty" => (vec![], Type::Bool),
             "toArray" => (vec![], Type::Array(Box::new(e.clone()))),
             "forEach" => (vec![Type::Unknown], Type::Null),
+            "map" => (vec![Type::Unknown], Type::Array(Box::new(Type::Unknown))),
+            "filter" => (vec![Type::Unknown], set_type.clone()),
+            "union" | "intersection" | "difference" | "symmetricDifference" => {
+                (vec![set_type.clone()], set_type.clone())
+            }
             "clear" => (vec![], set_type),
             _ => return None,
         };

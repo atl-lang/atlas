@@ -26,7 +26,7 @@ fn test_type_conversion_chain() {
 #[test]
 fn test_parse_int_then_to_string() {
     let code = r#"
-    let parsed: number = unwrap(parse_int("FF", 16));
+    let parsed: number = unwrap("FF".toInt(16));
     toString(parsed)
 "#;
     assert_eval_string(code, "255");
@@ -36,7 +36,7 @@ fn test_parse_int_then_to_string() {
 fn test_type_guards_all_false_for_null() {
     let code = r#"
     let val = null;
-    !typeof(val) == "string" && !is_number(val) && !typeof(val) == "bool" && !is_array(val) && !is_function(val)
+    !(typeof(val) == "string") && !is_number(val) && !(typeof(val) == "boolean") && !is_array(val) && !is_function(val)
 "#;
     assert_eval_bool(code, true);
 }

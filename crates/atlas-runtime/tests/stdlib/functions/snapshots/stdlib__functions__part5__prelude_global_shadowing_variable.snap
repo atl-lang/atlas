@@ -5,11 +5,11 @@ expression: diagnostics
 - diag_version: 1
   level: error
   code: AT1012
-  message: "Cannot shadow prelude builtin 'len' in global scope"
+  message: "Cannot shadow prelude builtin 'str' in global scope"
   file: "../../tests/prelude/global_shadowing_variable.atl"
   line: 2
   column: 5
   length: 3
-  snippet: let len = 42;
+  snippet: "let str = 42;"
   label: shadows prelude builtin
   help: Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope.

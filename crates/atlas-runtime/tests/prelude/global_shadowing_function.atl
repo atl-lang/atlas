@@ -1,0 +1,2 @@
+// Shadowing prelude builtin 'len' at global scope should produce AT1012
+fn len(borrow s: string): number { return 0; }

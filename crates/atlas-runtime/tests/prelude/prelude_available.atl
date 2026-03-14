@@ -1,0 +1,4 @@
+// Verify prelude functions are available without imports
+let x: number = len("hello");
+let s: string = str(42);
+let t: string = typeof(x);

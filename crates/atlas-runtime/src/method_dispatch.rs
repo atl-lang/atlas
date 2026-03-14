@@ -214,6 +214,11 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         // File async bare globals — kept for backwards compat in test code only
         // Canonical form: file.readAsync(), file.writeAsync(), file.appendAsync()
         | "appendFileAsync"
+        // Result conversion helpers — no namespace equivalent; bare forms are canonical
+        | "result_ok" | "result_err"
+        // Reflection bare globals — also available as reflect.typeOf() etc.
+        | "reflect_typeof" | "reflect_is_primitive" | "reflect_deep_equals"
+        | "reflect_same_type" | "reflect_is_empty"
     )
 }
 
@@ -399,6 +404,8 @@ fn resolve_hashset_method(method_name: &str) -> Option<String> {
         "isEmpty" => "setIsEmpty",
         "toArray" => "setToArray",
         "forEach" => "setForEach",
+        "map" => "setMap",
+        "filter" => "setFilter",
         "clear" => "setClear",
         "union" => "setUnion",
         "intersection" => "setIntersection",
