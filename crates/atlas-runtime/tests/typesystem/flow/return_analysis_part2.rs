@@ -250,8 +250,9 @@ fn test_return_in_match_arm_typed_as_never_h184() {
     // Pattern: match result { Ok(v) => v, Err(e) => return Err(e) }
     let diagnostics = typecheck_source(
         r#"
+        fn try_parse(borrow _s: string): Result<number, string> { return Ok(42); }
         fn parse_and_double(borrow s: string): Result<number, string> {
-            let n = match parseInt(s, 10) {
+            let n = match try_parse(s) {
                 Ok(v) => v,
                 Err(e) => return Err(e),
             };

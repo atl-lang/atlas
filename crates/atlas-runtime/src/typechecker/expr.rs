@@ -85,6 +85,7 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("datetime", "fromComponents") => None,
         // Regex namespace
         ("regex", "new") => Some(vec![str.clone()]),
+        ("regex", "test" | "isMatch") => None, // regex value + string arg; skip arity check
         // Crypto namespace
         ("crypto", "sha256" | "sha512") => Some(vec![str.clone()]),
         ("crypto", "blake3") => Some(vec![str.clone()]),
@@ -301,7 +302,9 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
                 Type::String,
             ],
         },
-        // Note: test/isMatch/find/findAll/replace/replaceAll/split are instance methods on Regex
+        // regex.test / regex.isMatch as namespace methods (also available as instance methods)
+        ("regex", "test" | "isMatch") => Type::Bool,
+        // Note: find/findAll/replace/replaceAll/split are instance methods on Regex
         // values (dispatched via TypeTag::RegexValue), not namespace methods.
         // Crypto namespace
         ("crypto", "sha256" | "sha512" | "blake3") => Type::String,

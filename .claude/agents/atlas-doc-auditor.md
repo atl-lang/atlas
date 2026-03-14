@@ -64,7 +64,7 @@ Verify:
 - `patterns.md` index lists all files in `patterns/` — no missing, no extra
 - Each `patterns/*.md` file exists and is non-empty
 - Key invariants in `domain-prereqs.md` match current `ast.rs`, `value.rs`
-- `testing-patterns.md` test file table matches actual `crates/atlas-runtime/tests/` contents (check subdirs: stdlib/functions/, stdlib/vm_stdlib/, interpreter/for_in/)
+- `testing-patterns.md` test file table matches actual `crates/atlas-runtime/tests/` contents (check subdirs: stdlib/functions/, stdlib/vm_stdlib/)
 - `build-performance.md` sccache config matches `.cargo/config.toml` — sccache must NOT be in config.toml (CI breaks); must be in `~/.zshrc`
 - `compiler-quality/battle-testing.md` battle test paths match actual `battle-test/` directories
 - **MEMORY.md current state cross-check:** Run `pt block B<N>` for any block claimed complete/in-progress. If tracking DB disagrees with MEMORY.md claim, flag as drift — MEMORY.md is likely stale.
@@ -81,7 +81,7 @@ Files in `.claude/rules/`:
 - `atlas-git.md` — branch/push policy
 - `atlas-ci.md` — CI job names and structure
 - `atlas-comms.md` — wording standards
-- `atlas-ast.md`, `atlas-typechecker.md`, `atlas-interpreter.md`, `atlas-vm.md`, `atlas-syntax.md`
+- `atlas-ast.md`, `atlas-typechecker.md`, `atlas-vm.md`, `atlas-syntax.md`
 
 Verify:
 - Test domain table in `atlas-testing.md` matches actual `crates/atlas-runtime/tests/` files

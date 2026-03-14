@@ -181,6 +181,18 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         | "isOk" | "isErr" | "isSome" | "isNone"
         // Core utilities (print is console.log, not a bare global)
         | "len" | "typeof" | "type_of" | "toString" | "str"
+        // Type guard predicates (both snake_case and camelCase; registered in VM stdlib)
+        | "is_string" | "isString"
+        | "is_number" | "isNumber"
+        | "is_bool" | "isBool"
+        | "is_null" | "isNull"
+        | "is_array" | "isArray"
+        | "is_function" | "isFunction"
+        | "is_object" | "isObject"
+        | "is_type" | "isType"
+        | "has_field" | "hasField"
+        | "has_method" | "hasMethod"
+        | "has_tag" | "hasTag"
         // Type constructors
         | "Map" | "Set" | "Queue" | "Stack"
         // Future bare globals (namespace equivalent: future.resolve(), future.all(), etc.)

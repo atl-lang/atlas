@@ -43,8 +43,8 @@ fn test_at3035_not_fired_when_impl_exists() {
 fn test_record_literal_infers_structural_type() {
     let diags = typecheck_source(
         r#"
-        let r = record { a: 1, borrow b: "ok" };
-        let _s: { a: number, borrow b: string } = r;
+        let r = record { a: 1, b: "ok" };
+        let _s: { a: number, b: string } = r;
         "#,
     );
     assert!(!has_error(&diags), "Errors: {:?}", diags);
@@ -141,7 +141,7 @@ mod migrated_types {
             params: vec![Type::Number, Type::String],
             return_type: Box::new(Type::Bool),
         };
-        assert_eq!(func_type.display_name(), "(number, string): bool");
+        assert_eq!(func_type.display_name(), "(number, string) -> bool");
     }
 
     #[test]

@@ -1,7 +1,7 @@
 ---
 name: atlas-doc-patch
 description: "Scoped doc fixer. Fires after commits to patch docs for what actually changed. Reads .doc-patch-pending.json, checks ONLY the relevant docs, makes surgical fixes, clears the pending file. Use after any commit that touched source files. Do NOT use for full audits — use atlas-doc-auditor for that."
-model: claude-sonnet-4-5
+model: claude-haiku-4-5
 color: cyan
 ---
 
@@ -22,7 +22,7 @@ Read: /Users/proxikal/dev/projects/atlas/.doc-patch-pending.json
 Extract:
 - `commit` — the commit SHA
 - `changed_files` — list of `.rs` files that changed
-- `domains` — which areas (parser, typechecker, interpreter, compiler, vm, stdlib)
+- `domains` — which areas (parser, typechecker, compiler, vm, stdlib)
 - `relevant_docs` — which doc files to check
 
 ### Step 2 — Read the git diff (1 tool call)
@@ -124,6 +124,6 @@ ACTION FOR MAIN AGENT: stage and commit the above files.
 - **Run `pt decisions all` before editing.** Decisions are hard constraints — never document something that contradicts a locked decision.
 - **"None" is a valid output.** If docs are accurate, say so and clear the pending file.
 - **No source changes.** Touch ONLY `.md` files and the pending JSON.
-- **No git ops. Ever.** No `git add`, no `git commit`, no `git push`. The main agent owns all git operations — Haiku touching git risks conflicts with active sessions.
+- **No git ops. Ever.** No `git add`, no `git commit`, no `git push`. The main agent owns all git operations — touching git risks conflicts with active sessions.
 - **Scope is sacred.** Only check files in `relevant_docs`. Not the full codebase.
 - **When in doubt, skip.** A missing doc note is safe. A doc that contradicts architecture is harmful.
