@@ -262,3 +262,83 @@ fn test_return_in_match_arm_typed_as_never_h184() {
     );
     assert_no_errors(&diagnostics);
 }
+
+// ============================================================================
+// H-238: block_always_returns missing match/while/for coverage
+// ============================================================================
+
+#[test]
+fn test_h238_match_only_body_no_false_at3004() {
+    // Function body is ONLY a match with all arms returning — must NOT emit AT3004.
+    let diagnostics = typecheck_source(
+        r#"
+        fn classify(borrow n: number): string {
+            match n {
+                0 => return "zero",
+                1 => return "one",
+                _ => return "many",
+            }
+        }
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}
+
+#[test]
+fn test_h238_while_with_trailing_return_no_at3004() {
+    // While loop followed by a trailing return — must NOT emit AT3004.
+    let diagnostics = typecheck_source(
+        r#"
+        fn find_first(borrow arr: number[]): number {
+            let mut i = 0;
+            while i < len(arr) {
+                if arr[i] > 0 {
+                    return arr[i];
+                }
+                i = i + 1;
+            }
+            return -1;
+        }
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}
+
+#[test]
+fn test_h238_for_with_trailing_return_no_at3004() {
+    // For loop followed by a trailing return — must NOT emit AT3004.
+    let diagnostics = typecheck_source(
+        r#"
+        fn sum(borrow arr: number[]): number {
+            let mut total = 0;
+            for x in arr {
+                total = total + x;
+            }
+            return total;
+        }
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}
+
+#[test]
+fn test_h238_match_in_if_else_no_at3004() {
+    // Match inside if/else — both branches return via match — must NOT emit AT3004.
+    let diagnostics = typecheck_source(
+        r#"
+        fn describe(borrow n: number): string {
+            if n < 0 {
+                match n {
+                    _ => return "negative",
+                }
+            } else {
+                match n {
+                    0 => return "zero",
+                    _ => return "positive",
+                }
+            }
+        }
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}
