@@ -1,7 +1,7 @@
 let q = new Queue<string>();
-q = q.enqueue("first");
-q = q.enqueue("second");
-q = q.enqueue("third");
+q.enqueue("first");
+q.enqueue("second");
+q.enqueue("third");
 
 console.log(q.size());
 

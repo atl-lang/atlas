@@ -1138,7 +1138,20 @@ impl Compiler {
             // Cleanup: remove extras (pattern vars + scrutinee for non-last) from
             // below the body result. Save result to temp global, pop extras, restore.
             let pattern_var_count = self.locals.len() - locals_before;
-            let extras = pattern_var_count + if !is_last_arm { 1 } else { 0 };
+            // For non-last arms: +1 for the Dup'd scrutinee copy that stays at slot pre_match_locals.
+            // For the last arm: +1 if the pattern did NOT consume the scrutinee from the stack.
+            // Wildcard (Pop) and Literal (Equal) consume it; all other patterns leave a ghost.
+            let scrutinee_consumed = is_last_arm
+                && matches!(
+                    &arm.pattern,
+                    crate::ast::Pattern::Wildcard(_) | crate::ast::Pattern::Literal(_, _)
+                );
+            let extras = pattern_var_count
+                + if !is_last_arm || !scrutinee_consumed {
+                    1
+                } else {
+                    0
+                };
 
             if extras > 0 {
                 // Save result to temp global (SetGlobal peeks, value stays)
@@ -1170,8 +1183,12 @@ impl Compiler {
                 // This mirrors the `extras` formula used in the success path, ensuring the stack
                 // is restored to the base scrutinee level for the next arm.
                 let pattern_var_count_guard = self.locals.len() - locals_before;
-                let guard_cleanup_count =
-                    pattern_var_count_guard + if !is_last_arm { 1 } else { 0 };
+                let guard_cleanup_count = pattern_var_count_guard
+                    + if !is_last_arm || !scrutinee_consumed {
+                        1
+                    } else {
+                        0
+                    };
                 for _ in 0..guard_cleanup_count {
                     self.bytecode.emit(Opcode::Pop, arm.span);
                 }

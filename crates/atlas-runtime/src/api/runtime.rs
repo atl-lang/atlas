@@ -488,16 +488,32 @@ impl Runtime {
                 .collect();
             let mut resolver = ModuleResolver::new(project_root.clone());
 
-            for (i, module) in modules.iter().enumerate() {
-                let is_last = i == modules.len() - 1;
-
-                // Compile this module
-                let mut compiler = Compiler::new();
+            // Pass 1: Run binder + typechecker to populate AST annotations (type_tag, etc.)
+            // Without this, MemberExpr.type_tag is None and compile_member falls back to
+            // the GetField structural path, which fails for builtin namespaces (console, etc.).
+            let mut module_registry = crate::module_loader::ModuleRegistry::new();
+            let mut expanded_modules: Vec<Program> = Vec::new();
+            for module in &modules {
                 let expanded = self
                     .expand_namespace_imports(module, &exports_by_path, &mut resolver)
                     .map_err(|diag| EvalError::ParseError(vec![*diag]))?;
+                let mut binder = Binder::new();
+                let (mut symbol_table, _) =
+                    binder.bind_with_modules(&expanded, &module.path, &module_registry);
+                let mut type_checker = TypeChecker::new(&mut symbol_table);
+                let _ = type_checker.check(&expanded); // populate annotations; ignore errors
+                module_registry.register(module.path.clone(), symbol_table);
+                expanded_modules.push(expanded);
+            }
+
+            for (i, (module, expanded)) in modules.iter().zip(expanded_modules.iter()).enumerate() {
+                let is_last = i == modules.len() - 1;
+
+                // Compile this module (AST already has type_tag annotations from Pass 1)
+                let mut compiler = Compiler::new();
+                compiler.register_imported_enums(&module.imports, &module.path, &module_registry);
                 let mut module_bytecode =
-                    compiler.compile(&expanded).map_err(EvalError::ParseError)?;
+                    compiler.compile(expanded).map_err(EvalError::ParseError)?;
 
                 // Strip trailing Halt from non-final modules
                 // (compiler adds Halt at end of each module, but we need

@@ -1,8 +1,8 @@
 let hs = new Set<string>();
-hs = hs.add("apple");
-hs = hs.add("banana");
-hs = hs.add("cherry");
-hs = hs.add("apple");
+hs.add("apple");
+hs.add("banana");
+hs.add("cherry");
+hs.add("apple");
 
 console.log(hs.size());
 console.log(hs.has("banana"));
