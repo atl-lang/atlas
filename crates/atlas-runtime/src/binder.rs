@@ -767,8 +767,20 @@ impl Binder {
                                     );
                                 }
                             } else if let Some(struct_decl) = struct_exports.get(&name.name) {
-                                // Exported struct type — inject into this module's symbol table
+                                // Exported struct type — inject into this module's symbol table.
+                                // Also transitively import any struct types used in field types
+                                // so the typechecker can resolve them without AT3060 errors.
+                                let dep_names: Vec<String> = struct_decl
+                                    .fields
+                                    .iter()
+                                    .flat_map(|f| collect_field_struct_names(&f.type_ref))
+                                    .collect();
                                 self.symbol_table.add_struct_export(struct_decl.clone());
+                                for dep_name in dep_names {
+                                    if let Some(dep_decl) = struct_exports.get(&dep_name) {
+                                        self.symbol_table.add_struct_export(dep_decl.clone());
+                                    }
+                                }
                                 // H-406: also import impl methods for this struct
                                 let struct_name = &name.name;
                                 for ((sn, mn), method) in &impl_method_exports {
@@ -2137,5 +2149,48 @@ impl Binder {
 impl Default for Binder {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Collect non-primitive named types from a TypeRef (one level — field types of an imported struct).
+/// Used to transitively import struct field types so the typechecker can resolve them.
+fn collect_field_struct_names(type_ref: &TypeRef) -> Vec<String> {
+    let mut out = Vec::new();
+    collect_field_struct_names_inner(type_ref, &mut out);
+    out
+}
+
+fn collect_field_struct_names_inner(type_ref: &TypeRef, out: &mut Vec<String>) {
+    match type_ref {
+        TypeRef::Named(name, _) => match name.as_str() {
+            "string" | "number" | "bool" | "any" | "void" | "never" => {}
+            _ => out.push(name.clone()),
+        },
+        TypeRef::Array(elem, _) => collect_field_struct_names_inner(elem, out),
+        TypeRef::Generic {
+            name, type_args, ..
+        } => {
+            match name.as_str() {
+                "string" | "number" | "bool" | "any" | "void" | "Map" | "Set" => {}
+                _ => out.push(name.clone()),
+            }
+            for arg in type_args {
+                collect_field_struct_names_inner(arg, out);
+            }
+        }
+        TypeRef::Tuple { elements, .. } => {
+            for e in elements {
+                collect_field_struct_names_inner(e, out);
+            }
+        }
+        TypeRef::Union { members, .. } | TypeRef::Intersection { members, .. } => {
+            for m in members {
+                collect_field_struct_names_inner(m, out);
+            }
+        }
+        TypeRef::Function { .. }
+        | TypeRef::Structural { .. }
+        | TypeRef::SelfType(_)
+        | TypeRef::Future { .. } => {}
     }
 }
