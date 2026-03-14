@@ -315,7 +315,7 @@ fn regression_stdlib_str() {
 
 #[rstest]
 #[case(r#"let x: number = "hello";"#, "AT3001")] // Type mismatch
-#[case(r#"unknown_var;"#, "AT2002")] // Unknown symbol
+#[case(r#"unknown_var;"#, "AT0002")] // Unknown symbol (AT0002: undefined identifier)
 #[case(r#"let x: number = 1; x = 2;"#, "AT3003")] // Invalid assignment (let is immutable)
 fn regression_type_errors(#[case] code: &str, #[case] expected_code: &str) {
     assert_error_code(code, expected_code);
