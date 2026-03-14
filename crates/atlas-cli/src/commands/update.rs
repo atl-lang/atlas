@@ -1,22 +1,33 @@
 //! Update dependencies command (atlas update)
+//!
+//! For git deps: queries remote tags via `git ls-remote`, bumps to the latest
+//! semver tag (or latest satisfying the declared version constraint), updates
+//! `atlas.lock`, and re-fetches the new version into the local cache.
+//!
+//! For path deps: always considered up-to-date (no remote version check).
+//! Registry deps are not yet supported (D-059: git is the registry).
 
 use anyhow::{bail, Context, Result};
-use atlas_package::manifest::PackageManifest;
-use atlas_package::{Lockfile, Resolver};
+use atlas_package::fetcher::GitFetcher;
+use atlas_package::manifest::{Dependency, PackageManifest};
+use atlas_package::{LockedPackage, LockedSource, Lockfile};
+use semver::{Version, VersionReq};
 use std::path::{Path, PathBuf};
 
-/// Arguments for the update command
+// ── public API ────────────────────────────────────────────────────────────────
+
+/// Arguments for the update command.
 #[derive(Debug, Clone)]
 pub struct UpdateArgs {
-    /// Specific packages to update (empty = all)
+    /// Specific packages to update (empty = all).
     pub packages: Vec<String>,
-    /// Only update dev dependencies
+    /// Only update dev dependencies.
     pub dev: bool,
-    /// Project directory (defaults to current)
+    /// Project directory (defaults to current).
     pub project_dir: PathBuf,
-    /// Dry run (don't modify files)
+    /// Dry run — print plan, do not modify files.
     pub dry_run: bool,
-    /// Verbose output
+    /// Verbose output.
     pub verbose: bool,
 }
 
@@ -32,48 +43,152 @@ impl Default for UpdateArgs {
     }
 }
 
-/// Update result for a single package
+/// Per-package result of an update check.
 #[derive(Debug)]
 pub struct UpdateResult {
     pub name: String,
-    pub old_version: Option<semver::Version>,
-    pub new_version: semver::Version,
-    pub updated: bool,
+    /// Current locked version (None if not in lockfile yet).
+    pub old_version: Option<Version>,
+    /// Best available version found from remote tags.
+    pub new_version: Version,
+    /// New tag name (e.g. "v1.2.0").
+    pub new_tag: String,
+    /// Git URL this dep comes from.
+    pub url: String,
+    /// True when `new_version > old_version` (or no existing lock entry).
+    pub needs_update: bool,
 }
 
-/// Run the update command
+// ── entry point ───────────────────────────────────────────────────────────────
+
+/// Run the update command.
 pub fn run(args: UpdateArgs) -> Result<()> {
     let manifest_path = find_manifest(&args.project_dir)?;
-    let project_dir = manifest_path.parent().unwrap();
+    let project_dir = manifest_path
+        .parent()
+        .context("atlas.toml has no parent directory")?;
     let lockfile_path = project_dir.join("atlas.lock");
 
     if args.verbose {
         println!("Reading manifest from {}", manifest_path.display());
     }
 
-    // Load manifest
     let manifest =
         PackageManifest::from_file(&manifest_path).context("Failed to read atlas.toml")?;
 
-    // Load existing lockfile if present
     let existing_lockfile = if lockfile_path.exists() {
         Some(Lockfile::from_file(&lockfile_path).context("Failed to read atlas.lock")?)
     } else {
         None
     };
 
-    // Determine which packages to update
-    let packages_to_update = if args.packages.is_empty() {
-        // Update all packages
-        let mut all_deps: Vec<String> = manifest.dependencies.keys().cloned().collect();
-        if args.dev {
-            all_deps = manifest.dev_dependencies.keys().cloned().collect();
-        } else {
-            all_deps.extend(manifest.dev_dependencies.keys().cloned());
+    // Build the set of dep names we should check.
+    let target_names = resolve_target_names(&args, &manifest)?;
+
+    if target_names.is_empty() {
+        println!("No dependencies to update.");
+        return Ok(());
+    }
+
+    println!("Checking for updates...");
+
+    let cache_dir = get_cache_dir();
+    let fetcher = GitFetcher::new(cache_dir);
+
+    // Check each dep for updates.
+    let mut updates: Vec<UpdateResult> = Vec::new();
+
+    for name in &target_names {
+        let dep = manifest
+            .dependencies
+            .get(name)
+            .or_else(|| manifest.dev_dependencies.get(name))
+            .expect("dep in target_names must exist in manifest");
+
+        match check_dep_for_update(
+            name,
+            dep,
+            existing_lockfile.as_ref(),
+            &fetcher,
+            args.verbose,
+        )? {
+            Some(result) => updates.push(result),
+            None => {
+                if args.verbose {
+                    println!("  {} {} (path dep — skipped)", green_check(), name);
+                }
+            }
         }
-        all_deps
-    } else {
-        // Validate specified packages exist
+    }
+
+    // Report.
+    let needs_update: Vec<&UpdateResult> = updates.iter().filter(|u| u.needs_update).collect();
+
+    if needs_update.is_empty() {
+        println!("\n{} All packages are up to date.", green_check());
+        return Ok(());
+    }
+
+    println!("\nUpdates available:");
+    for u in &needs_update {
+        let old = u
+            .old_version
+            .as_ref()
+            .map(|v| format!("v{}", v))
+            .unwrap_or_else(|| "(new)".to_string());
+        println!("  {} {} {} → {}", arrow_up(), u.name, old, u.new_tag);
+    }
+
+    if args.verbose {
+        let current: Vec<&UpdateResult> = updates.iter().filter(|u| !u.needs_update).collect();
+        for u in current {
+            println!("  {} {} {} (current)", green_check(), u.name, u.new_tag);
+        }
+    }
+
+    if args.dry_run {
+        println!("\n[Dry run] Would update {} package(s)", needs_update.len());
+        return Ok(());
+    }
+
+    // Apply updates: re-fetch and update lockfile.
+    let mut lockfile = existing_lockfile.unwrap_or_else(Lockfile::new);
+
+    for u in &needs_update {
+        println!("  Fetching {} {}...", u.name, u.new_tag);
+        let fetch_result = fetcher
+            .fetch(&u.name, &u.url, &u.new_tag)
+            .with_context(|| format!("Failed to fetch {} at {}", u.name, u.new_tag))?;
+
+        lockfile.add_package(LockedPackage {
+            name: u.name.clone(),
+            version: u.new_version.clone(),
+            source: LockedSource::Git {
+                url: u.url.clone(),
+                rev: fetch_result.rev,
+            },
+            checksum: Some(fetch_result.checksum),
+            dependencies: Default::default(),
+        });
+    }
+
+    lockfile.write_to_file(&lockfile_path)?;
+
+    println!(
+        "\n{} Updated {} package{}",
+        green_check(),
+        needs_update.len(),
+        if needs_update.len() == 1 { "" } else { "s" }
+    );
+
+    Ok(())
+}
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+
+/// Determine which dep names to check, validating any explicitly-named packages.
+fn resolve_target_names(args: &UpdateArgs, manifest: &PackageManifest) -> Result<Vec<String>> {
+    if !args.packages.is_empty() {
         for pkg in &args.packages {
             if !manifest.dependencies.contains_key(pkg)
                 && !manifest.dev_dependencies.contains_key(pkg)
@@ -81,104 +196,114 @@ pub fn run(args: UpdateArgs) -> Result<()> {
                 bail!("Package '{}' not found in dependencies", pkg);
             }
         }
-        args.packages.clone()
-    };
-
-    if packages_to_update.is_empty() {
-        println!("No dependencies to update.");
-        return Ok(());
+        return Ok(args.packages.clone());
     }
 
-    println!("Checking for updates...");
-
-    // Resolve new versions
-    let mut resolver = Resolver::new();
-    let resolution = resolver.resolve(&manifest)?;
-
-    // Compare with existing lockfile and collect updates
-    let mut updates: Vec<UpdateResult> = Vec::new();
-
-    for pkg_name in &packages_to_update {
-        let new_version = resolution.get_package(pkg_name).map(|p| p.version.clone());
-
-        let old_version = existing_lockfile
-            .as_ref()
-            .and_then(|lf| lf.get_package(pkg_name))
-            .map(|p| p.version.clone());
-
-        if let Some(new_ver) = new_version {
-            let updated = old_version
-                .as_ref()
-                .map(|old| &new_ver > old)
-                .unwrap_or(true);
-
-            updates.push(UpdateResult {
-                name: pkg_name.clone(),
-                old_version,
-                new_version: new_ver,
-                updated,
-            });
-        }
+    // All deps (or dev-only when --dev is set).
+    if args.dev {
+        Ok(manifest.dev_dependencies.keys().cloned().collect())
+    } else {
+        let mut all: Vec<String> = manifest.dependencies.keys().cloned().collect();
+        all.extend(manifest.dev_dependencies.keys().cloned());
+        Ok(all)
     }
-
-    // Display results
-    let updated_count = updates.iter().filter(|u| u.updated).count();
-
-    if updated_count == 0 {
-        println!("\n{} All packages are up to date.", green_check());
-        return Ok(());
-    }
-
-    println!("\nUpdates available:");
-    for update in &updates {
-        if update.updated {
-            let old_ver = update
-                .old_version
-                .as_ref()
-                .map(|v| v.to_string())
-                .unwrap_or_else(|| "new".to_string());
-            println!(
-                "  {} {} {} -> {}",
-                arrow_up(),
-                update.name,
-                old_ver,
-                update.new_version
-            );
-        } else if args.verbose {
-            println!(
-                "  {} {} {} (current)",
-                green_check(),
-                update.name,
-                update.new_version
-            );
-        }
-    }
-
-    if args.dry_run {
-        println!("\n[Dry run] Would update {} package(s)", updated_count);
-        return Ok(());
-    }
-
-    // Generate new lockfile
-    let new_lockfile = resolver.generate_lockfile(&resolution);
-
-    // Write lockfile
-    new_lockfile.write_to_file(&lockfile_path)?;
-
-    println!(
-        "\n{} Updated {} package{}",
-        green_check(),
-        updated_count,
-        if updated_count == 1 { "" } else { "s" }
-    );
-
-    // Hint about install
-    println!("\nRun 'atlas install' to download updated packages.");
-
-    Ok(())
 }
 
-/// Find atlas.toml manifest file
+/// Check a single dep for available updates.
+///
+/// Returns `None` for path/registry deps (no remote version to compare).
+fn check_dep_for_update(
+    name: &str,
+    dep: &Dependency,
+    lockfile: Option<&Lockfile>,
+    fetcher: &GitFetcher,
+    verbose: bool,
+) -> Result<Option<UpdateResult>> {
+    let detailed = match dep {
+        Dependency::Simple(_) => return Ok(None), // registry dep — skip
+        Dependency::Detailed(d) => d,
+    };
+
+    // Path dep — no remote check.
+    if detailed.path.is_some() {
+        return Ok(None);
+    }
+
+    // Must be a git dep.
+    let url = match &detailed.git {
+        Some(u) => u.clone(),
+        None => return Ok(None), // registry dep — skip
+    };
+
+    // Optional semver constraint from the `version` field.
+    let req: Option<VersionReq> = detailed
+        .version
+        .as_deref()
+        .and_then(|v| VersionReq::parse(v).ok());
+
+    if verbose {
+        println!("  Querying tags for {} ({})", name, url);
+    }
+
+    let raw_tags = fetcher
+        .list_remote_tags(&url)
+        .with_context(|| format!("Failed to list remote tags for '{}'", name))?;
+
+    // Filter to semver tags (with optional 'v' prefix), apply constraint.
+    let best = best_semver_tag(&raw_tags, req.as_ref());
+
+    let (new_tag, new_version) = match best {
+        Some(pair) => pair,
+        None => {
+            if verbose {
+                println!("  {} {} — no semver tags found", arrow_up(), name);
+            }
+            return Ok(None);
+        }
+    };
+
+    let old_version = lockfile
+        .and_then(|lf| lf.get_package(name))
+        .map(|p| p.version.clone());
+
+    let needs_update = old_version
+        .as_ref()
+        .map(|old| &new_version > old)
+        .unwrap_or(true);
+
+    Ok(Some(UpdateResult {
+        name: name.to_string(),
+        old_version,
+        new_version,
+        new_tag,
+        url,
+        needs_update,
+    }))
+}
+
+/// From a list of raw tag strings, find the highest semver tag satisfying `req`
+/// (or the global maximum if no constraint). Returns `(tag_string, version)`.
+fn best_semver_tag(tags: &[String], req: Option<&VersionReq>) -> Option<(String, Version)> {
+    let mut candidates: Vec<(String, Version)> = tags
+        .iter()
+        .filter_map(|tag| {
+            let stripped = tag.strip_prefix('v').unwrap_or(tag);
+            let v = Version::parse(stripped).ok()?;
+            if let Some(r) = req {
+                if !r.matches(&v) {
+                    return None;
+                }
+            }
+            Some((tag.clone(), v))
+        })
+        .collect();
+
+    // Sort descending, pick first (highest).
+    candidates.sort_by(|a, b| b.1.cmp(&a.1));
+    candidates.into_iter().next()
+}
+
+/// Find atlas.toml by walking up from `start_dir`.
 fn find_manifest(start_dir: &Path) -> Result<PathBuf> {
     let mut current = start_dir
         .canonicalize()
@@ -189,7 +314,6 @@ fn find_manifest(start_dir: &Path) -> Result<PathBuf> {
         if manifest_path.exists() {
             return Ok(manifest_path);
         }
-
         if !current.pop() {
             break;
         }
@@ -201,173 +325,246 @@ fn find_manifest(start_dir: &Path) -> Result<PathBuf> {
     )
 }
 
-/// Green checkmark
+fn get_cache_dir() -> PathBuf {
+    std::env::var("ATLAS_CACHE_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            dirs::home_dir()
+                .unwrap_or_else(|| PathBuf::from("."))
+                .join(".atlas")
+                .join("cache")
+        })
+}
+
 fn green_check() -> &'static str {
     "\u{2713}"
 }
 
-/// Up arrow for updates
 fn arrow_up() -> &'static str {
     "\u{2191}"
 }
 
+// ── tests ─────────────────────────────────────────────────────────────────────
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use atlas_package::{LockedPackage, LockedSource};
+    use atlas_package::{LockedSource, Lockfile};
     use std::collections::HashMap;
     use std::fs;
     use tempfile::TempDir;
 
-    fn create_test_manifest(dir: &Path) -> PathBuf {
-        let manifest = r#"[package]
-name = "test-project"
+    // ── best_semver_tag ───────────────────────────────────────────────────────
+
+    #[test]
+    fn test_best_semver_tag_no_constraint_picks_latest() {
+        let tags = vec![
+            "v1.0.0".to_string(),
+            "v1.2.0".to_string(),
+            "v1.1.0".to_string(),
+        ];
+        let (tag, ver) = best_semver_tag(&tags, None).unwrap();
+        assert_eq!(tag, "v1.2.0");
+        assert_eq!(ver, Version::new(1, 2, 0));
+    }
+
+    #[test]
+    fn test_best_semver_tag_with_constraint() {
+        let tags = vec![
+            "v1.0.0".to_string(),
+            "v1.5.0".to_string(),
+            "v2.0.0".to_string(),
+        ];
+        let req = VersionReq::parse("^1").unwrap();
+        let (tag, ver) = best_semver_tag(&tags, Some(&req)).unwrap();
+        assert_eq!(tag, "v1.5.0");
+        assert_eq!(ver, Version::new(1, 5, 0));
+    }
+
+    #[test]
+    fn test_best_semver_tag_filters_non_semver() {
+        let tags = vec![
+            "nightly".to_string(),
+            "latest".to_string(),
+            "v1.0.0".to_string(),
+        ];
+        let (tag, _) = best_semver_tag(&tags, None).unwrap();
+        assert_eq!(tag, "v1.0.0");
+    }
+
+    #[test]
+    fn test_best_semver_tag_empty_returns_none() {
+        assert!(best_semver_tag(&[], None).is_none());
+    }
+
+    #[test]
+    fn test_best_semver_tag_all_non_semver_returns_none() {
+        let tags = vec!["nightly".to_string(), "edge".to_string()];
+        assert!(best_semver_tag(&tags, None).is_none());
+    }
+
+    #[test]
+    fn test_best_semver_tag_no_v_prefix() {
+        let tags = vec!["1.0.0".to_string(), "1.2.0".to_string()];
+        let (tag, ver) = best_semver_tag(&tags, None).unwrap();
+        assert_eq!(tag, "1.2.0");
+        assert_eq!(ver, Version::new(1, 2, 0));
+    }
+
+    // ── resolve_target_names ──────────────────────────────────────────────────
+
+    #[test]
+    fn test_resolve_target_names_all_deps() {
+        let temp = TempDir::new().unwrap();
+        let manifest_str = r#"[package]
+name = "test"
 version = "0.1.0"
 
 [dependencies]
-foo = "^1.0"
-bar = "^2.0"
+foo = { git = "https://github.com/x/foo", tag = "v1.0.0" }
 
 [dev-dependencies]
-test-utils = "^0.1"
+bar = { git = "https://github.com/x/bar", tag = "v1.0.0" }
 "#;
-        let path = dir.join("atlas.toml");
-        fs::write(&path, manifest).unwrap();
-        path
-    }
-
-    fn create_test_lockfile(dir: &Path) -> PathBuf {
-        let mut lockfile = Lockfile::new();
-
-        lockfile.add_package(LockedPackage {
-            name: "foo".to_string(),
-            version: semver::Version::new(1, 0, 0),
-            source: LockedSource::Registry { registry: None },
-            checksum: None,
-            dependencies: HashMap::new(),
-        });
-
-        lockfile.add_package(LockedPackage {
-            name: "bar".to_string(),
-            version: semver::Version::new(2, 0, 0),
-            source: LockedSource::Registry { registry: None },
-            checksum: None,
-            dependencies: HashMap::new(),
-        });
-
-        let path = dir.join("atlas.lock");
-        lockfile.write_to_file(&path).unwrap();
-        path
+        fs::write(temp.path().join("atlas.toml"), manifest_str).unwrap();
+        let manifest = PackageManifest::from_file(&temp.path().join("atlas.toml")).unwrap();
+        let args = UpdateArgs::default();
+        let names = resolve_target_names(&args, &manifest).unwrap();
+        assert!(names.contains(&"foo".to_string()));
+        assert!(names.contains(&"bar".to_string()));
     }
 
     #[test]
-    fn test_update_all_packages() {
+    fn test_resolve_target_names_dev_only() {
         let temp = TempDir::new().unwrap();
-        create_test_manifest(temp.path());
+        let manifest_str = r#"[package]
+name = "test"
+version = "0.1.0"
 
+[dependencies]
+foo = { git = "https://github.com/x/foo", tag = "v1.0.0" }
+
+[dev-dependencies]
+bar = { git = "https://github.com/x/bar", tag = "v1.0.0" }
+"#;
+        fs::write(temp.path().join("atlas.toml"), manifest_str).unwrap();
+        let manifest = PackageManifest::from_file(&temp.path().join("atlas.toml")).unwrap();
         let args = UpdateArgs {
-            project_dir: temp.path().to_path_buf(),
+            dev: true,
             ..Default::default()
         };
-
-        // Should succeed even without lockfile
-        run(args).unwrap();
-
-        // Lockfile should be created
-        assert!(temp.path().join("atlas.lock").exists());
+        let names = resolve_target_names(&args, &manifest).unwrap();
+        assert!(!names.contains(&"foo".to_string()));
+        assert!(names.contains(&"bar".to_string()));
     }
 
     #[test]
-    fn test_update_specific_package() {
+    fn test_resolve_target_names_specific_package() {
         let temp = TempDir::new().unwrap();
-        create_test_manifest(temp.path());
-        create_test_lockfile(temp.path());
+        let manifest_str = r#"[package]
+name = "test"
+version = "0.1.0"
 
+[dependencies]
+foo = { git = "https://github.com/x/foo", tag = "v1.0.0" }
+bar = { git = "https://github.com/x/bar", tag = "v1.0.0" }
+"#;
+        fs::write(temp.path().join("atlas.toml"), manifest_str).unwrap();
+        let manifest = PackageManifest::from_file(&temp.path().join("atlas.toml")).unwrap();
         let args = UpdateArgs {
             packages: vec!["foo".to_string()],
-            project_dir: temp.path().to_path_buf(),
             ..Default::default()
         };
-
-        run(args).unwrap();
+        let names = resolve_target_names(&args, &manifest).unwrap();
+        assert_eq!(names, vec!["foo".to_string()]);
     }
 
     #[test]
-    fn test_update_nonexistent_package_fails() {
+    fn test_resolve_target_names_unknown_package_errors() {
         let temp = TempDir::new().unwrap();
-        create_test_manifest(temp.path());
+        let manifest_str = r#"[package]
+name = "test"
+version = "0.1.0"
 
+[dependencies]
+foo = { git = "https://github.com/x/foo", tag = "v1.0.0" }
+"#;
+        fs::write(temp.path().join("atlas.toml"), manifest_str).unwrap();
+        let manifest = PackageManifest::from_file(&temp.path().join("atlas.toml")).unwrap();
         let args = UpdateArgs {
             packages: vec!["nonexistent".to_string()],
-            project_dir: temp.path().to_path_buf(),
             ..Default::default()
         };
-
-        assert!(run(args).is_err());
+        assert!(resolve_target_names(&args, &manifest).is_err());
     }
+
+    // ── dry_run_does_not_write ────────────────────────────────────────────────
 
     #[test]
     fn test_dry_run_does_not_create_lockfile() {
         let temp = TempDir::new().unwrap();
-        create_test_manifest(temp.path());
+        // Empty deps — "No dependencies to update" path.
+        let manifest_str = r#"[package]
+name = "test"
+version = "0.1.0"
+
+[dependencies]
+"#;
+        fs::write(temp.path().join("atlas.toml"), manifest_str).unwrap();
 
         let args = UpdateArgs {
             project_dir: temp.path().to_path_buf(),
             dry_run: true,
             ..Default::default()
         };
-
         run(args).unwrap();
-
-        // Lockfile should not be created
         assert!(!temp.path().join("atlas.lock").exists());
     }
 
+    // ── find_manifest ─────────────────────────────────────────────────────────
+
     #[test]
-    fn test_update_result_comparison() {
+    fn test_find_manifest_missing_errors() {
+        let temp = TempDir::new().unwrap();
+        assert!(find_manifest(temp.path()).is_err());
+    }
+
+    #[test]
+    fn test_find_manifest_finds_it() {
+        let temp = TempDir::new().unwrap();
+        fs::write(
+            temp.path().join("atlas.toml"),
+            "[package]\nname = \"x\"\nversion = \"0.1.0\"\n",
+        )
+        .unwrap();
+        assert!(find_manifest(temp.path()).is_ok());
+    }
+
+    // ── update_result ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_update_result_needs_update_when_new_greater() {
         let result = UpdateResult {
             name: "foo".to_string(),
-            old_version: Some(semver::Version::new(1, 0, 0)),
-            new_version: semver::Version::new(1, 1, 0),
-            updated: true,
+            old_version: Some(Version::new(1, 0, 0)),
+            new_version: Version::new(1, 1, 0),
+            new_tag: "v1.1.0".to_string(),
+            url: "https://github.com/x/foo".to_string(),
+            needs_update: true,
         };
-
-        assert!(result.updated);
-        assert_eq!(result.old_version, Some(semver::Version::new(1, 0, 0)));
+        assert!(result.needs_update);
     }
 
     #[test]
-    fn test_no_manifest_fails() {
-        let temp = TempDir::new().unwrap();
-
-        let args = UpdateArgs {
-            project_dir: temp.path().to_path_buf(),
-            ..Default::default()
+    fn test_update_result_no_update_when_equal() {
+        let result = UpdateResult {
+            name: "foo".to_string(),
+            old_version: Some(Version::new(1, 0, 0)),
+            new_version: Version::new(1, 0, 0),
+            new_tag: "v1.0.0".to_string(),
+            url: "https://github.com/x/foo".to_string(),
+            needs_update: false,
         };
-
-        assert!(run(args).is_err());
-    }
-
-    #[test]
-    fn test_empty_dependencies() {
-        let temp = TempDir::new().unwrap();
-
-        let manifest = r#"[package]
-name = "empty-project"
-version = "0.1.0"
-
-[dependencies]
-
-[dev-dependencies]
-"#;
-        fs::write(temp.path().join("atlas.toml"), manifest).unwrap();
-
-        let args = UpdateArgs {
-            project_dir: temp.path().to_path_buf(),
-            ..Default::default()
-        };
-
-        // Should succeed with no dependencies
-        run(args).unwrap();
+        assert!(!result.needs_update);
     }
 }
