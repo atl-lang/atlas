@@ -110,3 +110,39 @@ export let VERSION: string = "1.0.0";"#,
     );
     assert_eq!(ast.items.len(), 3);
 }
+
+// ============================================================================
+// H-403: untyped anonymous function params fn(req, res) { ... }
+// ============================================================================
+
+#[test]
+fn test_h403_untyped_anon_fn_single_param() {
+    let ast = parse_ok(r#"let f = fn(x) { return x; };"#);
+    assert_eq!(ast.items.len(), 1);
+}
+
+#[test]
+fn test_h403_untyped_anon_fn_two_params() {
+    let ast = parse_ok(r#"let handler = fn(req, res) { return req; };"#);
+    assert_eq!(ast.items.len(), 1);
+}
+
+#[test]
+fn test_h403_mixed_typed_and_untyped_params() {
+    // Mixing typed and untyped params should work
+    let ast = parse_ok(r#"let f = fn(req, n: number) { return n; };"#);
+    assert_eq!(ast.items.len(), 1);
+}
+
+#[test]
+fn test_h403_typed_anon_fn_still_works() {
+    // Fully typed still works
+    let ast = parse_ok(r#"let f = fn(x: number, y: number): number { return x; };"#);
+    assert_eq!(ast.items.len(), 1);
+}
+
+#[test]
+fn test_h403_no_params_still_works() {
+    let ast = parse_ok(r#"let f = fn() { return 1; };"#);
+    assert_eq!(ast.items.len(), 1);
+}

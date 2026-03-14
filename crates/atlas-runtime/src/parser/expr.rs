@@ -1276,10 +1276,20 @@ impl Parser {
                 ownership_from_source
             };
 
-            // Type annotation is required: `param: Type`
-            self.consume(TokenKind::Colon, "Expected ':' after parameter name")?;
-            let type_ref = self.parse_type_ref()?;
-            let type_span_end = type_ref.span();
+            // Type annotation is optional for anonymous function params: `fn(req, res) { ... }`
+            // When omitted, the param type is inferred as `any` (H-403).
+            let (type_ref, type_span_end) = if self.check(TokenKind::Colon) {
+                self.advance(); // consume `:`
+                let tr = self.parse_type_ref()?;
+                let end = tr.span();
+                (tr, end)
+            } else {
+                // No annotation — use `any` so the body type-checks without errors
+                (
+                    TypeRef::Named("any".to_string(), param_name_span),
+                    param_name_span,
+                )
+            };
 
             // Parse optional default value (B39-P05): `= expr`
             let (default_value, param_span_end) = if self.match_token(TokenKind::Equal) {
