@@ -784,12 +784,39 @@ impl<'a> TypeChecker<'a> {
                 .or_insert_with(|| decl.clone());
         }
         // H-406: Import inherent impl methods from imported modules.
-        // Local impl blocks (processed later in check_item) will overwrite these if they conflict.
+        // Only import for structs that are NOT locally defined — local impl blocks handle
+        // their own registration and the duplicate check at line ~1572 would fire otherwise.
+        let locally_implemented: std::collections::HashSet<String> = program
+            .items
+            .iter()
+            .filter_map(|item| match item {
+                Item::Impl(b) if b.trait_name.is_none() => Some(b.type_name.name.clone()),
+                _ => None,
+            })
+            .collect();
         for ((struct_name, method_name), method) in self.symbol_table.get_impl_method_exports() {
-            self.inherent_registry
-                .entry((struct_name.clone(), method_name.clone()))
-                .or_insert_with(|| method.clone());
+            if !locally_implemented.contains(struct_name) {
+                self.inherent_registry
+                    .entry((struct_name.clone(), method_name.clone()))
+                    .or_insert_with(|| method.clone());
+            }
         }
+        // H-406 forward reference: pre-register inherent impl methods defined in THIS file
+        // so that functions appearing BEFORE the impl block can call them without AT3010.
+        // Uses `or_insert_with` so imported methods (from cross-module imports) are not
+        // overwritten if they were already registered above.
+        for item in &program.items {
+            if let Item::Impl(b) = item {
+                if b.trait_name.is_none() {
+                    for method in &b.methods {
+                        self.inherent_registry
+                            .entry((b.type_name.name.clone(), method.name.name.clone()))
+                            .or_insert_with(|| method.clone());
+                    }
+                }
+            }
+        }
+
         for item in &program.items {
             match item {
                 Item::Struct(struct_decl) => {
@@ -1568,25 +1595,13 @@ impl<'a> TypeChecker<'a> {
             } else {
                 // Instance method handling (existing logic)
 
-                // Also check if already registered from a previous inherent impl block.
-                if self
+                // Check if already registered (pre-populated from collect_struct_decls for
+                // H-406 forward-reference support, or from a previous impl block).
+                // If pre-registered, skip re-insertion but STILL type-check the body so
+                // type errors in impl methods are caught regardless of declaration order.
+                let already_registered = self
                     .inherent_registry
-                    .contains_key(&(type_name.clone(), method.name.name.clone()))
-                {
-                    self.diagnostics.push(
-                        error_codes::INHERENT_METHOD_DUPLICATE
-                            .emit(method.name.span)
-                            .arg(
-                                "detail",
-                                format!(
-                                    "Method '{}' already defined for '{}' in a previous impl block",
-                                    method.name.name, type_name
-                                ),
-                            )
-                            .build(),
-                    );
-                    continue;
-                }
+                    .contains_key(&(type_name.clone(), method.name.name.clone()));
 
                 // AT3058: self receiver must be first parameter.
                 let self_param_pos = method.params.iter().position(|p| p.name.name == "self");
@@ -1621,11 +1636,13 @@ impl<'a> TypeChecker<'a> {
                         )).build());
                 }
 
-                // Register into inherent_registry keyed by (type_name, method_name).
-                self.inherent_registry.insert(
-                    (type_name.clone(), method.name.name.clone()),
-                    method.clone(),
-                );
+                // Register into inherent_registry (skip if pre-registered).
+                if !already_registered {
+                    self.inherent_registry.insert(
+                        (type_name.clone(), method.name.name.clone()),
+                        method.clone(),
+                    );
+                }
 
                 // Typecheck the method body.
                 self.check_impl_method_body(method, Some(&impl_self_type));
