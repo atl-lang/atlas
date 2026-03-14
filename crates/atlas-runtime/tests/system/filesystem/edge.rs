@@ -11,8 +11,8 @@ fn test_mkdir_error_on_existing_directory() {
     std_fs::create_dir(&dir_path).unwrap();
 
     let path_str = dir_path.to_str().unwrap();
-    let result = fs::mkdir(path_str, span());
-    assert!(result.is_err());
+    let result = fs::mkdir(path_str, span()).unwrap();
+    assert!(result.to_string().starts_with("Err("));
 }
 
 #[test]

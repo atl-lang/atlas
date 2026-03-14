@@ -22,8 +22,8 @@ fn test_mkdir_fails_if_parent_missing() {
     let dir_path = temp.path().join("missing_parent").join("test_dir");
     let path_str = dir_path.to_str().unwrap();
 
-    let result = fs::mkdir(path_str, span());
-    assert!(result.is_err());
+    let result = fs::mkdir(path_str, span()).unwrap();
+    assert!(result.to_string().starts_with("Err("));
 }
 
 #[test]

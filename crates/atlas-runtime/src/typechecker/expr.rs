@@ -103,6 +103,7 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         // Http namespace — options-object API (B28). All accept optional map as last arg.
         // Use None (skip arity) so optional body/options args are not rejected.
         ("http", "get" | "post" | "put" | "delete" | "patch") => None,
+        ("http", "checkPermission") => Some(vec![Type::String]),
         // Net namespace — variadic / complex → skip arity check
         (
             "net",
@@ -331,6 +332,7 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             "base64Encode" | "base64Decode" | "base64UrlEncode" | "base64UrlDecode" | "hexEncode"
             | "hexDecode" | "urlEncode" | "urlDecode",
         ) => Type::String,
+        ("http", "checkPermission") => Type::Bool,
         // Http namespace — returns Result<HttpResponse, string> (B28 options-object API)
         ("http", "get" | "post" | "put" | "delete" | "patch") => Type::Generic {
             name: "Result".to_string(),
@@ -444,8 +446,19 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
                 Type::String,
             ],
         },
-        // sync namespace — factory functions return opaque handle arrays (tag + id pair)
-        ("sync", "atomic" | "rwLock" | "semaphore") => Type::Array(Box::new(Type::Unknown)),
+        // sync namespace — factory functions return typed handles for method dispatch
+        ("sync", "atomic") => Type::Generic {
+            name: "AtomicValue".to_string(),
+            type_args: vec![],
+        },
+        ("sync", "rwLock") => Type::Generic {
+            name: "RwLockValue".to_string(),
+            type_args: vec![],
+        },
+        ("sync", "semaphore") => Type::Generic {
+            name: "SemaphoreValue".to_string(),
+            type_args: vec![],
+        },
         // test namespace — all assertion methods return void (Null)
         (
             "test",
@@ -2841,6 +2854,15 @@ impl<'a> TypeChecker<'a> {
             Type::Generic { ref name, .. } if name == "Future" => {
                 Some(crate::method_dispatch::TypeTag::FutureValue)
             }
+            Type::Generic { ref name, .. } if name == "AtomicValue" => {
+                Some(crate::method_dispatch::TypeTag::AtomicValue)
+            }
+            Type::Generic { ref name, .. } if name == "RwLockValue" => {
+                Some(crate::method_dispatch::TypeTag::RwLockValue)
+            }
+            Type::Generic { ref name, .. } if name == "SemaphoreValue" => {
+                Some(crate::method_dispatch::TypeTag::SemaphoreValue)
+            }
             _ => None,
         };
         member.type_tag.set(type_tag);
@@ -2855,6 +2877,41 @@ impl<'a> TypeChecker<'a> {
         // Look up the method in the method table and clone the signature to avoid borrow issues
         let method_name = &member.member.name;
         let target_norm = target_type.normalized();
+
+        // TypeTag-based instance methods: AtomicValue, RwLockValue, SemaphoreValue
+        // These use runtime TypeTag dispatch — resolve return types statically here.
+        if let Type::Generic { ref name, .. } = target_norm {
+            let maybe_return = match name.as_str() {
+                "AtomicValue" => match method_name.as_str() {
+                    "get" | "add" | "sub" => Some(Type::Number),
+                    "set" => Some(Type::Null),
+                    "compareSwap" => Some(Type::Bool),
+                    _ => None,
+                },
+                "RwLockValue" => match method_name.as_str() {
+                    "read" | "tryRead" => Some(Type::Unknown), // value type not tracked statically
+                    "write" => Some(Type::Null),
+                    "tryWrite" => Some(Type::Bool),
+                    _ => None,
+                },
+                "SemaphoreValue" => match method_name.as_str() {
+                    "available" => Some(Type::Number),
+                    "tryAcquire" => Some(Type::Bool),
+                    "acquire" | "release" => Some(Type::Null),
+                    _ => None,
+                },
+                _ => None,
+            };
+            if let Some(ret) = maybe_return {
+                // Check args for side effects
+                if let Some(args) = &member.args {
+                    for arg in args {
+                        self.check_expr(arg);
+                    }
+                }
+                return ret;
+            }
+        }
 
         // Tuple element access: t.0, t.1, ...
         if member.args.is_none() {
