@@ -13,8 +13,8 @@ pub struct JitStats {
     pub compilations: u64,
     /// Total native code executions
     pub jit_executions: u64,
-    /// Total interpreter fallbacks (JIT failed or unsupported)
-    pub interpreter_fallbacks: u64,
+    /// Total VM fallbacks (JIT failed or unsupported — D-052)
+    pub vm_fallbacks: u64,
     /// Number of functions in the code cache
     pub cached_functions: usize,
     /// Total bytes of cached native code

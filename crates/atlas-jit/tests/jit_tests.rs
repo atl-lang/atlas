@@ -695,7 +695,7 @@ fn test_engine_stats() {
     let stats = engine.stats();
     assert_eq!(stats.compilations, 0);
     assert_eq!(stats.jit_executions, 0);
-    assert_eq!(stats.interpreter_fallbacks, 0);
+    assert_eq!(stats.vm_fallbacks, 0);
     assert_eq!(stats.cached_functions, 0);
     assert_eq!(stats.tracked_functions, 0);
 }
@@ -744,7 +744,7 @@ fn test_engine_unsupported_fallback() {
     assert!(result.is_none());
 
     let stats = engine.stats();
-    assert_eq!(stats.interpreter_fallbacks, 1);
+    assert_eq!(stats.vm_fallbacks, 1);
 }
 
 #[test]

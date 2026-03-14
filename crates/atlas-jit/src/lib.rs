@@ -149,7 +149,7 @@ pub struct JitEngine {
     /// Total number of JIT executions (cache hits that ran native code)
     jit_executions: u64,
     /// Total number of interpreter fallbacks
-    interpreter_fallbacks: u64,
+    vm_fallbacks: u64,
 }
 
 impl JitEngine {
@@ -164,7 +164,7 @@ impl JitEngine {
             config,
             compilations: 0,
             jit_executions: 0,
-            interpreter_fallbacks: 0,
+            vm_fallbacks: 0,
         })
     }
 
@@ -196,7 +196,7 @@ impl JitEngine {
             if let Some(entry) = self.cache.get(function_offset) {
                 // Verify arity matches
                 if entry.param_count != args.len() {
-                    self.interpreter_fallbacks += 1;
+                    self.vm_fallbacks += 1;
                     return None;
                 }
                 // Copy pointer before releasing borrow
@@ -221,7 +221,7 @@ impl JitEngine {
                 Err(_) => {
                     // Compilation failed — mark as compiled to avoid retrying
                     self.tracker.mark_compiled(function_offset);
-                    self.interpreter_fallbacks += 1;
+                    self.vm_fallbacks += 1;
                 }
             }
         }
@@ -293,7 +293,7 @@ impl JitEngine {
         JitStats {
             compilations: self.compilations,
             jit_executions: self.jit_executions,
-            interpreter_fallbacks: self.interpreter_fallbacks,
+            vm_fallbacks: self.vm_fallbacks,
             cached_functions: self.cache.len(),
             cache_bytes: self.cache.total_bytes(),
             cache_hit_rate: self.cache.hit_rate(),
@@ -308,7 +308,7 @@ impl JitEngine {
         self.cache.clear();
         self.compilations = 0;
         self.jit_executions = 0;
-        self.interpreter_fallbacks = 0;
+        self.vm_fallbacks = 0;
     }
 
     /// Get the compilation threshold
@@ -330,7 +330,7 @@ pub struct JitStats {
     /// Total native code executions
     pub jit_executions: u64,
     /// Total interpreter fallbacks (JIT failed)
-    pub interpreter_fallbacks: u64,
+    pub vm_fallbacks: u64,
     /// Number of functions in the code cache
     pub cached_functions: usize,
     /// Total bytes of cached native code
@@ -363,7 +363,7 @@ impl atlas_runtime::JitCompiler for JitEngine {
         atlas_runtime::JitStats {
             compilations: self.compilations,
             jit_executions: self.jit_executions,
-            interpreter_fallbacks: self.interpreter_fallbacks,
+            vm_fallbacks: self.vm_fallbacks,
             cached_functions: self.cache.len(),
             cache_bytes: self.cache.total_bytes(),
         }
@@ -378,6 +378,6 @@ impl atlas_runtime::JitCompiler for JitEngine {
         self.cache.clear();
         self.compilations = 0;
         self.jit_executions = 0;
-        self.interpreter_fallbacks = 0;
+        self.vm_fallbacks = 0;
     }
 }

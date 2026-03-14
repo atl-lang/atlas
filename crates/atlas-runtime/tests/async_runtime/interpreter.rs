@@ -1,6 +1,6 @@
-// Phase 09: Interpreter async/await execution tests
+// Phase 09: VM async/await execution tests (D-052: compiler+VM only)
 //
-// Verifies that the tree-walking interpreter correctly executes async/await programs:
+// Verifies that the compiler+VM correctly executes async/await programs:
 // - async fn calls return Value::Future
 // - await unwraps resolved futures
 // - nested async, sequential awaits, params, branching, void, top-level await

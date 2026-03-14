@@ -1,6 +1,6 @@
-//! Shared method dispatch table for interpreter/VM parity.
+//! Shared method dispatch table for compiler + VM (D-052: unified execution path).
 //!
-//! Both the interpreter and compiler consult this module to map
+//! The compiler and VM consult this module to map
 //! (TypeTag, method_name) → stdlib function name.
 
 use serde::{Deserialize, Serialize};
