@@ -479,7 +479,7 @@ fn docs_reflect_is_empty_nonempty() {
 fn docs_hashmap_basic_ops() {
     assert_eval_bool(
         r#"
-        let hmap = Map();
+        let hmap = new Map<string, string>();
         hmap.set("name", "Alice");
         hmap.has("name") && !hmap.has("email")
         "#,
@@ -491,7 +491,7 @@ fn docs_hashmap_basic_ops() {
 fn docs_hashmap_get_returns_some() {
     assert_eval_bool(
         r#"
-        let hmap = Map();
+        let hmap = new Map<string, number>();
         hmap.set("x", 42);
         is_some(hmap.get("x"))
         "#,
@@ -503,7 +503,7 @@ fn docs_hashmap_get_returns_some() {
 fn docs_hashmap_get_returns_none() {
     assert_eval_bool(
         r#"
-        let hmap = Map();
+        let hmap = new Map<string, string>();
         is_none(hmap.get("missing"))
         "#,
         true,
@@ -514,7 +514,7 @@ fn docs_hashmap_get_returns_none() {
 fn docs_hashmap_size() {
     assert_eval_number(
         r#"
-        let hmap = Map();
+        let hmap = new Map<string, number>();
         hmap.set("a", 1);
         hmap.set("b", 2);
         hmap.size()
@@ -529,7 +529,8 @@ fn docs_hashmap_size() {
 fn docs_hashset_deduplication() {
     assert_eval_number(
         r#"
-        let set = Set([1, 2, 2, 3, 3, 3]);
+        let set = new Set<number>();
+        set.add(1); set.add(2); set.add(2); set.add(3); set.add(3); set.add(3);
         set.size()
         "#,
         3.0,
@@ -540,9 +541,9 @@ fn docs_hashset_deduplication() {
 fn docs_hashset_union() {
     assert_eval_number(
         r#"
-        let a = Set([1, 2, 3]);
-        let b = Set([3, 4, 5]);
-        a.union(b.size())
+        let a = new Set<number>(); a.add(1); a.add(2); a.add(3);
+        let b = new Set<number>(); b.add(3); b.add(4); b.add(5);
+        a.union(b).size()
         "#,
         5.0,
     );
@@ -552,9 +553,9 @@ fn docs_hashset_union() {
 fn docs_hashset_intersection() {
     assert_eval_number(
         r#"
-        let a = Set([1, 2, 3]);
-        let b = Set([2, 3, 4]);
-        a.intersection(b.size())
+        let a = new Set<number>(); a.add(1); a.add(2); a.add(3);
+        let b = new Set<number>(); b.add(2); b.add(3); b.add(4);
+        a.intersection(b).size()
         "#,
         2.0,
     );

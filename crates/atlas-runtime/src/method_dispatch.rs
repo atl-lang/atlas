@@ -386,6 +386,10 @@ fn resolve_hashset_method(method_name: &str) -> Option<String> {
         "toArray" => "setToArray",
         "forEach" => "setForEach",
         "clear" => "setClear",
+        "union" => "setUnion",
+        "intersection" => "setIntersection",
+        "difference" => "setDifference",
+        "symmetricDifference" => "setSymmetricDifference",
         _ => return None,
     };
     Some(func_name.to_string())
