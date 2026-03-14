@@ -620,7 +620,7 @@ impl MethodTable {
             // Mutating methods — CoW, return new HashMap
             "set" | "put" => (vec![k.clone(), v.clone()], hashmap_type.clone()),
             "remove" | "delete" => (vec![k.clone()], option_v),
-            "clear" => (vec![], hashmap_type),
+            "clear" | "copy" => (vec![], hashmap_type),
             _ => return None,
         };
 
@@ -649,6 +649,7 @@ impl MethodTable {
             "union" | "intersection" | "difference" | "symmetricDifference" => {
                 (vec![set_type.clone()], set_type.clone())
             }
+            "isSubset" | "isSuperset" => (vec![set_type.clone()], Type::Bool),
             "clear" => (vec![], set_type),
             _ => return None,
         };

@@ -217,6 +217,15 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         // Duration bare globals — available until Duration namespace is implemented
         | "durationFromSeconds" | "durationFromMinutes" | "durationFromHours" | "durationFromDays"
         | "durationFormat"
+        // Collection constructor/operation bare globals (bridge until namespace migration)
+        | "setNew" | "setAdd" | "setRemove" | "setHas" | "setSize" | "setIsEmpty" | "setClear"
+        | "setUnion" | "setIntersection" | "setDifference" | "setSymmetricDifference"
+        | "setIsSubset" | "setIsSuperset" | "setToArray"
+        | "queueNew" | "queueEnqueue" | "queueDequeue" | "queuePeek" | "queueSize"
+        | "queueIsEmpty" | "queueClear" | "queueToArray"
+        | "stackNew" | "stackPush" | "stackPop" | "stackPeek" | "stackSize"
+        | "stackIsEmpty" | "stackClear" | "stackToArray"
+        | "hashMapCopy" | "regex_replace_with"
         // Result conversion helpers — no namespace equivalent; bare forms are canonical
         | "result_ok" | "result_err"
         // Reflection bare globals — also available as reflect.typeOf() etc.
@@ -392,6 +401,7 @@ fn resolve_hashmap_method(method_name: &str) -> Option<String> {
         "set" | "put" => "mapSet",
         "remove" | "delete" => "mapDelete",
         "clear" => "mapClear",
+        "copy" => "mapCopy",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -414,6 +424,8 @@ fn resolve_hashset_method(method_name: &str) -> Option<String> {
         "intersection" => "setIntersection",
         "difference" => "setDifference",
         "symmetricDifference" => "setSymmetricDifference",
+        "isSubset" => "setIsSubset",
+        "isSuperset" => "setIsSuperset",
         _ => return None,
     };
     Some(func_name.to_string())
