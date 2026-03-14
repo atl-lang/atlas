@@ -40,6 +40,11 @@ pub fn run(args: BuildArgs) -> Result<()> {
         .clone()
         .unwrap_or_else(|| PathBuf::from("."));
 
+    // Validate package state before compilation
+    if let Err(msg) = atlas_build::validate_packages(&project_dir) {
+        anyhow::bail!("{}", msg);
+    }
+
     // Create builder
     let mut builder = Builder::new(&project_dir).context("Failed to create builder")?;
 

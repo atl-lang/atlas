@@ -8,6 +8,14 @@ use atlas_runtime::{Atlas, SecurityContext};
 /// Compiles and executes the source file, printing the result to stdout.
 /// If `json_output` is true, diagnostics are printed in JSON format.
 pub fn run(file_path: &str, json_output: bool) -> Result<()> {
+    // Validate package state before compilation
+    let project_dir = std::path::Path::new(file_path)
+        .parent()
+        .unwrap_or(std::path::Path::new("."));
+    if let Err(msg) = atlas_build::validate_packages(project_dir) {
+        anyhow::bail!("{}", msg);
+    }
+
     // Create runtime with full permissions (like go run, cargo run, python, node, etc.)
     let runtime = Atlas::new_with_security(SecurityContext::allow_all());
 
