@@ -376,6 +376,44 @@ impl Validator {
         Ok(())
     }
 
+    /// Additional validation checks required for publishing.
+    ///
+    /// Calls the standard `validate()` first, then enforces publish-specific rules:
+    /// - License is required
+    /// - Description is required
+    /// - Version must not be 0.0.0
+    pub fn validate_for_publish(manifest: &PackageManifest) -> Result<(), Vec<ValidationError>> {
+        let mut errors = match Self::validate(manifest) {
+            Ok(()) => Vec::new(),
+            Err(e) => e,
+        };
+
+        if manifest.package.license.is_none() {
+            errors.push(ValidationError::MissingField(
+                "license (required for publishing)".to_string(),
+            ));
+        }
+
+        if manifest.package.description.is_none() {
+            errors.push(ValidationError::MissingField(
+                "description (required for publishing)".to_string(),
+            ));
+        }
+
+        let zero = semver::Version::new(0, 0, 0);
+        if manifest.package.version == zero {
+            errors.push(ValidationError::InvalidVersion(
+                "version 0.0.0 cannot be published".to_string(),
+            ));
+        }
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
+    }
+
     /// Validate workspace configuration
     fn validate_workspace(workspace: &crate::manifest::Workspace) -> Vec<ValidationError> {
         let mut errors = Vec::new();
