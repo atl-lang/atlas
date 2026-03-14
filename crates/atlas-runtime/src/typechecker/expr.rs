@@ -159,6 +159,8 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
     // Normalize namespace to lowercase for case-insensitive matching (AI-friendly)
     let ns_lower = ns.to_lowercase();
     match (ns_lower.as_str(), method) {
+        // Array namespace (D-062: Array.isArray(x) mirrors TypeScript — AI models know it cold)
+        ("array", "isArray") => Type::Bool,
         // Json namespace
         ("json", "parse") => Type::Generic {
             name: "Result".to_string(),

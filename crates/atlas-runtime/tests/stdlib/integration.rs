@@ -1442,7 +1442,7 @@ fn test_is_array_type_check() {
     let code = r#"
         let arr: number[] = [1, 2, 3];
         let notArr: number = 42;
-        is_array(arr) && !is_array(notArr)
+        Array.isArray(arr) && !Array.isArray(notArr)
     "#;
     assert_eval_bool(code, true);
 }
@@ -1454,7 +1454,7 @@ fn test_is_function_check() {
             return 42;
         }
 
-        is_function(myFunc)
+        typeof(myFunc) == "function"
     "#;
     assert_eval_bool(code, true);
 }
@@ -1465,7 +1465,7 @@ fn test_is_bool_check() {
         let b1: bool = true;
         let b2: bool = false;
         let n: number = 1;
-        isBool(b1) && isBool(b2) && !isBool(n)
+        typeof(b1) == "boolean" && typeof(b2) == "boolean" && !(typeof(n) == "boolean")
     "#;
     assert_eval_bool(code, true);
 }
@@ -1475,7 +1475,7 @@ fn test_is_null_check() {
     let code = r#"
         let n = null;
         let num: number = 42;
-        isNull(n) && !isNull(num)
+        typeof(n) == "null" && !(typeof(num) == "null")
     "#;
     assert_eval_bool(code, true);
 }
@@ -1507,9 +1507,9 @@ fn test_json_array_of_objects_to_strings() {
 fn test_type_checking_pipeline() {
     let code = r#"
         let val: any = 42;
-        let isNum: bool = is_number(val);
-        let isStr: bool = isString(val);
-        let isB: bool = isBool(val);
+        let isNum: bool = typeof(val) == "number";
+        let isStr: bool = typeof(val) == "string";
+        let isB: bool = typeof(val) == "boolean";
         isNum && !isStr && !isB
     "#;
     assert_eval_bool(code, true);

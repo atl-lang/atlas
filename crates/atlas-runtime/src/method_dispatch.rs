@@ -91,6 +91,8 @@ pub enum TypeTag {
     Number,
     /// Instance methods on bool values: toString()
     Bool,
+    /// Static namespace: Array.isArray(x) — D-062, mirrors TypeScript
+    ArrayNs,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -143,7 +145,17 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::TestNs => resolve_test_ns_method(method_name),
         TypeTag::Number => resolve_number_method(method_name),
         TypeTag::Bool => resolve_bool_method(method_name),
+        TypeTag::ArrayNs => resolve_array_ns_method(method_name),
     }
+}
+
+fn resolve_array_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        // D-062: Array.isArray(x) — mirrors TypeScript, acts as typeof(x) == 'array'
+        "isArray" => "arrayIsArray",
+        _ => return None,
+    };
+    Some(func_name.to_string())
 }
 
 fn resolve_number_method(method_name: &str) -> Option<String> {
@@ -261,7 +273,7 @@ const STATIC_NAMESPACES: &[(&str, TypeTag)] = &[
     ("sync", TypeTag::SyncNs),
     ("future", TypeTag::FutureNs),
     ("test", TypeTag::TestNs),
-    ("array", TypeTag::Array),
+    ("array", TypeTag::ArrayNs),
 ];
 
 /// Check if an identifier name is a static namespace sentinel.

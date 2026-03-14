@@ -290,3 +290,20 @@ Returns a new array with elements from `start` (inclusive) to `end` (exclusive) 
 let filled = arrayFill([1, 2, 3, 4, 5], 0, 1, 3);
 // filled == [1, 0, 0, 4, 5]
 ```
+
+---
+
+## Static Namespace Methods
+
+### `Array.isArray(value: any) -> bool`
+
+Returns `true` if `value` is an array. Mirrors TypeScript's `Array.isArray()` — AI models know this pattern cold (D-062).
+
+```atlas
+Array.isArray([1, 2, 3])   // true
+Array.isArray("abc")       // false
+Array.isArray([])          // true
+Array.isArray(42)          // false
+```
+
+Note: `typeof([1, 2]) == "array"` is equivalent and more idiomatic for type guards.

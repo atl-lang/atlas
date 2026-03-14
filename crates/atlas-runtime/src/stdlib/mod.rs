@@ -685,6 +685,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("isBool", |a, s, _, _| types::is_bool(a, s));
         m.insert("isNull", |a, s, _, _| types::is_null(a, s));
         m.insert("isArray", |a, s, _, _| types::is_array(a, s));
+        m.insert("arrayIsArray", |a, s, _, _| types::is_array(a, s));
         m.insert("isFunction", |a, s, _, _| types::is_function(a, s));
         m.insert("isObject", |a, s, _, _| types::is_object(a, s));
         m.insert("isType", |a, s, _, _| types::is_type(a, s));

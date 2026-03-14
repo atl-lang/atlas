@@ -253,54 +253,37 @@ let r2 = Err("skip").andThen(parseNum);
 
 ---
 
-## Type Checking Predicates
+## Type Checking
 
-### `isString(value: any) -> bool`
+Atlas uses `typeof(x)` for type checking (D-062). Unlike JavaScript, Atlas `typeof` returns correct strings for all types:
+
+| Value | `typeof(x)` returns |
+|-------|-------------------|
+| `"hello"` | `"string"` |
+| `42` | `"number"` |
+| `true` / `false` | `"boolean"` (not `"bool"`) |
+| `null` | `"null"` (not `"object"`) |
+| `[1, 2]` | `"array"` (not `"object"`) |
+| `fn() {}` | `"function"` |
+| `{}` / Map | `"object"` |
 
 ```atlas
-isString("hello")   // true
-isString(42)        // false
+typeof("hello") == "string"    // true
+typeof(42) == "number"         // true
+typeof(true) == "boolean"      // true
+typeof(null) == "null"         // true
+typeof([1, 2]) == "array"      // true
 ```
 
-### `isNumber(value: any) -> bool`
+### `Array.isArray(value) -> bool`
 
-Returns `true` for any `number`, including `NaN` (NaN is still typed as number).
-
-```atlas
-isNumber(42)        // true
-isNumber(0)         // true
-isNumber("42")      // false
-```
-
-### `isBool(value: any) -> bool`
+The one static type-check method — mirrors TypeScript's `Array.isArray()` for AI-generation fidelity.
 
 ```atlas
-isBool(true)        // true
-isBool(1)           // false
-```
-
-### `isNull(value: any) -> bool`
-
-```atlas
-isNull(null)        // true
-isNull(0)           // false
-```
-
-### `isArray(value: any) -> bool`
-
-```atlas
-isArray([1, 2, 3])  // true
-isArray("abc")      // false
-```
-
-### `isFunction(value: any) -> bool`
-
-Returns `true` for user-defined functions and builtins.
-
-```atlas
-isFunction(console.log)             // true
-isFunction(fn(borrow x: number): number { return x; })  // true
-isFunction(42)                      // false
+Array.isArray([1, 2, 3])   // true
+Array.isArray("abc")       // false
+Array.isArray([])          // true
+Array.isArray(42)          // false
 ```
 
 ### `isObject(value: any) -> bool`
