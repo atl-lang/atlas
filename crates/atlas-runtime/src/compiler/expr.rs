@@ -640,7 +640,7 @@ impl Compiler {
             })?;
 
             // Load the stdlib function as a Builtin constant
-            let func_value = crate::value::Value::Builtin(std::sync::Arc::from(func_name.as_str()));
+            let func_value = crate::value::Value::Builtin(std::sync::Arc::from(func_name.as_ref()));
             let const_idx = self.bytecode.add_constant(func_value);
 
             // Load the function constant
