@@ -362,6 +362,62 @@ impl VM {
         }
     }
 
+    /// Create a C-callable FFI callback from a named Atlas function (phase-10c, H-343).
+    ///
+    /// Looks up `fn_name` in the VM's globals, then snapshots the VM via
+    /// `new_for_worker()` — same isolated-clone strategy used by concurrency
+    /// workers (D-057).  The snapshot owns its own bytecode + globals and
+    /// executes on its own stack, so **no `Arc<Mutex>` is required** (D-029).
+    ///
+    /// Each callback invocation spins up execution on the snapshot.  This is
+    /// sound for single-threaded C libraries and re-entrant callbacks because
+    /// every call gets a fresh stack frame on a fully independent VM instance.
+    ///
+    /// # Errors
+    /// - `fn_name` not found in globals → `CallbackError::ExecutionError`
+    /// - global exists but is not a `Value::Function` → `CallbackError::ExecutionError`
+    /// - signature not supported by trampoline layer → `CallbackError::UnsupportedSignature`
+    pub fn create_ffi_callback(
+        &self,
+        fn_name: &str,
+        param_types: Vec<crate::ffi::ExternType>,
+        return_type: crate::ffi::ExternType,
+    ) -> Result<crate::ffi::CallbackHandle, crate::ffi::CallbackError> {
+        // Resolve the function value from globals.
+        let func_value = self.globals.get(fn_name).cloned().ok_or_else(|| {
+            crate::ffi::CallbackError::ExecutionError(format!(
+                "function '{}' not found in VM globals",
+                fn_name
+            ))
+        })?;
+
+        // Must be a user-defined function (closures also accepted via Value::Closure).
+        match &func_value {
+            Value::Function(_) | Value::Closure(_) => {}
+            other => {
+                return Err(crate::ffi::CallbackError::ExecutionError(format!(
+                    "'{}' is not a function (found {:?})",
+                    fn_name,
+                    other.type_name()
+                )));
+            }
+        }
+
+        // Snapshot the VM: isolated bytecode + globals, fresh stack.
+        // No shared mutable state — value semantics throughout (D-029).
+        let mut snapshot = self.new_for_worker();
+        let security = crate::security::SecurityContext::default();
+        snapshot.current_security = Some(std::sync::Arc::new(security));
+
+        // The snapshot is moved into the closure; it lives as long as the handle.
+        let span = crate::span::Span::dummy();
+        let closure = move |args: &[Value]| -> Result<Value, crate::value::RuntimeError> {
+            snapshot.vm_call_function_value(&func_value, args.to_vec(), span)
+        };
+
+        crate::ffi::callbacks::create_callback(closure, param_types, return_type)
+    }
+
     /// Execute an Atlas function or closure as a task on this VM.
     ///
     /// Pushes `args` onto the stack, sets the IP to the callable's bytecode

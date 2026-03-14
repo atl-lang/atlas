@@ -57,43 +57,46 @@ fn parse_and_eval(source: &str) -> Result<(VM, Value), String> {
     Ok((vm, result))
 }
 
-// ===== Callback Creation Tests =====
-// NOTE: These tests use Interpreter.create_callback() which was removed in D-052.
-// FFI callbacks need to be reimplemented for VM before these can work.
+// ===== Callback Creation Tests (H-343 — VM path, D-052) =====
+// vm.create_ffi_callback() snapshots the VM via new_for_worker() and wraps
+// the named Atlas function in a C-callable trampoline.  No Arc<Mutex> (D-029).
 
 #[test]
-#[ignore = "Requires Interpreter callback support - D-052 removed interpreter"]
 fn test_create_callback_simple() {
     let source = r#"
         fn double(borrow x: number): number {
             return x * 2;
         }
     "#;
-
-    let (_vm, _) = parse_and_eval(source).unwrap();
-
-    // NOTE: Interpreter.create_callback() and callback_count() removed in D-052
-    // These tests need to be reimplemented when FFI callbacks are added to VM
+    let (vm, _) = parse_and_eval(source).unwrap();
+    let handle = vm
+        .create_ffi_callback("double", vec![ExternType::CDouble], ExternType::CDouble)
+        .expect("create_ffi_callback should succeed for 'double'");
+    // Invoke the trampoline to verify it actually calls the Atlas function.
+    let trampoline: unsafe extern "C" fn(*mut c_void, f64) -> f64 =
+        unsafe { std::mem::transmute(handle.trampoline()) };
+    let result = unsafe { trampoline(handle.context(), 7.0) };
+    assert_eq!(result, 14.0);
 }
 
 #[test]
-#[ignore = "Requires Interpreter callback support - D-052 removed interpreter"]
 fn test_create_callback_missing_function() {
     let source = r#"
         fn exists(borrow x: number): number {
             return x;
         }
     "#;
-
-    let (_vm, _) = parse_and_eval(source).unwrap();
-
-    // NOTE: interp.create_callback() requires Interpreter - stubbed for D-052
-    let result: Result<(), &str> = Err("not implemented");
-    assert!(result.is_err());
+    let (vm, _) = parse_and_eval(source).unwrap();
+    // Requesting a function that was never defined must return an error.
+    let result = vm.create_ffi_callback(
+        "does_not_exist",
+        vec![ExternType::CDouble],
+        ExternType::CDouble,
+    );
+    assert!(result.is_err(), "should error for unknown function");
 }
 
 #[test]
-#[ignore = "Requires Interpreter callback support - D-052 removed interpreter"]
 fn test_create_callback_multiple() {
     let source = r#"
         fn add(borrow x: number, borrow y: number): number {
@@ -103,35 +106,97 @@ fn test_create_callback_multiple() {
             return x * y;
         }
     "#;
+    let (vm, _) = parse_and_eval(source).unwrap();
 
-    let (_vm, _) = parse_and_eval(source).unwrap();
+    let add_handle = vm
+        .create_ffi_callback(
+            "add",
+            vec![ExternType::CDouble, ExternType::CDouble],
+            ExternType::CDouble,
+        )
+        .expect("create_ffi_callback should succeed for 'add'");
+    let mul_handle = vm
+        .create_ffi_callback(
+            "multiply",
+            vec![ExternType::CDouble, ExternType::CDouble],
+            ExternType::CDouble,
+        )
+        .expect("create_ffi_callback should succeed for 'multiply'");
 
-    // NOTE: interp.create_callback() requires Interpreter - stubbed for D-052
-    // Assertions stubbed since callback methods don't exist on VM
+    let add_tramp: unsafe extern "C" fn(*mut c_void, f64, f64) -> f64 =
+        unsafe { std::mem::transmute(add_handle.trampoline()) };
+    let mul_tramp: unsafe extern "C" fn(*mut c_void, f64, f64) -> f64 =
+        unsafe { std::mem::transmute(mul_handle.trampoline()) };
+
+    assert_eq!(unsafe { add_tramp(add_handle.context(), 3.0, 4.0) }, 7.0);
+    assert_eq!(unsafe { mul_tramp(mul_handle.context(), 3.0, 4.0) }, 12.0);
 }
 
 #[test]
-#[ignore = "Requires Interpreter callback support - D-052 removed interpreter"]
 fn test_callback_function_pointer_valid() {
-    // NOTE: Interpreter.create_callback() removed in D-052
+    // The trampoline pointer must be non-null — it's a real extern "C" fn.
+    let source = r#"
+        fn identity(borrow x: number): number {
+            return x;
+        }
+    "#;
+    let (vm, _) = parse_and_eval(source).unwrap();
+    let handle = vm
+        .create_ffi_callback("identity", vec![ExternType::CDouble], ExternType::CDouble)
+        .unwrap();
+    assert!(!handle.trampoline().is_null());
+    assert!(!handle.context().is_null());
 }
 
 #[test]
-#[ignore = "Requires Interpreter callback support - D-052 removed interpreter"]
 fn test_callback_no_params() {
-    // NOTE: Interpreter.create_callback() removed in D-052
+    // () -> CInt trampoline: Atlas fn returns a constant.
+    let source = r#"
+        fn answer(): number {
+            return 42;
+        }
+    "#;
+    let (vm, _) = parse_and_eval(source).unwrap();
+    let handle = vm
+        .create_ffi_callback("answer", vec![], ExternType::CInt)
+        .expect("create_ffi_callback should succeed for 'answer'");
+    let trampoline: unsafe extern "C" fn(*mut c_void) -> i32 =
+        unsafe { std::mem::transmute(handle.trampoline()) };
+    let result = unsafe { trampoline(handle.context()) };
+    assert_eq!(result, 42);
 }
 
 #[test]
-#[ignore = "Requires Interpreter callback support - D-052 removed interpreter"]
 fn test_callback_void_return() {
-    // NOTE: Interpreter.create_callback() removed in D-052
+    // () -> CVoid trampoline: Atlas fn performs side-effectful work and returns nothing.
+    let source = r#"
+        fn noop(): void {
+        }
+    "#;
+    let (vm, _) = parse_and_eval(source).unwrap();
+    let handle = vm
+        .create_ffi_callback("noop", vec![], ExternType::CVoid)
+        .expect("create_ffi_callback should succeed for 'noop'");
+    let trampoline: unsafe extern "C" fn(*mut c_void) =
+        unsafe { std::mem::transmute(handle.trampoline()) };
+    // Must not panic or crash.
+    unsafe { trampoline(handle.context()) };
 }
 
 #[test]
-#[ignore = "Requires Interpreter callback support - D-052 removed interpreter"]
 fn test_callback_int_params() {
-    // NOTE: Interpreter.create_callback() removed in D-052
+    // CInt -> CVoid trampoline.
+    let source = r#"
+        fn consume(borrow n: number): void {
+        }
+    "#;
+    let (vm, _) = parse_and_eval(source).unwrap();
+    let handle = vm
+        .create_ffi_callback("consume", vec![ExternType::CInt], ExternType::CVoid)
+        .expect("create_ffi_callback should succeed for 'consume'");
+    let trampoline: unsafe extern "C" fn(*mut c_void, i32) =
+        unsafe { std::mem::transmute(handle.trampoline()) };
+    unsafe { trampoline(handle.context(), 99) };
 }
 
 // ===== Callback Execution Tests =====
