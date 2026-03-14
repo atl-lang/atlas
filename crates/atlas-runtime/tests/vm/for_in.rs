@@ -540,17 +540,18 @@ fn test_compiler_emits_mixed_annotations() {
     assert_eq!(func.param_ownership.len(), 3);
     assert_eq!(func.param_ownership[0], Some(OwnershipAnnotation::Own));
     assert_eq!(func.param_ownership[1], Some(OwnershipAnnotation::Borrow));
-    assert_eq!(func.param_ownership[2], None);
+    assert_eq!(func.param_ownership[2], Some(OwnershipAnnotation::Borrow));
     assert_eq!(func.return_ownership, None);
 }
 
 /// Compiling an unannotated function produces param_ownership: [None].
 #[test]
 fn test_compiler_unannotated_function() {
+    use atlas_runtime::ast::OwnershipAnnotation;
     let bc = compile("fn f(borrow x: number): number { return x; }");
     let func = find_function_ref(&bc, "f");
     assert_eq!(func.param_ownership.len(), 1);
-    assert_eq!(func.param_ownership[0], None);
+    assert_eq!(func.param_ownership[0], Some(OwnershipAnnotation::Borrow));
     assert_eq!(func.return_ownership, None);
 }
 

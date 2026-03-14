@@ -1407,8 +1407,11 @@ impl VM {
 
                     // Execute deferred blocks in LIFO order before returning
                     let frame_idx = self.ctx.frames.len().saturating_sub(1);
-                    while let Some((body_start, body_len)) = self.ctx.defer_stacks[frame_idx].pop()
-                    {
+                    while frame_idx < self.ctx.defer_stacks.len() {
+                        let Some((body_start, body_len)) = self.ctx.defer_stacks[frame_idx].pop()
+                        else {
+                            break;
+                        };
                         // Save current IP
                         let saved_ip = self.ctx.ip;
 

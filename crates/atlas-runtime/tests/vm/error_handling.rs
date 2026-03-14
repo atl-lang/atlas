@@ -369,6 +369,7 @@ fn test_parity_try_first_fails() {
 
 #[test]
 fn test_parity_option_try_multiple_expr() {
+    // D-052: interpreter removed — test VM with full pipeline (binder+TC)
     let code = r#"
     fn a(): Option<number> { return Some(10); }
     fn b(): Option<number> { return Some(32); }
@@ -377,11 +378,11 @@ fn test_parity_option_try_multiple_expr() {
     }
     unwrap(calc());
 "#;
-    let vm_result = vm_eval_checked(code).unwrap_or(Value::Null);
-    let interp_result = interp_eval(code);
+    let result = vm_eval_checked(code).unwrap_or(Value::Null);
     assert_eq!(
-        vm_result, interp_result,
-        "Parity mismatch for Option multiple ?"
+        result,
+        Value::Number(42.0),
+        "Option multiple ? should produce 42"
     );
 }
 

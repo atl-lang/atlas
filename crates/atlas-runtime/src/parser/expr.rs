@@ -1054,10 +1054,10 @@ impl Parser {
         let start_token = self.consume(TokenKind::LeftParen, "Expected '(' at start of type")?;
         let start_span = start_token.span;
 
-        // Unit type () — either `() -> T` (function) or `()` (unit tuple)
+        // Unit type () — either `(): T` or `() => T` (function) or `()` (unit tuple)
         if self.check(TokenKind::RightParen) {
             let end_span = self.consume(TokenKind::RightParen, "Expected ')'")?.span;
-            if self.match_token(TokenKind::FatArrow) {
+            if self.match_token(TokenKind::FatArrow) || self.match_token(TokenKind::Colon) {
                 let return_type = self.parse_type_ref()?;
                 let full_span = start_span.merge(return_type.span());
                 return Ok(TypeRef::Function {
@@ -1092,7 +1092,7 @@ impl Parser {
             .consume(TokenKind::RightParen, "Expected ')' after type list")?
             .span;
 
-        if self.match_token(TokenKind::FatArrow) {
+        if self.match_token(TokenKind::FatArrow) || self.match_token(TokenKind::Colon) {
             let return_type = self.parse_type_ref()?;
             let full_span = start_span.merge(return_type.span());
             return Ok(TypeRef::Function {
@@ -1102,7 +1102,7 @@ impl Parser {
             });
         }
 
-        // No arrow → tuple type. Single element without trailing comma stays as grouping
+        // No arrow or colon → tuple type. Single element without trailing comma stays as grouping
         // (already consumed trailing comma above, so params.len() == 1 here means
         // the user wrote `(T)` with no comma — treat as grouped type, not a tuple).
         if params.len() == 1 {

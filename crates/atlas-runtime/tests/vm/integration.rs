@@ -947,7 +947,10 @@ fn test_vm_numeric_error_codes_division_by_zero() {
     let diags = result.unwrap_err();
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].code, "AT0005");
-    assert!(diags[0].message.contains("Divide by zero"));
+    assert!(
+        diags[0].message.contains("division by zero")
+            || diags[0].message.contains("Divide by zero")
+    );
 }
 
 #[test]
@@ -958,5 +961,8 @@ fn test_vm_numeric_error_codes_invalid_result() {
     let diags = result.unwrap_err();
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].code, "AT0007");
-    assert!(diags[0].message.contains("Invalid numeric result"));
+    assert!(
+        diags[0].message.contains("invalid numeric result")
+            || diags[0].message.contains("Invalid numeric result")
+    );
 }

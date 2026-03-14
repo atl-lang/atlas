@@ -258,9 +258,11 @@ fn test_return_function() {
 
 #[test]
 fn test_return_builtin() {
+    // len is a bare global — wrap in a function to return it
     let source = r#"
         fn getLen(): (string): number {
-            return len;
+            fn wrapped(borrow s: string): number { return len(s); }
+            return wrapped;
         }
         let f = getLen();
         f("test");
@@ -270,8 +272,9 @@ fn test_return_builtin() {
 
 #[test]
 fn test_return_function_from_parameter() {
+    // own f allows the parameter to be returned (borrow cannot escape)
     let source = r#"
-        fn identity(borrow f: (number): number): (number): number {
+        fn identity(own f: (number): number): (number): number {
             return f;
         }
         fn triple(borrow x: number): number { return x * 3; }
@@ -370,9 +373,11 @@ fn test_type_valid_function_parameter() {
 
 #[test]
 fn test_function_returning_void() {
+    // print is a banned bare global — use a wrapper that calls console.log
     let source = r#"
         fn getVoid(): (string): void {
-            return print;
+            fn logger(borrow s: string): void { console.log(s); }
+            return logger;
         }
         let f = getVoid();
         f("test");
