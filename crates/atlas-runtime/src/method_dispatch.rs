@@ -214,6 +214,9 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         // File async bare globals — kept for backwards compat in test code only
         // Canonical form: file.readAsync(), file.writeAsync(), file.appendAsync()
         | "appendFileAsync"
+        // Duration bare globals — available until Duration namespace is implemented
+        | "durationFromSeconds" | "durationFromMinutes" | "durationFromHours" | "durationFromDays"
+        | "durationFormat"
         // Result conversion helpers — no namespace equivalent; bare forms are canonical
         | "result_ok" | "result_err"
         // Reflection bare globals — also available as reflect.typeOf() etc.
@@ -659,6 +662,7 @@ fn resolve_datetime_ns_method(method_name: &str) -> Option<String> {
         "parse" => "dateTimeParse",
         "parseRfc3339" => "dateTimeParseRfc3339",
         "parseRfc2822" => "dateTimeParseRfc2822",
+        "tryParse" => "dateTimeTryParse",
         "utc" => "dateTimeUtc",
         _ => return None,
     };
@@ -776,19 +780,22 @@ fn resolve_encoding_ns_method(method_name: &str) -> Option<String> {
 }
 
 /// Resolve Regex.method() → stdlib function name.
-/// Note: Regex.new() returns Result<Regex>. Methods like test/isMatch/find take the compiled Regex.
-/// Regex.test(r, s) and Regex.isMatch(r, s) both map to regexIsMatch (compiled Regex, string).
+/// Note: Regex.new() returns Result<Regex>. Methods like isMatch/find take the compiled Regex.
+/// Regex.test(pattern_str, text) is a convenience that compiles + tests in one call → regexTest.
 /// Regex.escape(s) maps to regexEscape (string pattern only, no Regex arg).
 fn resolve_regex_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         "new" => "regexNew",
-        "test" | "isMatch" => "regexIsMatch",
+        // Convenience: takes a string pattern, not a Regex instance
+        "test" => "regexTest",
+        "isMatch" => "regexIsMatch",
         "find" => "regexFind",
         "findAll" => "regexFindAll",
         "replace" => "regexReplace",
         "replaceAll" => "regexReplaceAll",
         "split" => "regexSplit",
         "captures" => "regexCaptures",
+        "capturesNamed" => "regexCapturesNamed",
         "escape" => "regexEscape",
         _ => return None,
     };
@@ -1170,9 +1177,16 @@ fn resolve_datetime_instance_method(method_name: &str) -> Option<String> {
         "compare" => "dateTimeCompare",
         "toIso" => "dateTimeToIso",
         "format" => "dateTimeFormat",
+        "toCustom" => "dateTimeToCustom",
         "toRfc3339" => "dateTimeToRfc3339",
         "toRfc2822" => "dateTimeToRfc2822",
-        "timestamp" => "dateTimeTimestamp",
+        "timestamp" | "toTimestamp" => "dateTimeToTimestamp",
+        "toUtc" => "dateTimeToUtc",
+        "toLocal" => "dateTimeToLocal",
+        "toTimezone" => "dateTimeToTimezone",
+        "inTimezone" => "dateTimeInTimezone",
+        "getTimezone" => "dateTimeGetTimezone",
+        "getOffset" => "dateTimeGetOffset",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -1188,6 +1202,8 @@ fn resolve_regex_instance_method(method_name: &str) -> Option<String> {
         "replace" => "regexReplace",
         "replaceAll" => "regexReplaceAll",
         "split" => "regexSplit",
+        "splitN" => "regexSplitN",
+        "matchIndices" => "regexMatchIndices",
         _ => return None,
     };
     Some(func_name.to_string())

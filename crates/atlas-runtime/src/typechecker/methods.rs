@@ -323,10 +323,28 @@ impl MethodTable {
         self.register("DateTime", "weekday", vec![], Type::Number);
         self.register("DateTime", "dayOfYear", vec![], Type::Number);
         self.register("DateTime", "timestamp", vec![], Type::Number);
+        self.register("DateTime", "toTimestamp", vec![], Type::Number);
         self.register("DateTime", "toIso", vec![], Type::String);
         self.register("DateTime", "toRfc3339", vec![], Type::String);
         self.register("DateTime", "toRfc2822", vec![], Type::String);
         self.register("DateTime", "format", vec![Type::String], Type::String);
+        self.register("DateTime", "toCustom", vec![Type::String], Type::String);
+        self.register("DateTime", "toUtc", vec![], datetime_ty.clone());
+        self.register("DateTime", "toLocal", vec![], datetime_ty.clone());
+        self.register(
+            "DateTime",
+            "toTimezone",
+            vec![Type::String],
+            datetime_ty.clone(),
+        );
+        self.register(
+            "DateTime",
+            "inTimezone",
+            vec![Type::String],
+            datetime_ty.clone(),
+        );
+        self.register("DateTime", "getTimezone", vec![], Type::String);
+        self.register("DateTime", "getOffset", vec![], Type::Number);
         self.register(
             "DateTime",
             "addSeconds",
@@ -441,20 +459,25 @@ impl MethodTable {
         // H-231: Regex instance methods
         self.register("Regex", "test", vec![Type::String], Type::Bool);
         self.register("Regex", "isMatch", vec![Type::String], Type::Bool);
+        // Match object: Map<string, any> with keys text(String), start(Number), end(Number)
+        let match_map_ty = Type::Generic {
+            name: "Map".to_string(),
+            type_args: vec![Type::String, Type::Unknown],
+        };
         self.register(
             "Regex",
             "find",
             vec![Type::String],
             Type::Generic {
                 name: "Option".to_string(),
-                type_args: vec![Type::String],
+                type_args: vec![match_map_ty.clone()],
             },
         );
         self.register(
             "Regex",
             "findAll",
             vec![Type::String],
-            Type::Array(Box::new(Type::String)),
+            Type::Array(Box::new(match_map_ty)),
         );
         self.register(
             "Regex",
@@ -473,6 +496,19 @@ impl MethodTable {
             "split",
             vec![Type::String],
             Type::Array(Box::new(Type::String)),
+        );
+        self.register(
+            "Regex",
+            "splitN",
+            vec![Type::String, Type::Number],
+            Type::Array(Box::new(Type::String)),
+        );
+        // matchIndices returns Array of [start, end] pairs
+        self.register(
+            "Regex",
+            "matchIndices",
+            vec![Type::String],
+            Type::Array(Box::new(Type::Array(Box::new(Type::Number)))),
         );
     }
 

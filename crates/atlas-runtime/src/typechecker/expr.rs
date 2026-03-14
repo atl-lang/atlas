@@ -78,14 +78,17 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         // DateTime namespace
         ("datetime", "now" | "utc") => Some(vec![]),
         ("datetime", "fromTimestamp") => Some(vec![num.clone()]),
-        ("datetime", "parseIso" | "parse" | "parseRfc3339" | "parseRfc2822") => {
-            Some(vec![str.clone()])
-        }
+        ("datetime", "parseIso" | "parseRfc3339" | "parseRfc2822") => Some(vec![str.clone()]),
+        // parse(text, format) — 2 args
+        ("datetime", "parse") => Some(vec![str.clone(), str.clone()]),
+        // datetime.tryParse(text, formats[]) — variadic; skip arity check
+        ("datetime", "tryParse") => None,
         // datetime.fromComponents — variadic (year,month,day,hour,min,sec) → skip arity
         ("datetime", "fromComponents") => None,
         // Regex namespace
         ("regex", "new") => Some(vec![str.clone()]),
         ("regex", "test" | "isMatch") => None, // regex value + string arg; skip arity check
+        ("regex", "escape") => Some(vec![str.clone()]),
         // Crypto namespace
         ("crypto", "sha256" | "sha512") => Some(vec![str.clone()]),
         ("crypto", "blake3") => Some(vec![str.clone()]),
@@ -281,16 +284,13 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             name: "DateTime".to_string(),
             type_args: vec![],
         },
-        ("datetime", "parseIso" | "parse" | "parseRfc3339" | "parseRfc2822") => Type::Generic {
-            name: "Result".to_string(),
-            type_args: vec![
-                Type::Generic {
-                    name: "DateTime".to_string(),
-                    type_args: vec![],
-                },
-                Type::String,
-            ],
-        },
+        // All parse methods panic on failure (RuntimeError), return DateTime directly on success
+        ("datetime", "parseIso" | "parse" | "parseRfc3339" | "parseRfc2822" | "tryParse") => {
+            Type::Generic {
+                name: "DateTime".to_string(),
+                type_args: vec![],
+            }
+        }
         // Regex namespace (H-231): regex.new returns Result<Regex, string>
         ("regex", "new") => Type::Generic {
             name: "Result".to_string(),
@@ -304,6 +304,21 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         },
         // regex.test / regex.isMatch as namespace methods (also available as instance methods)
         ("regex", "test" | "isMatch") => Type::Bool,
+        // regex.captures returns Option<string[]> — None when no match, Some(groups) when matched
+        ("regex", "captures") => Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::Array(Box::new(Type::String))],
+        },
+        // regex.capturesNamed returns Option<Map<string, string>> for named capture groups
+        ("regex", "capturesNamed") => Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::Generic {
+                name: "Map".to_string(),
+                type_args: vec![Type::String, Type::String],
+            }],
+        },
+        // regex.escape escapes special chars in a string for use in a regex
+        ("regex", "escape") => Type::String,
         // Note: find/findAll/replace/replaceAll/split are instance methods on Regex
         // values (dispatched via TypeTag::RegexValue), not namespace methods.
         // Crypto namespace
@@ -2120,6 +2135,19 @@ impl<'a> TypeChecker<'a> {
                         }
                         return stack_type;
                     }
+                }
+                // Duration bare globals return Map<string, number>
+                "durationFromSeconds"
+                | "durationFromMinutes"
+                | "durationFromHours"
+                | "durationFromDays" => {
+                    for arg in &call.args {
+                        let _ = self.check_expr(arg);
+                    }
+                    return Type::Generic {
+                        name: "Map".to_string(),
+                        type_args: vec![Type::String, Type::Number],
+                    };
                 }
                 // H-112: hashMapHas / hashSetHas return bool
                 "mapHas" | "map_has" | "setHas" | "set_has" => {
