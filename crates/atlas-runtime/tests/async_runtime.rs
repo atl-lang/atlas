@@ -16,12 +16,12 @@ use tempfile::TempDir;
 mod async_parity;
 #[path = "async_runtime/async_runtime_loops.rs"]
 mod async_runtime_loops;
+#[path = "async_runtime/async_vm.rs"]
+mod async_vm;
 #[path = "async_runtime/compiler.rs"]
 mod compiler;
 #[path = "async_runtime/concurrency.rs"]
 mod concurrency;
-#[path = "async_runtime/interpreter.rs"]
-mod interpreter;
 #[path = "async_runtime/stdlib_wiring.rs"]
 mod stdlib_wiring;
 #[path = "async_runtime/stress.rs"]
@@ -41,7 +41,7 @@ mod value_future;
 // - Runtime integration
 // - Error handling
 
-/// Helper to evaluate code with the interpreter
+/// Helper to evaluate code with the VM
 fn eval(code: &str) -> Result<Value, Box<dyn std::error::Error>> {
     let mut runtime = Runtime::new();
     Ok(runtime.eval(code)?)
@@ -1536,7 +1536,7 @@ fn test_await_rejected_future() {
 // Tests for task spawning, channels, timers, mutex, and timeout operations.
 // Tests the async primitives from Atlas code (not direct Rust API calls).
 
-/// Helper to evaluate code with the interpreter
+/// Helper to evaluate code with the VM
 /// Helper to evaluate code expecting success
 // ============================================================================
 // Task Spawning Tests (10 tests)
