@@ -125,7 +125,7 @@ fn test_top_level_var_mutable_from_fn() {
     assert_parity_number(
         r#"
 let mut counter = 0;
-fn increment() { counter = counter + 1; }
+fn increment(): void { counter = counter + 1; }
 increment();
 increment();
 increment();
@@ -140,7 +140,7 @@ fn test_top_level_var_mutation_and_read() {
     assert_parity_number(
         r#"
 let mut total = 100;
-fn subtract(borrow n: number) { total = total - n; }
+fn subtract(borrow n: number): void { total = total - n; }
 subtract(30);
 subtract(20);
 total;
@@ -169,8 +169,8 @@ fn test_two_fns_sharing_top_level_var() {
     assert_parity_number(
         r#"
 let mut acc = 0;
-fn add_one() { acc = acc + 1; }
-fn add_ten() { acc = acc + 10; }
+fn add_one(): void { acc = acc + 1; }
+fn add_ten(): void { acc = acc + 10; }
 add_one();
 add_ten();
 add_one();
@@ -1678,7 +1678,7 @@ fn test_hof_find_fn_expr() {
     assert_parity_number(
         r#"
 let arr = [1, 2, 3, 4];
-find(arr, fn(borrow x: number): bool { return x == 3; })?;
+unwrap(find(arr, fn(borrow x: number): bool { return x == 3; }));
 "#,
         3.0,
     );
@@ -1689,7 +1689,7 @@ fn test_hof_find_arrow() {
     assert_parity_number(
         r#"
 let arr = [10, 20, 30];
-find(arr, fn(x: number): bool { x == 20 })?;
+unwrap(find(arr, fn(x: number): bool { x == 20 }));
 "#,
         20.0,
     );
