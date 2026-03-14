@@ -234,66 +234,51 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
     )
 }
 
-/// Check if an identifier name is a static namespace sentinel.
+/// Single source of truth for all static namespace names and their TypeTags.
+/// Both `is_static_namespace` and `namespace_type_tag` derive from this table.
 /// Case-insensitive matching for AI-friendliness (both `Math.sqrt` and `math.sqrt` work).
+const STATIC_NAMESPACES: &[(&str, TypeTag)] = &[
+    ("json", TypeTag::JsonNs),
+    ("math", TypeTag::MathNs),
+    ("env", TypeTag::EnvNs),
+    ("file", TypeTag::FileNs),
+    ("process", TypeTag::ProcessNs),
+    ("datetime", TypeTag::DateTimeNs),
+    ("path", TypeTag::PathNs),
+    ("http", TypeTag::HttpNs),
+    ("net", TypeTag::NetNs),
+    ("crypto", TypeTag::CryptoNs),
+    ("encoding", TypeTag::EncodingNs),
+    ("regex", TypeTag::RegexNs),
+    ("io", TypeTag::IoNs),
+    ("console", TypeTag::ConsoleNs),
+    ("reflect", TypeTag::ReflectNs),
+    ("sqlite", TypeTag::SqliteNs),
+    ("gzip", TypeTag::GzipNs),
+    ("tar", TypeTag::TarNs),
+    ("zip", TypeTag::ZipNs),
+    ("task", TypeTag::TaskNs),
+    ("sync", TypeTag::SyncNs),
+    ("future", TypeTag::FutureNs),
+    ("test", TypeTag::TestNs),
+    ("array", TypeTag::Array),
+];
+
+/// Check if an identifier name is a static namespace sentinel.
 pub fn is_static_namespace(name: &str) -> bool {
-    matches!(
-        name.to_lowercase().as_str(),
-        "json"
-            | "math"
-            | "env"
-            | "file"
-            | "process"
-            | "datetime"
-            | "path"
-            | "http"
-            | "net"
-            | "crypto"
-            | "encoding"
-            | "regex"
-            | "io"
-            | "console"
-            | "reflect"
-            | "sqlite"
-            | "gzip"
-            | "tar"
-            | "zip"
-            | "task"
-            | "sync"
-            | "future"
-            | "test"
-    )
+    let lower = name.to_lowercase();
+    STATIC_NAMESPACES
+        .iter()
+        .any(|(ns, _)| *ns == lower.as_str())
 }
 
 /// Map a static namespace identifier to its TypeTag.
-/// Case-insensitive matching for AI-friendliness.
 pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
-    match name.to_lowercase().as_str() {
-        "json" => Some(TypeTag::JsonNs),
-        "math" => Some(TypeTag::MathNs),
-        "env" => Some(TypeTag::EnvNs),
-        "file" => Some(TypeTag::FileNs),
-        "process" => Some(TypeTag::ProcessNs),
-        "datetime" => Some(TypeTag::DateTimeNs),
-        "path" => Some(TypeTag::PathNs),
-        "http" => Some(TypeTag::HttpNs),
-        "net" => Some(TypeTag::NetNs),
-        "crypto" => Some(TypeTag::CryptoNs),
-        "encoding" => Some(TypeTag::EncodingNs),
-        "regex" => Some(TypeTag::RegexNs),
-        "io" => Some(TypeTag::IoNs),
-        "console" => Some(TypeTag::ConsoleNs),
-        "reflect" => Some(TypeTag::ReflectNs),
-        "sqlite" => Some(TypeTag::SqliteNs),
-        "gzip" => Some(TypeTag::GzipNs),
-        "tar" => Some(TypeTag::TarNs),
-        "zip" => Some(TypeTag::ZipNs),
-        "task" => Some(TypeTag::TaskNs),
-        "sync" => Some(TypeTag::SyncNs),
-        "future" => Some(TypeTag::FutureNs),
-        "test" => Some(TypeTag::TestNs),
-        _ => None,
-    }
+    let lower = name.to_lowercase();
+    STATIC_NAMESPACES
+        .iter()
+        .find(|(ns, _)| *ns == lower.as_str())
+        .map(|(_, tag)| *tag)
 }
 
 /// Resolve an HttpResponse method call to its stdlib function name.
