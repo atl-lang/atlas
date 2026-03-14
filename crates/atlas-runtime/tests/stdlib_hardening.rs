@@ -63,8 +63,8 @@ fn is_runtime_error(diags: &[Diagnostic]) -> bool {
 
 #[test]
 fn test_split_empty_string_with_separator() {
-    // split("", ",") returns [""] — one empty-string element
-    let result = eval_ok(r#"split("", ",");"#);
+    // "".split(",") returns [""] — one empty-string element
+    let result = eval_ok(r#""".split(",");"#);
     match result {
         Value::Array(arr) => {
             let b = arr.as_slice();
@@ -77,8 +77,8 @@ fn test_split_empty_string_with_separator() {
 
 #[test]
 fn test_split_empty_string_empty_separator() {
-    // split("", "") returns [] — no characters to iterate
-    let result = eval_ok(r#"split("", "");"#);
+    // "".split("") returns [] — no characters to iterate
+    let result = eval_ok(r#""".split("");"#);
     match result {
         Value::Array(arr) => {
             let b = arr.as_slice();
@@ -90,7 +90,7 @@ fn test_split_empty_string_empty_separator() {
 
 #[test]
 fn test_split_separator_not_found() {
-    let result = eval_ok(r#"split("abc", ",");"#);
+    let result = eval_ok(r#""abc".split(",");"#);
     match result {
         Value::Array(arr) => {
             let b = arr.as_slice();
@@ -103,8 +103,8 @@ fn test_split_separator_not_found() {
 
 #[test]
 fn test_split_parity() {
-    let interp = format!("{:?}", eval_ok(r#"split("a,b,c", ",");"#));
-    let vm = format!("{:?}", vm_eval_ok(r#"split("a,b,c", ",");"#));
+    let interp = format!("{:?}", eval_ok(r#""a,b,c".split(",");"#));
+    let vm = format!("{:?}", vm_eval_ok(r#""a,b,c".split(",");"#));
     assert_eq!(interp, vm);
 }
 
@@ -259,24 +259,24 @@ fn test_char_at_parity() {
 
 #[test]
 fn test_repeat_zero_times() {
-    assert_eq!(eval_ok(r#"repeat("ha", 0);"#), Value::string(""));
+    assert_eq!(eval_ok(r#""ha".repeat(0);"#), Value::string(""));
 }
 
 #[test]
 fn test_repeat_negative_error() {
-    let err = eval_err(r#"repeat("ha", -1);"#);
+    let err = eval_err(r#""ha".repeat(-1);"#);
     assert!(is_runtime_error(&err));
 }
 
 #[test]
 fn test_repeat_empty_string() {
-    assert_eq!(eval_ok(r#"repeat("", 100);"#), Value::string(""));
+    assert_eq!(eval_ok(r#""".repeat(100);"#), Value::string(""));
 }
 
 #[test]
 fn test_repeat_parity() {
-    let i = eval_ok(r#"repeat("ab", 3);"#);
-    let v = vm_eval_ok(r#"repeat("ab", 3);"#);
+    let i = eval_ok(r#""ab".repeat(3);"#);
+    let v = vm_eval_ok(r#""ab".repeat(3);"#);
     assert_eq!(i, v);
 }
 
@@ -284,24 +284,21 @@ fn test_repeat_parity() {
 
 #[test]
 fn test_replace_first_only() {
-    assert_eq!(
-        eval_ok(r#"replace("aaa", "a", "b");"#),
-        Value::string("baa")
-    );
+    assert_eq!(eval_ok(r#""aaa".replace("a", "b");"#), Value::string("baa"));
 }
 
 #[test]
 fn test_replace_not_found() {
     assert_eq!(
-        eval_ok(r#"replace("hello", "x", "y");"#),
+        eval_ok(r#""hello".replace("x", "y");"#),
         Value::string("hello")
     );
 }
 
 #[test]
 fn test_replace_parity() {
-    let i = eval_ok(r#"replace("hello world", "world", "Atlas");"#);
-    let v = vm_eval_ok(r#"replace("hello world", "world", "Atlas");"#);
+    let i = eval_ok(r#""hello world".replace("world", "Atlas");"#);
+    let v = vm_eval_ok(r#""hello world".replace("world", "Atlas");"#);
     assert_eq!(i, v);
 }
 
@@ -310,36 +307,33 @@ fn test_replace_parity() {
 #[test]
 fn test_pad_start_already_long_enough() {
     assert_eq!(
-        eval_ok(r#"pad_start("hello", 3, "0");"#),
+        eval_ok(r#""hello".padStart(3, "0");"#),
         Value::string("hello")
     );
 }
 
 #[test]
 fn test_pad_start_multi_char_fill() {
-    assert_eq!(
-        eval_ok(r#"pad_start("1", 5, "ab");"#),
-        Value::string("abab1")
-    );
+    assert_eq!(eval_ok(r#""1".padStart(5, "ab");"#), Value::string("abab1"));
 }
 
 #[test]
 fn test_pad_end_already_long_enough() {
     assert_eq!(
-        eval_ok(r#"pad_end("hello", 3, "0");"#),
+        eval_ok(r#""hello".padEnd(3, "0");"#),
         Value::string("hello")
     );
 }
 
 #[test]
 fn test_pad_end_multi_char_fill() {
-    assert_eq!(eval_ok(r#"pad_end("1", 5, "ab");"#), Value::string("1abab"));
+    assert_eq!(eval_ok(r#""1".padEnd(5, "ab");"#), Value::string("1abab"));
 }
 
 #[test]
 fn test_pad_start_parity() {
-    let i = eval_ok(r#"pad_start("5", 4, "0");"#);
-    let v = vm_eval_ok(r#"pad_start("5", 4, "0");"#);
+    let i = eval_ok(r#""5".padStart(4, "0");"#);
+    let v = vm_eval_ok(r#""5".padStart(4, "0");"#);
     assert_eq!(i, v);
 }
 
@@ -395,12 +389,12 @@ fn test_case_parity() {
 
 #[test]
 fn test_string_includes_empty_needle() {
-    assert_eq!(eval_ok(r#"includes("hello", "");"#), Value::Bool(true));
+    assert_eq!(eval_ok(r#""hello".includes("");"#), Value::Bool(true));
 }
 
 #[test]
 fn test_string_includes_empty_haystack() {
-    assert_eq!(eval_ok(r#"includes("", "x");"#), Value::Bool(false));
+    assert_eq!(eval_ok(r#""".includes("x");"#), Value::Bool(false));
 }
 
 // ============================================================================
@@ -411,7 +405,7 @@ fn test_string_includes_empty_haystack() {
 
 #[test]
 fn test_reverse_empty_array() {
-    let result = eval_ok("reverse([]);");
+    let result = eval_ok("[].reverse();");
     match result {
         Value::Array(arr) => assert_eq!(arr.len(), 0),
         _ => panic!("Expected array"),
@@ -420,7 +414,7 @@ fn test_reverse_empty_array() {
 
 #[test]
 fn test_reverse_single_element() {
-    let result = eval_ok("reverse([42]);");
+    let result = eval_ok("[42].reverse();");
     match result {
         Value::Array(arr) => {
             let b = arr.as_slice();
@@ -433,8 +427,8 @@ fn test_reverse_single_element() {
 
 #[test]
 fn test_reverse_parity() {
-    let i = format!("{:?}", eval_ok("reverse([1, 2, 3]);"));
-    let v = format!("{:?}", vm_eval_ok("reverse([1, 2, 3]);"));
+    let i = format!("{:?}", eval_ok("[1, 2, 3].reverse();"));
+    let v = format!("{:?}", vm_eval_ok("[1, 2, 3].reverse();"));
     assert_eq!(i, v);
 }
 
@@ -442,7 +436,7 @@ fn test_reverse_parity() {
 
 #[test]
 fn test_concat_empty_arrays() {
-    let result = eval_ok("concat([], []);");
+    let result = eval_ok("[].concat([]);");
     match result {
         Value::Array(arr) => assert_eq!(arr.len(), 0),
         _ => panic!("Expected array"),
@@ -451,8 +445,8 @@ fn test_concat_empty_arrays() {
 
 #[test]
 fn test_concat_parity() {
-    let i = format!("{:?}", eval_ok("concat([1, 2], [3, 4]);"));
-    let v = format!("{:?}", vm_eval_ok("concat([1, 2], [3, 4]);"));
+    let i = format!("{:?}", eval_ok("[1, 2].concat([3, 4]);"));
+    let v = format!("{:?}", vm_eval_ok("[1, 2].concat([3, 4]);"));
     assert_eq!(i, v);
 }
 
@@ -469,7 +463,7 @@ fn test_flatten_empty_array() {
 
 #[test]
 fn test_flatten_nested_empty_arrays() {
-    let result = eval_ok("flatten([[], []]);");
+    let result = eval_ok("[[], []].flatten();");
     match result {
         Value::Array(arr) => assert_eq!(arr.len(), 0),
         _ => panic!("Expected array"),
@@ -480,7 +474,7 @@ fn test_flatten_nested_empty_arrays() {
 fn test_flatten_one_level_only() {
     // flatten([[[1, 2]], [[3, 4]]]) (number[][][]) → flattens ONE level → [[1,2], [3,4]] (number[][])
     // Verify length = 2 meaning outer arrays were unwrapped but inner stays nested
-    let result = eval_ok("flatten([[[1, 2]], [[3, 4]]]);");
+    let result = eval_ok("[[[1, 2]], [[3, 4]]].flatten();");
     match result {
         Value::Array(arr) => {
             let b = arr.as_slice();
@@ -499,8 +493,8 @@ fn test_flatten_one_level_only() {
 
 #[test]
 fn test_flatten_parity() {
-    let i = format!("{:?}", eval_ok("flatten([[1, 2], [3, 4]]);"));
-    let v = format!("{:?}", vm_eval_ok("flatten([[1, 2], [3, 4]]);"));
+    let i = format!("{:?}", eval_ok("[[1, 2], [3, 4]].flatten();"));
+    let v = format!("{:?}", vm_eval_ok("[[1, 2], [3, 4]].flatten();"));
     assert_eq!(i, v);
 }
 
@@ -589,7 +583,7 @@ fn test_slice_parity() {
 
 #[test]
 fn test_unshift_to_empty() {
-    let result = eval_ok("unshift([], 42);");
+    let result = eval_ok("[].unshift(42);");
     match result {
         Value::Array(arr) => {
             let b = arr.as_slice();
@@ -1061,8 +1055,8 @@ fn test_is_null_false_for_zero() {
 
 #[test]
 fn test_is_array_parity() {
-    let i = eval_ok("is_array([1, 2, 3]);");
-    let v = vm_eval_ok("is_array([1, 2, 3]);");
+    let i = eval_ok(r#"typeof([1, 2, 3]) == "array";"#);
+    let v = vm_eval_ok(r#"typeof([1, 2, 3]) == "array";"#);
     assert_eq!(i, v);
 }
 
@@ -1149,7 +1143,7 @@ fn test_to_bool_parity() {
 #[test]
 fn test_parse_int_hex() {
     assert_eq!(
-        eval_ok("parse_int(\"ff\", 16);"),
+        eval_ok(r#""ff".toInt(16);"#),
         Value::Result(Ok(Box::new(Value::Number(255.0))))
     );
 }
@@ -1157,35 +1151,35 @@ fn test_parse_int_hex() {
 #[test]
 fn test_parse_int_binary() {
     assert_eq!(
-        eval_ok("parse_int(\"1010\", 2);"),
+        eval_ok(r#""1010".toInt(2);"#),
         Value::Result(Ok(Box::new(Value::Number(10.0))))
     );
 }
 
 #[test]
 fn test_parse_int_invalid_error() {
-    let result = eval_ok("parse_int(\"xyz\", 10);");
+    let result = eval_ok(r#""xyz".toInt(10);"#);
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_parse_float_scientific() {
     assert_eq!(
-        eval_ok("parse_float(\"1.5e3\");"),
+        eval_ok(r#""1.5e3".toNumber();"#),
         Value::Result(Ok(Box::new(Value::Number(1500.0))))
     );
 }
 
 #[test]
 fn test_parse_float_invalid_error() {
-    let result = eval_ok("parse_float(\"abc\");");
+    let result = eval_ok(r#""abc".toNumber();"#);
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_parse_int_parity() {
-    let i = eval_ok("parse_int(\"ff\", 16);");
-    let v = vm_eval_ok("parse_int(\"ff\", 16);");
+    let i = eval_ok(r#""ff".toInt(16);"#);
+    let v = vm_eval_ok(r#""ff".toInt(16);"#);
     assert_eq!(i, v);
 }
 
@@ -1228,8 +1222,8 @@ fn test_h083_canonical_index_of_still_works() {
 
 #[test]
 fn test_h083_str_includes_alias_works() {
-    // str_includes should be a snake_case alias for includes (string)
-    let r1 = eval_ok(r#"includes("hello world", "world");"#);
-    let r2 = eval_ok(r#"str_includes("hello world", "world");"#);
+    // str_includes was a snake_case alias — canonical form is now .includes() method
+    let r1 = eval_ok(r#""hello world".includes("world");"#);
+    let r2 = vm_eval_ok(r#""hello world".includes("world");"#);
     assert_eq!(r1, r2);
 }

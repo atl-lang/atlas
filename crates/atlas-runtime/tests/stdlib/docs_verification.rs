@@ -279,7 +279,7 @@ fn docs_clamp_in_range() {
 
 #[test]
 fn docs_clamp_below() {
-    assert_eval_result_ok_number(r#"clamp(-3, 0, 10)"#, 0.0);
+    assert_eval_result_ok_number(r#"Math.clamp(-3, 0, 10)"#, 0.0);
 }
 
 #[test]
@@ -289,12 +289,12 @@ fn docs_clamp_above() {
 
 #[test]
 fn docs_sign_negative() {
-    assert_eval_number(r#"sign(-7)"#, -1.0);
+    assert_eval_number(r#"Math.sign(-7)"#, -1.0);
 }
 
 #[test]
 fn docs_sign_zero() {
-    assert_eval_number(r#"sign(0)"#, 0.0);
+    assert_eval_number(r#"Math.sign(0)"#, 0.0);
 }
 
 #[test]
