@@ -1447,6 +1447,36 @@ impl Parser {
         }
     }
 
+    /// Consume the next token as a member name (method or property after a dot).
+    ///
+    /// Unlike `consume_identifier`, this accepts keywords as valid member names.
+    /// TypeScript/JS precedent: `foo.new()`, `foo.delete()`, `foo.for()` are all legal
+    /// because after a dot, any token is unambiguously a property name, not a statement keyword.
+    pub(super) fn consume_member_name(&mut self) -> Result<&Token, ()> {
+        let current = self.peek().clone();
+        // After a dot, any identifier OR keyword token is a valid member name.
+        // TypeScript/JS precedent: `foo.new()`, `foo.delete()`, `foo.for()` are legal
+        // because `.name` is unambiguously a property access, not a keyword expression.
+        let is_name_token = current.kind == TokenKind::Identifier
+            || Self::is_reserved_keyword(current.kind)
+            || current
+                .lexeme
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_alphabetic() || c == '_');
+        if is_name_token {
+            Ok(self.advance())
+        } else {
+            self.emit_descriptor(
+                UNEXPECTED_TOKEN
+                    .emit(current.span)
+                    .arg("token", current.kind.as_str())
+                    .with_help("expected a method or property name after '.'"),
+            );
+            Err(())
+        }
+    }
+
     /// Synchronize after error — clears `in_panic_mode` to re-enable error reporting.
     ///
     /// Tracks brace depth so it skips nested `{ }` blocks entirely before stopping at

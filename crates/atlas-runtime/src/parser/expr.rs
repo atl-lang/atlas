@@ -798,7 +798,7 @@ impl Parser {
                 span: tok.span,
             }
         } else {
-            let member_token = self.consume_identifier("a method or property name")?;
+            let member_token = self.consume_member_name()?;
             Identifier {
                 name: member_token.lexeme.clone(),
                 span: member_token.span,
