@@ -304,11 +304,13 @@ impl<T> Stack<T> {
 
 ### Pattern Matching
 
+Enum variants are matched by bare name — the typechecker resolves them from the scrutinee type. The qualified `EnumName::Variant` form also works but is not required.
+
 ```javascript
-// Match on enum
+// Match on enum — bare variant names
 match shape {
-    Shape::Circle(r) => console.log(`Circle with radius ${r}`),
-    Shape::Rectangle(w, h) => console.log(`${w}x${h} rectangle`),
+    Circle(r) => console.log(`Circle with radius ${r}`),
+    Rectangle(w, h) => console.log(`${w}x${h} rectangle`),
 }
 
 // Guards
@@ -321,8 +323,8 @@ match score {
 
 // OR patterns
 match direction {
-    Direction::North | Direction::South => "vertical",
-    Direction::East | Direction::West => "horizontal",
+    North | South => "vertical",
+    East | West => "horizontal",
 }
 
 // Struct patterns
