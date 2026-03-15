@@ -327,14 +327,17 @@ fn find_manifest(start_dir: &Path) -> Result<PathBuf> {
 }
 
 fn get_cache_dir() -> PathBuf {
-    std::env::var("ATLAS_CACHE_DIR")
+    if let Ok(dir) = std::env::var("ATLAS_CACHE_DIR") {
+        return PathBuf::from(dir);
+    }
+    let root = std::env::var("ATLAS_HOME")
         .map(PathBuf::from)
         .unwrap_or_else(|_| {
             dirs::home_dir()
                 .unwrap_or_else(|| PathBuf::from("."))
-                .join(".atlas")
-                .join("cache")
-        })
+                .join("atlas")
+        });
+    root.join("pkg")
 }
 
 fn green_check() -> &'static str {

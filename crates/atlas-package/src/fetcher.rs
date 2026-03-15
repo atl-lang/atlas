@@ -1,7 +1,8 @@
 //! Git-based package fetcher for Atlas.
 //!
 //! Atlas uses a Go-style package system: git repos are the registry.
-//! Packages are fetched by tag and cached locally under `~/.atlas/cache/`.
+//! Packages are cached locally under `~/atlas/pkg/<host>/<org>/<name>@<tag>/`,
+//! namespaced by git host + org to prevent name collisions across orgs.
 
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
@@ -36,20 +37,53 @@ pub enum FetchError {
     Io(#[from] std::io::Error),
 }
 
+/// Derive a namespaced cache subpath from a git URL and tag.
+///
+/// Mirrors Go's module cache layout: `<host>/<org>/<name>@<tag>`.
+///
+/// Examples:
+/// - `https://github.com/atl-pkg/argus` + `v0.1.0` → `github.com/atl-pkg/argus@v0.1.0`
+/// - `https://gitlab.com/myorg/utils`   + `v2.0.0` → `gitlab.com/myorg/utils@v2.0.0`
+/// - Fallback (unrecognised URL):                   → `<name>@<tag>`
+pub fn url_to_cache_subpath(url: &str, name: &str, tag: &str) -> PathBuf {
+    // Strip scheme (https://, http://, git://, ssh://git@, etc.)
+    let stripped = url
+        .trim_start_matches("https://")
+        .trim_start_matches("http://")
+        .trim_start_matches("git://")
+        .trim_start_matches("ssh://")
+        // Handle `git@github.com:org/repo` SSH shorthand → `github.com/org/repo`
+        .replace(':', "/")
+        .trim_start_matches("git@")
+        .to_string();
+
+    // Strip trailing `.git` suffix
+    let stripped = stripped.trim_end_matches(".git");
+
+    if stripped.is_empty() || !stripped.contains('/') {
+        // Unrecognised format — fall back to name@tag
+        return PathBuf::from(format!("{}@{}", name, tag));
+    }
+
+    PathBuf::from(format!("{}@{}", stripped, tag))
+}
+
 impl GitFetcher {
-    /// Create a new fetcher rooted at `cache_dir` (e.g. `~/.atlas/cache/`).
+    /// Create a new fetcher rooted at `pkg_dir` (e.g. `~/atlas/pkg/`).
     pub fn new(cache_dir: PathBuf) -> Self {
         Self { cache_dir }
     }
 
-    /// Return the canonical cache path for a package at a given tag.
-    fn package_path(&self, name: &str, tag: &str) -> PathBuf {
-        self.cache_dir.join(name).join(tag)
+    /// Return the canonical cache path for a package at a given URL + tag.
+    ///
+    /// Layout: `<pkg_dir>/<host>/<org>/<name>@<tag>/`
+    fn package_path(&self, url: &str, name: &str, tag: &str) -> PathBuf {
+        self.cache_dir.join(url_to_cache_subpath(url, name, tag))
     }
 
-    /// Check whether `<cache_dir>/<name>/<tag>/` already exists and is non-empty.
-    pub fn is_cached(&self, name: &str, tag: &str) -> bool {
-        let path = self.package_path(name, tag);
+    /// Check whether the package directory already exists and is non-empty.
+    pub fn is_cached(&self, url: &str, name: &str, tag: &str) -> bool {
+        let path = self.package_path(url, name, tag);
         if !path.exists() {
             return false;
         }
@@ -64,9 +98,9 @@ impl GitFetcher {
     /// Idempotent: if the package is already cached the existing data is returned
     /// without re-cloning.
     pub fn fetch(&self, name: &str, url: &str, tag: &str) -> Result<FetchResult, FetchError> {
-        let target = self.package_path(name, tag);
+        let target = self.package_path(url, name, tag);
 
-        if self.is_cached(name, tag) {
+        if self.is_cached(url, name, tag) {
             // Re-read cached rev and recompute checksum
             let rev = self.read_rev(&target)?;
             let checksum = compute_dir_checksum(&target)?;
@@ -215,36 +249,72 @@ mod tests {
     use std::io::Write;
     use tempfile::TempDir;
 
+    // ── url_to_cache_subpath ──────────────────────────────────────────────────
+
+    #[test]
+    fn test_url_to_cache_subpath_https() {
+        let path = url_to_cache_subpath("https://github.com/atl-pkg/argus", "argus", "v0.1.0");
+        assert_eq!(path, PathBuf::from("github.com/atl-pkg/argus@v0.1.0"));
+    }
+
+    #[test]
+    fn test_url_to_cache_subpath_strips_git_suffix() {
+        let path = url_to_cache_subpath("https://github.com/atl-pkg/argus.git", "argus", "v1.0.0");
+        assert_eq!(path, PathBuf::from("github.com/atl-pkg/argus@v1.0.0"));
+    }
+
+    #[test]
+    fn test_url_to_cache_subpath_ssh() {
+        let path = url_to_cache_subpath("git@github.com:atl-pkg/web", "web", "v0.2.0");
+        assert_eq!(path, PathBuf::from("github.com/atl-pkg/web@v0.2.0"));
+    }
+
+    #[test]
+    fn test_url_to_cache_subpath_gitlab() {
+        let path = url_to_cache_subpath("https://gitlab.com/myorg/utils", "utils", "v2.0.0");
+        assert_eq!(path, PathBuf::from("gitlab.com/myorg/utils@v2.0.0"));
+    }
+
+    #[test]
+    fn test_url_to_cache_subpath_different_orgs_no_collision() {
+        let a = url_to_cache_subpath("https://github.com/atl-pkg/router", "router", "v1.0.0");
+        let b = url_to_cache_subpath("https://github.com/other-org/router", "router", "v1.0.0");
+        assert_ne!(a, b, "different orgs must produce different cache paths");
+    }
+
     // ── is_cached ────────────────────────────────────────────────────────────
+
+    const TEST_URL: &str = "https://github.com/atl-pkg/my-lib";
 
     #[test]
     fn test_is_cached_false_when_empty() {
         let tmp = TempDir::new().expect("tempdir");
         let fetcher = GitFetcher::new(tmp.path().to_path_buf());
-        assert!(!fetcher.is_cached("my-lib", "v1.0.0"));
+        assert!(!fetcher.is_cached(TEST_URL, "my-lib", "v1.0.0"));
     }
 
     #[test]
     fn test_is_cached_false_for_empty_dir() {
         let tmp = TempDir::new().expect("tempdir");
         let fetcher = GitFetcher::new(tmp.path().to_path_buf());
-        // Create the directory but leave it empty
-        std::fs::create_dir_all(tmp.path().join("my-lib").join("v1.0.0")).expect("create dir");
-        assert!(!fetcher.is_cached("my-lib", "v1.0.0"));
+        let subpath = url_to_cache_subpath(TEST_URL, "my-lib", "v1.0.0");
+        std::fs::create_dir_all(tmp.path().join(&subpath)).expect("create dir");
+        assert!(!fetcher.is_cached(TEST_URL, "my-lib", "v1.0.0"));
     }
 
     #[test]
     fn test_is_cached_true_when_populated() {
         let tmp = TempDir::new().expect("tempdir");
         let fetcher = GitFetcher::new(tmp.path().to_path_buf());
-        let pkg_dir = tmp.path().join("my-lib").join("v1.0.0");
+        let subpath = url_to_cache_subpath(TEST_URL, "my-lib", "v1.0.0");
+        let pkg_dir = tmp.path().join(&subpath);
         std::fs::create_dir_all(&pkg_dir).expect("create dir");
         std::fs::write(
             pkg_dir.join("atlas.toml"),
             b"[package]\nname = \"my-lib\"\n",
         )
         .expect("write file");
-        assert!(fetcher.is_cached("my-lib", "v1.0.0"));
+        assert!(fetcher.is_cached(TEST_URL, "my-lib", "v1.0.0"));
     }
 
     // ── parse_ls_remote_tags ──────────────────────────────────────────────────

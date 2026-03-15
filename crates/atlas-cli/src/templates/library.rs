@@ -478,7 +478,7 @@ Open an issue if you have questions or need help.
 const GITIGNORE: &str = r#"# Atlas build artifacts
 /target/
 /dist/
-/.atlas/
+/atlas/
 
 # Lock file (uncomment to track)
 # atlas.lock

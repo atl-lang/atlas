@@ -15,6 +15,29 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 // ---------------------------------------------------------------------------
+// Package path helpers (mirrors atlas-package::fetcher::url_to_cache_subpath)
+// Inlined here to avoid a dependency on atlas-package from atlas-runtime.
+// ---------------------------------------------------------------------------
+
+/// Convert a git URL + tag into a namespaced cache subpath.
+/// `https://github.com/atl-pkg/argus` + `v0.1.0` → `github.com/atl-pkg/argus@v0.1.0`
+fn resolver_url_to_cache_subpath(url: &str, name: &str, tag: &str) -> std::path::PathBuf {
+    let stripped = url
+        .trim_start_matches("https://")
+        .trim_start_matches("http://")
+        .trim_start_matches("git://")
+        .trim_start_matches("ssh://")
+        .replace(':', "/")
+        .trim_start_matches("git@")
+        .to_string();
+    let stripped = stripped.trim_end_matches(".git");
+    if stripped.is_empty() || !stripped.contains('/') {
+        return std::path::PathBuf::from(format!("{}@{}", name, tag));
+    }
+    std::path::PathBuf::from(format!("{}@{}", stripped, tag))
+}
+
+// ---------------------------------------------------------------------------
 // Minimal inline lockfile reader (avoids pulling in atlas-package + reqwest)
 // ---------------------------------------------------------------------------
 
@@ -29,6 +52,8 @@ struct MinLockfile {
 struct MinLockedSource {
     #[serde(default)]
     tag: Option<String>,
+    #[serde(default)]
+    url: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -40,12 +65,17 @@ struct MinLockedPackage {
 }
 
 impl MinLockedPackage {
-    /// The cache subdirectory for this package: the git tag if present, else the semver version.
+    /// The cache key for this package: the git tag if present, else the semver version.
     fn cache_key(&self) -> String {
         self.source
             .as_ref()
             .and_then(|s| s.tag.clone())
             .unwrap_or_else(|| self.version.clone())
+    }
+
+    /// The git URL for this package, if it is a git dep.
+    fn git_url(&self) -> Option<String> {
+        self.source.as_ref()?.url.clone()
     }
 }
 
@@ -307,19 +337,27 @@ impl ModuleResolver {
                 .build()
         })?;
 
-        // 4. Determine cache dir
-        let cache_dir = std::env::var("ATLAS_CACHE_DIR")
-            .map(std::path::PathBuf::from)
-            .unwrap_or_else(|_| {
-                dirs::home_dir()
-                    .unwrap_or_else(|| std::path::PathBuf::from("."))
-                    .join(".atlas")
-                    .join("cache")
-            });
+        // 4. Determine pkg dir root: ATLAS_CACHE_DIR (compat) → ATLAS_HOME/pkg → ~/atlas/pkg
+        let pkg_root = if let Ok(dir) = std::env::var("ATLAS_CACHE_DIR") {
+            std::path::PathBuf::from(dir)
+        } else {
+            let atlas_home = std::env::var("ATLAS_HOME")
+                .map(std::path::PathBuf::from)
+                .unwrap_or_else(|_| {
+                    dirs::home_dir()
+                        .unwrap_or_else(|| std::path::PathBuf::from("."))
+                        .join("atlas")
+                });
+            atlas_home.join("pkg")
+        };
 
-        // 5. Determine cache subdirectory: tag string if available, else semver version
+        // 5. Build namespaced path: <pkg_root>/<host>/<org>/<name>@<tag>
+        //    Falls back to <name>@<tag> for path deps or entries without a git URL.
         let cache_key = locked_pkg.cache_key();
-        let pkg_dir = cache_dir.join(name).join(&cache_key);
+        let pkg_dir = match locked_pkg.git_url() {
+            Some(url) => pkg_root.join(resolver_url_to_cache_subpath(&url, name, &cache_key)),
+            None => pkg_root.join(name).join(&cache_key),
+        };
 
         // 6. Try entry point candidates: lib.atlas, index.atlas, mod.atlas
         let candidates = ["lib.atlas", "index.atlas", "mod.atlas"];
