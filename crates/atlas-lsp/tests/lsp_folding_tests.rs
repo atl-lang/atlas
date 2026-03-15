@@ -23,7 +23,7 @@ fn parse_source(source: &str) -> atlas_runtime::ast::Program {
 
 #[test]
 fn test_function_body_folding() {
-    let source = "fn test() -> number {\n  let x = 1;\n  return x;\n}";
+    let source = "fn test(): number {\n  let x = 1;\n  return x;\n}";
     let ast = parse_source(source);
     let ranges = generate_folding_ranges(source, Some(&ast));
 
@@ -38,7 +38,7 @@ fn test_function_body_folding() {
 
 #[test]
 fn test_multiple_functions_folding() {
-    let source = "fn foo() -> number {\n  return 1;\n}\n\nfn bar() -> number {\n  return 2;\n}";
+    let source = "fn foo(): number {\n  return 1;\n}\n\nfn bar(): number {\n  return 2;\n}";
     let ast = parse_source(source);
     let ranges = generate_folding_ranges(source, Some(&ast));
 
@@ -52,7 +52,7 @@ fn test_multiple_functions_folding() {
 
 #[test]
 fn test_single_line_function_no_fold() {
-    let source = "fn test() -> number { return ; }";
+    let source = "fn test(): number { return ; }";
     let ast = parse_source(source);
     let ranges = generate_folding_ranges(source, Some(&ast));
 
@@ -69,7 +69,7 @@ fn test_single_line_function_no_fold() {
 
 #[test]
 fn test_if_statement_folding() {
-    let source = "fn test() -> void {\n  if true {\n    let x = 1;\n  }\n}";
+    let source = "fn test(): void {\n  if true {\n    let x = 1;\n  }\n}";
     let ast = parse_source(source);
     let ranges = generate_folding_ranges(source, Some(&ast));
 
@@ -85,7 +85,7 @@ fn test_if_statement_folding() {
 #[test]
 fn test_if_else_folding() {
     let source =
-        "fn test() -> void {\n  if true {\n    let x = 1;\n  } else {\n    let y = 2;\n  }\n}";
+        "fn test(): void {\n  if true {\n    let x = 1;\n  } else {\n    let y = 2;\n  }\n}";
     let ast = parse_source(source);
     let ranges = generate_folding_ranges(source, Some(&ast));
 
@@ -100,7 +100,7 @@ fn test_if_else_folding() {
 
 #[test]
 fn test_while_loop_folding() {
-    let source = "fn test() -> void {\n  while true {\n    let x = 1;\n  }\n}";
+    let source = "fn test(): void {\n  while true {\n    let x = 1;\n  }\n}";
     let ast = parse_source(source);
     let ranges = generate_folding_ranges(source, Some(&ast));
 
@@ -115,7 +115,7 @@ fn test_while_loop_folding() {
 
 #[test]
 fn test_for_loop_folding() {
-    let source = "fn test() -> void {\n  for i in [1, 2, 3] {\n    println(i);\n  }\n}";
+    let source = "fn test(): void {\n  for i in [1, 2, 3] {\n    println(i);\n  }\n}";
     let ast = parse_source(source);
     let ranges = generate_folding_ranges(source, Some(&ast));
 
@@ -131,7 +131,7 @@ fn test_for_loop_folding() {
 #[test]
 fn test_nested_blocks_folding() {
     let source =
-        "fn test() -> void {\n  if true {\n    while true {\n      let x = 1;\n    }\n  }\n}";
+        "fn test(): void {\n  if true {\n    while true {\n      let x = 1;\n    }\n  }\n}";
     let ast = parse_source(source);
     let ranges = generate_folding_ranges(source, Some(&ast));
 
@@ -287,7 +287,7 @@ fn test_folding_ranges_sorted() {
 
 #[test]
 fn test_folding_line_accuracy() {
-    let source = "fn test() -> number {\n  return 1;\n}";
+    let source = "fn test(): number {\n  return 1;\n}";
     let ast = parse_source(source);
     let ranges = generate_folding_ranges(source, Some(&ast));
 

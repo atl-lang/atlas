@@ -114,7 +114,7 @@ fn test_tokenize_variable_declaration() {
 
 #[test]
 fn test_tokenize_function_declaration() {
-    let source = "fn greet() -> number { return ; }";
+    let source = "fn greet(): number { return ; }";
     let (ast, symbols) = parse_source(source);
 
     let result = generate_semantic_tokens(source, ast.as_ref(), symbols.as_ref());
@@ -178,7 +178,7 @@ fn test_tokenize_operators() {
 
 #[test]
 fn test_tokenize_builtin_function() {
-    let source = "print(42);";
+    let source = "console.log(42);";
     let result = generate_semantic_tokens(source, None, None);
 
     if let SemanticTokensResult::Tokens(tokens) = result {
@@ -381,7 +381,7 @@ fn test_variable_token_type() {
 
 #[test]
 fn test_function_token_type() {
-    let source = "print(1);";
+    let source = "console.log(1);";
     let result = generate_semantic_tokens(source, None, None);
 
     if let SemanticTokensResult::Tokens(tokens) = result {
@@ -397,7 +397,7 @@ fn test_function_token_type() {
 
 #[test]
 fn test_builtin_has_default_library_modifier() {
-    let source = "print(1);";
+    let source = "console.log(1);";
     let result = generate_semantic_tokens(source, None, None);
 
     if let SemanticTokensResult::Tokens(tokens) = result {
@@ -436,7 +436,7 @@ fn test_tokenize_large_source() {
 
 #[test]
 fn test_tokenize_with_ast_and_symbols() {
-    let source = "fn add(a: number, b: number) -> number { return a + b; }";
+    let source = "fn add(a: number, b: number): number { return a + b; }";
     let (ast, symbols) = parse_source(source);
 
     let result = generate_semantic_tokens(source, ast.as_ref(), symbols.as_ref());
@@ -484,7 +484,7 @@ const KEYWORD_TYPE_IDX: u32 = 15;
 
 #[test]
 fn test_own_keyword_is_keyword_semantic_token() {
-    let source = "fn f(own x: number) -> number { return x; }";
+    let source = "fn f(own x: number): number { return x; }";
     let (ast, symbols) = parse_source(source);
     let result = generate_semantic_tokens(source, ast.as_ref(), symbols.as_ref());
 
@@ -505,7 +505,7 @@ fn test_own_keyword_is_keyword_semantic_token() {
 
 #[test]
 fn test_borrow_keyword_is_keyword_semantic_token() {
-    let source = "fn f(borrow x: number) -> number { return x; }";
+    let source = "fn f(borrow x: number): number { return x; }";
     let (ast, symbols) = parse_source(source);
     let result = generate_semantic_tokens(source, ast.as_ref(), symbols.as_ref());
 
@@ -526,7 +526,7 @@ fn test_borrow_keyword_is_keyword_semantic_token() {
 
 #[test]
 fn test_shared_keyword_is_keyword_semantic_token() {
-    let source = "fn f(shared x: number) -> number { return x; }";
+    let source = "fn f(shared x: number): number { return x; }";
     let (ast, symbols) = parse_source(source);
     let result = generate_semantic_tokens(source, ast.as_ref(), symbols.as_ref());
 
@@ -551,9 +551,9 @@ fn test_ownership_keywords_not_classified_as_variable() {
     const VARIABLE_TYPE_IDX: u32 = 8;
 
     for source in &[
-        "fn f(own x: number) -> number { return x; }",
-        "fn f(borrow x: number) -> number { return x; }",
-        "fn f(shared x: number) -> number { return x; }",
+        "fn f(own x: number): number { return x; }",
+        "fn f(borrow x: number): number { return x; }",
+        "fn f(share x: number): number { return x; }",
     ] {
         let (ast, symbols) = parse_source(source);
         let result = generate_semantic_tokens(source, ast.as_ref(), symbols.as_ref());

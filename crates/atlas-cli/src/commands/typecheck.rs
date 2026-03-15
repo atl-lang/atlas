@@ -95,7 +95,7 @@ mod tests {
         let mut temp_file = NamedTempFile::new().unwrap();
         writeln!(
             temp_file,
-            "fn add(borrow a: number, borrow b: number) -> number {{ return a + b; }}"
+            "fn add(borrow a: number, borrow b: number): number {{ return a + b; }}"
         )
         .unwrap();
 

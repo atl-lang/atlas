@@ -1022,7 +1022,7 @@ impl FormatVisitor {
                 let params_str: Vec<String> =
                     params.iter().map(|p| self.type_ref_to_string(p)).collect();
                 format!(
-                    "fn({}) -> {}",
+                    "({}): {}",
                     params_str.join(", "),
                     self.type_ref_to_string(return_type)
                 )

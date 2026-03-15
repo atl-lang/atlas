@@ -13,13 +13,13 @@ async fn test_document_symbols() {
 
     // Open document with functions and variables
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(a: number, b: number): number {
     return a + b;
 }
 
 let mut counter: number = 0;
 
-fn increment() -> number {
+fn increment(): number {
     counter = counter + 1;
     return counter;
 }
@@ -61,7 +61,7 @@ async fn test_hover_on_function() {
     let uri = Url::parse("file:///test.atl").unwrap();
 
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(a: number, b: number): number {
     return a + b;
 }
 "#;
@@ -101,7 +101,7 @@ async fn test_goto_definition() {
     let uri = Url::parse("file:///test.atl").unwrap();
 
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(a: number, b: number): number {
     return a + b;
 }
 let mut result: number = add(1, 2);
@@ -163,7 +163,7 @@ async fn test_references_placeholder() {
     let uri = Url::parse("file:///test.atl").unwrap();
 
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(a: number, b: number): number {
     return a + b;
 }
 let mut x: number = add(1, 2);
@@ -239,7 +239,7 @@ async fn test_symbol_index_find_definition_at() {
     let _server = service.inner();
 
     let uri = Url::parse("file:///index_test.atl").unwrap();
-    let source = r#"fn add(a: number) -> number {
+    let source = r#"fn add(a: number): number {
     return a;
 }
 
@@ -275,7 +275,7 @@ async fn test_symbol_index_import_export_indexing() {
     let _server = service.inner();
 
     let export_uri = Url::parse("file:///export.atl").unwrap();
-    let export_source = r#"export fn foo() -> number {
+    let export_source = r#"export fn foo(): number {
     return 1;
 }
 "#;

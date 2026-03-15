@@ -156,7 +156,7 @@ async fn test_type_mismatch_diagnostics() {
         r#"let x: string = 42;"#,
         r#"let x: bool = "not bool";"#,
         r#"
-fn add(a: number, b: number) -> number {
+fn add(a: number, b: number): number {
     return a + b;
 }
 add("wrong", "types");
@@ -171,7 +171,7 @@ add("wrong", "types");
 #[tokio::test]
 async fn test_complex_program_diagnostics() {
     let source = r#"
-fn factorial(n: number) -> number {
+fn factorial(n: number): number {
     if (n <= 1) {
         return 1;
     }

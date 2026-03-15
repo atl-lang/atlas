@@ -109,16 +109,16 @@ fn test_continue_statement() {
 #[test]
 fn test_return_void() {
     assert_eq!(
-        fmt("fn foo() -> void { return; }"),
-        "fn foo() -> void {\n    return;\n}\n"
+        fmt("fn foo(): void { return; }"),
+        "fn foo(): void {\n    return;\n}\n"
     );
 }
 
 #[test]
 fn test_return_value() {
     assert_eq!(
-        fmt("fn foo() -> number { return 42; }"),
-        "fn foo() -> number {\n    return 42;\n}\n"
+        fmt("fn foo(): number { return 42; }"),
+        "fn foo(): number {\n    return 42;\n}\n"
     );
 }
 
@@ -127,38 +127,38 @@ fn test_return_value() {
 #[test]
 fn test_simple_function() {
     assert_eq!(
-        fmt("fn hello() -> void { print(\"hi\"); }"),
-        "fn hello() -> void {\n    print(\"hi\");\n}\n"
+        fmt("fn hello(): void { console.log(\"hi\"); }"),
+        "fn hello(): void {\n    console.log(\"hi\");\n}\n"
     );
 }
 
 #[test]
 fn test_function_with_params() {
     assert_eq!(
-        fmt("fn add(a: number, b: number) -> number { return a + b; }"),
-        "fn add(a: number, b: number) -> number {\n    return a + b;\n}\n"
+        fmt("fn add(a: number, b: number): number { return a + b; }"),
+        "fn add(a: number, b: number): number {\n    return a + b;\n}\n"
     );
 }
 
 #[test]
 fn test_function_no_return_type() {
     assert_eq!(
-        fmt("fn greet(name: string) -> void { print(name); }"),
-        "fn greet(name: string) -> void {\n    print(name);\n}\n"
+        fmt("fn greet(name: string): void { console.log(name); }"),
+        "fn greet(name: string): void {\n    console.log(name);\n}\n"
     );
 }
 
 #[test]
 fn test_function_with_type_params() {
     assert_eq!(
-        fmt("fn identity<T>(x: T) -> T { return x; }"),
-        "fn identity<T>(x: T) -> T {\n    return x;\n}\n"
+        fmt("fn identity<T>(x: T): T { return x; }"),
+        "fn identity<T>(x: T): T {\n    return x;\n}\n"
     );
 }
 
 #[test]
 fn test_empty_function() {
-    assert_eq!(fmt("fn noop() -> void {}"), "fn noop() -> void {}\n");
+    assert_eq!(fmt("fn noop(): void {}"), "fn noop(): void {}\n");
 }
 
 // === If Statements ===
@@ -166,24 +166,24 @@ fn test_empty_function() {
 #[test]
 fn test_if_simple() {
     assert_eq!(
-        fmt("if x > 0 { print(x); }"),
-        "if x > 0 {\n    print(x);\n}\n"
+        fmt("if x > 0 { console.log(x); }"),
+        "if x > 0 {\n    console.log(x);\n}\n"
     );
 }
 
 #[test]
 fn test_if_else() {
     assert_eq!(
-        fmt("if x > 0 { print(\"pos\"); } else { print(\"neg\"); }"),
-        "if x > 0 {\n    print(\"pos\");\n} else {\n    print(\"neg\");\n}\n"
+        fmt("if x > 0 { console.log(\"pos\"); } else { console.log(\"neg\"); }"),
+        "if x > 0 {\n    console.log(\"pos\");\n} else {\n    console.log(\"neg\");\n}\n"
     );
 }
 
 #[test]
 fn test_nested_if() {
     assert_eq!(
-        fmt("if a { if b { print(1); } }"),
-        "if a {\n    if b {\n        print(1);\n    }\n}\n"
+        fmt("if a { if b { console.log(1); } }"),
+        "if a {\n    if b {\n        console.log(1);\n    }\n}\n"
     );
 }
 
@@ -202,8 +202,8 @@ fn test_while_loop() {
 #[test]
 fn test_for_in_loop() {
     assert_eq!(
-        fmt("for item in items { print(item); }"),
-        "for item in items {\n    print(item);\n}\n"
+        fmt("for item in items { console.log(item); }"),
+        "for item in items {\n    console.log(item);\n}\n"
     );
 }
 
@@ -241,7 +241,7 @@ fn test_grouped_expression() {
 
 #[test]
 fn test_function_call() {
-    assert_eq!(fmt("print(\"hello\");"), "print(\"hello\");\n");
+    assert_eq!(fmt("console.log(\"hello\");"), "console.log(\"hello\");\n");
 }
 
 #[test]
@@ -272,8 +272,8 @@ fn test_method_chain() {
 #[test]
 fn test_try_expression() {
     assert_eq!(
-        fmt("fn foo() -> void { let x = bar()?; }"),
-        "fn foo() -> void {\n    let x = bar()?;\n}\n"
+        fmt("fn foo(): void { let x = bar()?; }"),
+        "fn foo(): void {\n    let x = bar()?;\n}\n"
     );
 }
 
@@ -321,8 +321,8 @@ fn test_match_constructor_patterns() {
 fn test_indent_2_spaces() {
     let config = FormatConfig::default().with_indent_size(2);
     assert_eq!(
-        fmt_with("if true { print(1); }", &config),
-        "if true {\n  print(1);\n}\n"
+        fmt_with("if true { console.log(1); }", &config),
+        "if true {\n  console.log(1);\n}\n"
     );
 }
 
@@ -330,8 +330,8 @@ fn test_indent_2_spaces() {
 fn test_indent_8_spaces() {
     let config = FormatConfig::default().with_indent_size(8);
     assert_eq!(
-        fmt_with("if true { print(1); }", &config),
-        "if true {\n        print(1);\n}\n"
+        fmt_with("if true { console.log(1); }", &config),
+        "if true {\n        console.log(1);\n}\n"
     );
 }
 
@@ -350,7 +350,7 @@ fn test_no_trailing_commas() {
 fn test_long_function_params_break() {
     let config = FormatConfig::default().with_max_width(40);
     let result = fmt_with(
-        "fn long_function_name(first_parameter: string, second_parameter: number) -> void {}",
+        "fn long_function_name(first_parameter: string, second_parameter: number): void {}",
         &config,
     );
     assert!(result.contains('\n'));
@@ -361,8 +361,8 @@ fn test_long_function_params_break() {
 #[test]
 fn test_short_params_no_break() {
     assert_eq!(
-        fmt("fn f(a: number) -> void {}"),
-        "fn f(a: number) -> void {}\n"
+        fmt("fn f(a: number): void {}"),
+        "fn f(a: number): void {}\n"
     );
 }
 
@@ -387,8 +387,8 @@ fn test_import_namespace() {
 #[test]
 fn test_export_function() {
     assert_eq!(
-        fmt("export fn add(a: number, b: number) -> number { return a + b; }"),
-        "export fn add(a: number, b: number) -> number {\n    return a + b;\n}\n"
+        fmt("export fn add(a: number, b: number): number { return a + b; }"),
+        "export fn add(a: number, b: number): number {\n    return a + b;\n}\n"
     );
 }
 
@@ -401,7 +401,7 @@ fn test_export_variable() {
 
 #[test]
 fn test_blank_line_between_functions() {
-    let result = fmt("fn a() -> void {}\nfn b() -> void {}");
+    let result = fmt("fn a(): void {}\nfn b(): void {}");
     assert!(
         result.contains("}\n\nfn b"),
         "Should have blank line between functions, got:\n{}",
@@ -447,11 +447,11 @@ fn test_check_formatted_needs_formatting() {
 
 #[rstest]
 #[case("let x = 5;")]
-#[case("fn foo(a: number, b: string) -> number { return a; }")]
-#[case("if true { print(1); } else { print(2); }")]
+#[case("fn foo(a: number, b: string): number { return a; }")]
+#[case("if true { console.log(1); } else { console.log(2); }")]
 #[case("while x > 0 { x -= 1; }")]
 // C-style for loop case removed (H-034)
-#[case("for item in items { print(item); }")]
+#[case("for item in items { console.log(item); }")]
 #[case("let a = [1, 2, 3];")]
 #[case("import { foo } from \"./bar\";")]
 #[case("let r = match x { 1 => \"one\", _ => \"other\", };")]
@@ -469,16 +469,16 @@ fn test_idempotency(#[case] source: &str) {
 fn test_idempotency_complex_program() {
     let source = r#"import { math } from "./math";
 
-fn fibonacci(n: number) -> number {
+fn fibonacci(n: number): number {
     if n <= 1 {
         return n;
     }
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-fn main() -> void {
+fn main(): void {
     let result = fibonacci(10);
-    print(result);
+    console.log(result);
 }"#;
     let first = fmt(source);
     let second = fmt(&first);
@@ -505,20 +505,20 @@ fn test_styles_converge(#[case] input: &str, #[case] expected: &str) {
 #[test]
 fn test_deep_nesting() {
     assert_eq!(
-        fmt("if a { if b { if c { print(1); } } }"),
-        "if a {\n    if b {\n        if c {\n            print(1);\n        }\n    }\n}\n"
+        fmt("if a { if b { if c { console.log(1); } } }"),
+        "if a {\n    if b {\n        if c {\n            console.log(1);\n        }\n    }\n}\n"
     );
 }
 
 #[test]
 fn test_function_with_loops_and_conditions() {
     let result = fmt(
-        "fn process(items: string) -> void { for item in items { if item > 0 { print(item); } } }",
+        "fn process(items: string): void { for item in items { if item > 0 { console.log(item); } } }",
     );
     assert!(result.contains("fn process"));
     assert!(result.contains("    for item in items"));
     assert!(result.contains("        if item > 0"));
-    assert!(result.contains("            print(item)"));
+    assert!(result.contains("            console.log(item)"));
 }
 
 // === Number Formatting ===
@@ -544,10 +544,10 @@ fn test_expr_statement() {
 
 #[rstest]
 #[case("let x = 5;")]
-#[case("fn foo(a: number) -> number { return a + 1; }")]
-#[case("if true { print(1); } else { print(2); }")]
+#[case("fn foo(a: number): number { return a + 1; }")]
+#[case("if true { console.log(1); } else { console.log(2); }")]
 // C-style for loop case removed (H-034)
-#[case("for item in [1, 2, 3] { print(item); }")]
+#[case("for item in [1, 2, 3] { console.log(item); }")]
 #[case("let r = match x { 1 => true, _ => false, };")]
 fn test_formatted_output_parses(#[case] source: &str) {
     let formatted = fmt(source);
@@ -584,7 +584,7 @@ fn test_multiple_statements() {
 
 #[test]
 fn test_nested_function_call() {
-    assert_eq!(fmt("print(add(1, 2));"), "print(add(1, 2));\n");
+    assert_eq!(fmt("console.log(add(1, 2));"), "console.log(add(1, 2));\n");
 }
 
 #[test]
@@ -627,8 +627,8 @@ fn test_multiple_imports() {
 #[test]
 fn test_function_returning_function_type() {
     assert_eq!(
-        fmt("fn make() -> (number) -> number { return add; }"),
-        "fn make() -> fn(number) -> number {\n    return add;\n}\n"
+        fmt("fn make(): (number): number { return add; }"),
+        "fn make(): (number): number {\n    return add;\n}\n"
     );
 }
 

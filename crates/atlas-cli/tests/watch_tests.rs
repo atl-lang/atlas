@@ -116,7 +116,7 @@ fn test_run_simple_expression() {
 
 #[test]
 fn test_run_with_print() {
-    let file = temp_atlas_file("print(\"hello\");");
+    let file = temp_atlas_file("console.log(\"hello\");");
     atlas()
         .args(["run", file.path().to_str().unwrap()])
         .assert()
@@ -263,7 +263,7 @@ fn test_run_value_result_printed() {
 
 #[test]
 fn test_run_function_definition_no_output() {
-    let file = temp_atlas_file("fn greet() -> void { print(\"hi\"); }");
+    let file = temp_atlas_file("fn greet(): void { console.log(\"hi\"); }");
     atlas()
         .args(["run", file.path().to_str().unwrap()])
         .assert()
@@ -310,7 +310,7 @@ fn test_run_type_error_message() {
 #[test]
 fn test_run_with_functions() {
     let code = r#"
-fn add(borrow a: number, borrow b: number) -> number {
+fn add(borrow a: number, borrow b: number): number {
     return a + b;
 }
 add(2, 3);

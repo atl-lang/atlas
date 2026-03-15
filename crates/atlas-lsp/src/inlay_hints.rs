@@ -711,6 +711,7 @@ mod tests {
                 span: Span::dummy(),
             })),
             args: vec![],
+            type_args: vec![],
             span: Span::dummy(),
         });
         assert!(!is_obvious_type(&call));

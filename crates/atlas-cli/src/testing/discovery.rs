@@ -187,15 +187,15 @@ mod tests {
         write!(
             file,
             r#"
-fn test_addition() -> void {{
+fn test_addition(): void {{
     assertEqual(2 + 2, 4);
 }}
 
-fn test_subtraction() -> void {{
+fn test_subtraction(): void {{
     assertEqual(5 - 3, 2);
 }}
 
-fn helper() -> void {{
+fn helper(): void {{
     // Not a test
 }}
 "#
@@ -214,11 +214,11 @@ fn helper() -> void {{
         write!(
             file,
             r#"
-fn test_with_param(borrow x: number) -> void {{
+fn test_with_param(borrow x: number): void {{
     // Should be skipped
 }}
 
-fn test_no_param() -> void {{
+fn test_no_param(): void {{
     assert(true, "ok");
 }}
 "#
@@ -267,7 +267,7 @@ fn test_no_param() -> void {{
         fs::write(
             &test1_path,
             r#"
-fn test_add() -> void {
+fn test_add(): void {
     assertEqual(1 + 1, 2);
 }
 "#,
@@ -278,7 +278,7 @@ fn test_add() -> void {
         fs::write(
             &test2_path,
             r#"
-fn test_concat() -> void {
+fn test_concat(): void {
     assertEqual("a" + "b", "ab");
 }
 "#,
@@ -289,7 +289,7 @@ fn test_concat() -> void {
         fs::write(
             &non_test_path,
             r#"
-fn test_should_be_ignored() -> void {
+fn test_should_be_ignored(): void {
     assert(true, "ignored");
 }
 "#,

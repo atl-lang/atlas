@@ -139,6 +139,7 @@ fn test_install_git_dep_lockfile_has_correct_source() {
         LockedSource::Git {
             url: locked_url,
             rev,
+            ..
         } => {
             assert_eq!(locked_url, &url);
             assert!(!rev.is_empty(), "rev should be a non-empty commit hash");

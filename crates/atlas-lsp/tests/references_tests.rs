@@ -26,7 +26,7 @@ async fn test_find_references_local_variable() {
 
     let uri = test_uri("test");
     let source = r#"
-fn example() -> number {
+fn example(): number {
     let mut x: number = 5;
     let mut y: number = x + 1;
     return x + y;
@@ -80,7 +80,7 @@ async fn test_find_references_function_parameter() {
 
     let uri = test_uri("test");
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(a: number, b: number): number {
     return a + b;
 }
 "#;
@@ -130,7 +130,7 @@ async fn test_find_references_with_definition() {
 
     let uri = test_uri("test");
     let source = r#"
-fn example() -> number {
+fn example(): number {
     let mut x: number = 5;
     return x + 1;
 }
@@ -182,7 +182,7 @@ async fn test_find_references_excluding_definition() {
 
     let uri = test_uri("test");
     let source = r#"
-fn example() -> number {
+fn example(): number {
     let mut x: number = 5;
     return x + 1;
 }
@@ -233,7 +233,7 @@ async fn test_references_to_shadowed_variables() {
 
     let uri = test_uri("test");
     let source = r#"
-fn example() -> number {
+fn example(): number {
     let mut x: number = 5;
     let mut y: number = x;
     {
@@ -287,7 +287,7 @@ async fn test_no_references_for_undefined_symbol() {
 
     let uri = test_uri("test");
     let source = r#"
-fn example() -> number {
+fn example(): number {
     return 42;
 }
 "#;
@@ -331,7 +331,7 @@ async fn test_references_in_nested_scopes() {
 
     let uri = test_uri("test");
     let source = r#"
-fn example() -> number {
+fn example(): number {
     let mut x: number = 5;
     if (x > 0) {
         let mut y: number = x + 1;
@@ -393,13 +393,13 @@ async fn test_references_across_multiple_files() {
     let uri2 = test_uri("main");
 
     let source1 = r#"
-fn helper(x: number) -> number {
+fn helper(x: number): number {
     return x * 2;
 }
 "#;
 
     let source2 = r#"
-fn main() -> number {
+fn main(): number {
     let mut result: number = helper(5);
     return result;
 }
@@ -464,7 +464,7 @@ async fn test_references_to_function_across_files() {
                 uri: uri1,
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "fn util() -> number { return 1; }".to_string(),
+                text: "fn util(): number { return 1; }".to_string(),
             },
         })
         .await;
@@ -475,7 +475,7 @@ async fn test_references_to_function_across_files() {
                 uri: uri2.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "fn app() -> number { return util(); }".to_string(),
+                text: "fn app(): number { return util(); }".to_string(),
             },
         })
         .await;
@@ -511,7 +511,7 @@ async fn test_index_updates_on_file_change() {
 
     let uri = test_uri("test");
     let initial_source = r#"
-fn example() -> number {
+fn example(): number {
     let mut x: number = 5;
     return x;
 }
@@ -551,7 +551,7 @@ fn example() -> number {
 
     // Update document with more references
     let updated_source = r#"
-fn example() -> number {
+fn example(): number {
     let mut x: number = 5;
     let mut y: number = x + 1;
     return x + y;
@@ -593,7 +593,7 @@ async fn test_index_cleared_on_file_close() {
 
     let uri = test_uri("test");
     let source = r#"
-fn example() -> number {
+fn example(): number {
     let mut x: number = 5;
     return x;
 }
@@ -652,13 +652,13 @@ async fn test_multiple_files_in_index() {
     let uri2 = test_uri("file2");
 
     let source1 = r#"
-fn helper() -> number {
+fn helper(): number {
     return 42;
 }
 "#;
 
     let source2 = r#"
-fn main() -> number {
+fn main(): number {
     let mut x: number = helper();
     return x;
 }
@@ -889,7 +889,7 @@ async fn test_references_at_document_start() {
     let server = service.inner();
 
     let uri = test_uri("test");
-    let source = r#"fn add(a: number) -> number {
+    let source = r#"fn add(a: number): number {
     return a;
 }"#;
 
@@ -972,10 +972,10 @@ async fn test_references_to_for_in_variable() {
 
     let uri = test_uri("test");
     let source = r#"
-fn example() -> number {
+fn example(): number {
     let mut arr: array = [1, 2, 3];
     for (item in arr) {
-        print(item);
+        console.log(item);
     }
     return 0;
 }
@@ -1020,11 +1020,11 @@ async fn test_references_in_function_call() {
 
     let uri = test_uri("test");
     let source = r#"
-fn square(x: number) -> number {
+fn square(x: number): number {
     return x * x;
 }
 
-fn main() -> number {
+fn main(): number {
     return square(5);
 }
 "#;
@@ -1070,7 +1070,7 @@ async fn test_references_in_binary_expression() {
 
     let uri = test_uri("test");
     let source = r#"
-fn compute() -> number {
+fn compute(): number {
     let mut a: number = 10;
     let mut b: number = a + a * 2;
     return b;
@@ -1118,7 +1118,7 @@ async fn test_references_with_assignment() {
 
     let uri = test_uri("test");
     let source = r#"
-fn update() -> number {
+fn update(): number {
     let mut counter: number = 0;
     counter = counter + 1;
     counter = counter + 1;
@@ -1166,7 +1166,7 @@ async fn test_references_position_accuracy() {
     let server = service.inner();
 
     let uri = test_uri("test");
-    let source = "fn test() -> number { let mut x: number = 1; return x; }";
+    let source = "fn test(): number { let mut x: number = 1; return x; }";
 
     server
         .did_open(DidOpenTextDocumentParams {
@@ -1185,7 +1185,7 @@ async fn test_references_position_accuracy() {
             text_document: TextDocumentIdentifier { uri },
             position: Position {
                 line: 0,
-                character: 30, // "x" in let mut declaration
+                character: 28, // "x" in let mut declaration
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),

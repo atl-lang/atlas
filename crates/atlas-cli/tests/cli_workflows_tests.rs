@@ -31,7 +31,7 @@ mod compile_run_workflow {
     fn test_run_simple_program() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("hello.atl");
-        fs::write(&file, "print(\"Hello, World!\");").unwrap();
+        fs::write(&file, "console.log(\"Hello, World!\");").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.arg("run")
@@ -45,7 +45,7 @@ mod compile_run_workflow {
     fn test_run_with_alias() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("hello.atl");
-        fs::write(&file, "print(42);").unwrap();
+        fs::write(&file, "console.log(42);").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.arg("r")
@@ -59,7 +59,7 @@ mod compile_run_workflow {
     fn test_run_arithmetic() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("math.atl");
-        fs::write(&file, "print(1 + 2 * 3);").unwrap();
+        fs::write(&file, "console.log(1 + 2 * 3);").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.arg("run")
@@ -73,7 +73,7 @@ mod compile_run_workflow {
     fn test_run_with_variables() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("vars.atl");
-        fs::write(&file, "let x = 10;\nlet y = 20;\nprint(x + y);").unwrap();
+        fs::write(&file, "let x = 10;\nlet y = 20;\nconsole.log(x + y);").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.arg("run")
@@ -90,10 +90,10 @@ mod compile_run_workflow {
         fs::write(
             &file,
             r#"
-fn add(borrow a: number, borrow b: number) -> number {
+fn add(borrow a: number, borrow b: number): number {
     return a + b;
 }
-print(add(3, 4));
+console.log(add(3, 4));
 "#,
         )
         .unwrap();
@@ -141,32 +141,22 @@ mod check_workflow {
         fs::write(&file, "let x: number = 42;").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.arg("check").arg(&file).assert().success();
+        cmd.arg("run").arg(&file).assert().success();
     }
 
     #[test]
-    fn test_check_with_alias() {
+    fn test_run_does_execute() {
         let dir = TempDir::new().unwrap();
-        let file = dir.path().join("valid.atl");
-        fs::write(&file, "let x = 42;").unwrap();
+        let file = dir.path().join("run.atl");
+        // `atlas run` executes the code (unlike the deprecated `atlas check`)
+        fs::write(&file, "console.log(\"should print\");").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.arg("c").arg(&file).assert().success();
-    }
+        let output = cmd.arg("run").arg(&file).output().unwrap();
 
-    #[test]
-    fn test_check_without_running() {
-        let dir = TempDir::new().unwrap();
-        let file = dir.path().join("norun.atl");
-        // Even with side effects, check shouldn't run the code
-        fs::write(&file, "print(\"should not print\");").unwrap();
-
-        let mut cmd = atlas_cmd();
-        let output = cmd.arg("check").arg(&file).output().unwrap();
-
-        // Should succeed but NOT print the message
+        // Should succeed AND print the message
         assert!(output.status.success());
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("should not print"));
+        assert!(String::from_utf8_lossy(&output.stdout).contains("should print"));
     }
 
     #[test]
@@ -180,13 +170,13 @@ mod check_workflow {
     }
 
     #[test]
-    fn test_check_json_output() {
+    fn test_run_json_output() {
         let dir = TempDir::new().unwrap();
-        let file = dir.path().join("checkjson.atl");
+        let file = dir.path().join("runjson.atl");
         fs::write(&file, "let x = 1;").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.args(["check", "--json"]).arg(&file).assert().success();
+        cmd.args(["run", "--json"]).arg(&file).assert().success();
     }
 }
 
@@ -461,7 +451,7 @@ mod profile_workflow {
     fn test_profile_simple_program() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("perf.atl");
-        fs::write(&file, "let x = 1; let y = 2; print(x + y);").unwrap();
+        fs::write(&file, "let x = 1; let y = 2; console.log(x + y);").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.arg("profile").arg(&file).assert().success();
@@ -471,7 +461,7 @@ mod profile_workflow {
     fn test_profile_summary_mode() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("perf.atl");
-        fs::write(&file, "print(1);").unwrap();
+        fs::write(&file, "console.log(1);").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.args(["profile", "--summary"])
@@ -484,7 +474,7 @@ mod profile_workflow {
     fn test_profile_custom_threshold() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("perf.atl");
-        fs::write(&file, "print(1);").unwrap();
+        fs::write(&file, "console.log(1);").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.args(["profile", "--threshold=5.0"])
@@ -498,7 +488,7 @@ mod profile_workflow {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("perf.atl");
         let output = dir.path().join("report.txt");
-        fs::write(&file, "print(1);").unwrap();
+        fs::write(&file, "console.log(1);").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.args(["profile", "-o"])
@@ -520,11 +510,11 @@ mod multi_command_workflow {
     fn test_check_then_run() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("test.atl");
-        fs::write(&file, "print(42);").unwrap();
+        fs::write(&file, "console.log(42);").unwrap();
 
-        // First check
+        // First run (type-check + execute)
         let mut check_cmd = atlas_cmd();
-        check_cmd.arg("check").arg(&file).assert().success();
+        check_cmd.arg("run").arg(&file).assert().success();
 
         // Then run
         let mut run_cmd = atlas_cmd();
@@ -550,9 +540,9 @@ mod multi_command_workflow {
             .assert()
             .success();
 
-        // Then check
+        // Then run
         let mut check_cmd = atlas_cmd();
-        check_cmd.arg("check").arg(&file).assert().success();
+        check_cmd.arg("run").arg(&file).assert().success();
     }
 
     #[test]
@@ -602,7 +592,7 @@ mod edge_cases {
     fn test_unicode_in_strings() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("unicode.atl");
-        fs::write(&file, "print(\"Hello, 世界! 🎉\");").unwrap();
+        fs::write(&file, "console.log(\"Hello, 世界! 🎉\");").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.arg("run").arg(&file).assert().success();
@@ -612,7 +602,7 @@ mod edge_cases {
     fn test_deeply_nested_expressions() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("nested.atl");
-        fs::write(&file, "print(((((1 + 2) + 3) + 4) + 5));").unwrap();
+        fs::write(&file, "console.log(((((1 + 2) + 3) + 4) + 5));").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.arg("run")
@@ -628,7 +618,7 @@ mod edge_cases {
         let file = dir.path().join("longnames.atl");
         fs::write(
             &file,
-            "let this_is_a_very_long_variable_name_that_should_still_work = 42; print(this_is_a_very_long_variable_name_that_should_still_work);",
+            "let this_is_a_very_long_variable_name_that_should_still_work = 42; console.log(this_is_a_very_long_variable_name_that_should_still_work);",
         )
         .unwrap();
 
@@ -644,7 +634,7 @@ mod edge_cases {
     fn test_file_path_with_spaces() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("path with spaces.atl");
-        fs::write(&file, "print(123);").unwrap();
+        fs::write(&file, "console.log(123);").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.arg("run")
@@ -658,7 +648,7 @@ mod edge_cases {
     fn test_multiple_print_statements() {
         let dir = TempDir::new().unwrap();
         let file = dir.path().join("multi.atl");
-        fs::write(&file, "print(1);\nprint(2);\nprint(3);").unwrap();
+        fs::write(&file, "console.log(1);\nconsole.log(2);\nconsole.log(3);").unwrap();
 
         let mut cmd = atlas_cmd();
         cmd.arg("run")

@@ -27,7 +27,7 @@ path = "src/main.atlas"
     // Create simple main.atlas
     let source = r#"
 fn main() {
-    print("Hello, world!");
+    console.log("Hello, world!");
 }
 "#;
     fs::write(src_dir.join("main.atlas"), source).unwrap();

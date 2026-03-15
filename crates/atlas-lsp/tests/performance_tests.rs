@@ -38,7 +38,7 @@ fn test_batch_indexing_speedup() {
     let mut documents = Vec::new();
     for i in 0..20 {
         let uri = test_uri(&format!("file{}", i));
-        let source = format!("fn function_{}() -> number {{ return {}; }}", i, i);
+        let source = format!("fn function_{}(): number {{ return {}; }}", i, i);
         let ast = parse_source(&source);
         documents.push((uri, source, ast));
     }
@@ -64,7 +64,7 @@ fn test_incremental_update_performance() {
     let mut index = WorkspaceIndex::new();
 
     let uri = test_uri("test");
-    let source1 = "fn function1() -> number { return 1; }";
+    let source1 = "fn function1(): number { return 1; }";
     let ast1 = parse_source(source1);
 
     // Initial index
@@ -74,11 +74,11 @@ fn test_incremental_update_performance() {
 
     // Update with larger document
     let source2 = r#"
-fn function1() -> number { return 1; }
-fn function2() -> number { return 2; }
-fn function3() -> number { return 3; }
-fn function4() -> number { return 4; }
-fn function5() -> number { return 5; }
+fn function1(): number { return 1; }
+fn function2(): number { return 2; }
+fn function3(): number { return 3; }
+fn function4(): number { return 4; }
+fn function5(): number { return 5; }
 "#;
     let ast2 = parse_source(source2);
 
@@ -105,7 +105,7 @@ fn test_query_cache_effectiveness() {
     for i in 0..50 {
         let uri = test_uri(&format!("file{}", i));
         let source = format!(
-            "fn function_{}() -> number {{ return {}; }}\nfn helper_{}() -> number {{ return {}; }}",
+            "fn function_{}(): number {{ return {}; }}\nfn helper_{}(): number {{ return {}; }}",
             i, i, i, i
         );
         let ast = parse_source(&source);
@@ -155,7 +155,7 @@ fn test_memory_usage_stays_bounded() {
     // Try to index more symbols than the limit
     for i in 0..150 {
         let uri = test_uri(&format!("file{}", i));
-        let source = format!("fn function_{}() -> number {{ return {}; }}", i, i);
+        let source = format!("fn function_{}(): number {{ return {}; }}", i, i);
         let ast = parse_source(&source);
         index.index_document(uri, &source, &ast);
     }
@@ -174,10 +174,10 @@ fn test_kind_filtering_performance() {
     // Index mixed symbol types
     let uri = test_uri("test");
     let source = r#"
-fn myFunction() -> number { return 1; }
+fn myFunction(): number { return 1; }
 let myVariable: number = 2;
 type MyType = number;
-fn anotherFunction() -> number { return 3; }
+fn anotherFunction(): number { return 3; }
 let anotherVariable: number = 4;
 "#;
     let ast = parse_source(source);
@@ -223,7 +223,7 @@ fn test_large_workspace_performance() {
         let mut source = String::new();
         for j in 0..10 {
             source.push_str(&format!(
-                "fn function_{}_{} () -> number {{ return {}; }}\n",
+                "fn function_{}_{} (): number {{ return {}; }}\n",
                 i, j, j
             ));
         }
@@ -250,7 +250,7 @@ fn test_cache_invalidation_on_update() {
     let mut index = WorkspaceIndex::new();
 
     let uri = test_uri("test");
-    let source1 = "fn oldFunction() -> number { return 1; }";
+    let source1 = "fn oldFunction(): number { return 1; }";
     let ast1 = parse_source(source1);
 
     index.index_document(uri.clone(), source1, &ast1);
@@ -260,7 +260,7 @@ fn test_cache_invalidation_on_update() {
     assert_eq!(results1.len(), 1);
 
     // Update document
-    let source2 = "fn newFunction() -> number { return 2; }";
+    let source2 = "fn newFunction(): number { return 2; }";
     let ast2 = parse_source(source2);
     index.index_document(uri, source2, &ast2);
 
@@ -281,11 +281,11 @@ fn test_relevance_ranking_consistency() {
 
     let uri = test_uri("test");
     let source = r#"
-fn testFunction() -> number { return 1; }
-fn myTestHelper() -> number { return 2; }
-fn someTestUtility() -> number { return 3; }
-fn anotherTest() -> number { return 4; }
-fn testing() -> number { return 5; }
+fn testFunction(): number { return 1; }
+fn myTestHelper(): number { return 2; }
+fn someTestUtility(): number { return 3; }
+fn anotherTest(): number { return 4; }
+fn testing(): number { return 5; }
 "#;
     let ast = parse_source(source);
     index.index_document(uri, source, &ast);
@@ -316,7 +316,7 @@ fn test_empty_query_performance() {
     // Index multiple symbols
     for i in 0..50 {
         let uri = test_uri(&format!("file{}", i));
-        let source = format!("fn function_{}() -> number {{ return {}; }}", i, i);
+        let source = format!("fn function_{}(): number {{ return {}; }}", i, i);
         let ast = parse_source(&source);
         index.index_document(uri, &source, &ast);
     }

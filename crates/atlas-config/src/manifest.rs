@@ -231,6 +231,7 @@ test-utils = "0.1"
                 license: None,
                 repository: None,
             },
+            entry: EntryConfig::default(),
             dependencies: HashMap::new(),
             dev_dependencies: HashMap::new(),
         };
@@ -250,6 +251,7 @@ test-utils = "0.1"
                 license: None,
                 repository: None,
             },
+            entry: EntryConfig::default(),
             dependencies: HashMap::new(),
             dev_dependencies: HashMap::new(),
         };

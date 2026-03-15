@@ -113,7 +113,7 @@ fn test_fmt_quiet_output() {
 
 #[test]
 fn test_fmt_indent_size_flag() {
-    let file = temp_atlas_file("fn test() -> void {\nlet x = 1;\n}");
+    let file = temp_atlas_file("fn test(): void {\nlet x = 1;\n}");
     atlas()
         .args(["fmt", "--indent-size", "2", file.path().to_str().unwrap()])
         .assert()
@@ -395,7 +395,7 @@ fn test_fmt_whitespace_only() {
 #[test]
 fn test_fmt_complex_code() {
     // Complex code - test that formatting works (may need reformatting)
-    let code = r#"fn factorial(borrow n: number) -> number {
+    let code = r#"fn factorial(borrow n: number): number {
     if n <= 1 {
         return 1;
     }
@@ -428,7 +428,7 @@ fn test_fmt_preserves_functionality() {
 
     // File should still be valid Atlas code
     atlas()
-        .args(["check", path.to_str().unwrap()])
+        .args(["run", path.to_str().unwrap()])
         .assert()
         .success();
 }

@@ -179,7 +179,7 @@ fn test_extract_function_with_default_name() {
 
 #[test]
 fn test_extract_function_generates_unique_name() {
-    let source = "fn extracted_function() -> void {}\nlet x = 1;";
+    let source = "fn extracted_function(): void {}\nlet x = 1;";
     let program = parse_program(source);
     let uri = test_uri();
 
@@ -268,7 +268,7 @@ fn test_extract_function_captures_variables() {
 
 #[test]
 fn test_extract_function_inferrs_return_type() {
-    let source = "fn outer() -> number {\nreturn 1;\n}";
+    let source = "fn outer(): number {\nreturn 1;\n}";
     let program = parse_program(source);
     let uri = test_uri();
 
@@ -293,8 +293,8 @@ fn test_extract_function_inferrs_return_type() {
     let mut has_return_type = false;
 
     for edit in edits {
-        if edit.new_text.contains("fn compute() -> number")
-            || edit.new_text.contains("fn compute() -> number {")
+        if edit.new_text.contains("fn compute(): number")
+            || edit.new_text.contains("fn compute(): number {")
         {
             has_return_type = true;
         }
@@ -359,7 +359,7 @@ fn test_inline_variable_multiple_usages() {
 
 #[test]
 fn test_inline_function_not_implemented() {
-    let source = "fn foo() -> number { return 42; }\nlet x = foo();";
+    let source = "fn foo(): number { return 42; }\nlet x = foo();";
     let program = parse_program(source);
     let uri = test_uri();
 
@@ -409,7 +409,7 @@ fn test_rename_variable() {
 
 #[test]
 fn test_rename_function() {
-    let source = "fn oldFunc() -> number { return 42; }\nlet x = oldFunc();";
+    let source = "fn oldFunc(): number { return 42; }\nlet x = oldFunc();";
     let program = parse_program(source);
     let uri = test_uri();
 

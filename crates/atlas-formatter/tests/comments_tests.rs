@@ -145,7 +145,7 @@ fn test_block_comment_preserved() {
 #[test]
 fn test_doc_comment_on_function() {
     let result =
-        fmt("/// Adds two numbers\nfn add(a: number, b: number) -> number { return a + b; }");
+        fmt("/// Adds two numbers\nfn add(a: number, b: number): number { return a + b; }");
     assert!(
         result.contains("/// Adds two numbers"),
         "Doc comment preserved, got: {}",
@@ -191,7 +191,7 @@ fn test_mixed_comment_types() {
 
 #[test]
 fn test_comment_between_functions() {
-    let result = fmt("fn a() -> void {}\n// separator\nfn b() -> void {}");
+    let result = fmt("fn a(): void {}\n// separator\nfn b(): void {}");
     assert!(
         result.contains("// separator"),
         "Comment between functions preserved, got: {}",
@@ -201,7 +201,7 @@ fn test_comment_between_functions() {
 
 #[test]
 fn test_comment_before_if() {
-    let result = fmt("// check condition\nif x > 0 { print(x); }");
+    let result = fmt("// check condition\nif x > 0 { console.log(x); }");
     assert!(result.contains("// check condition"));
 }
 
@@ -250,7 +250,7 @@ fn test_multiple_trailing_and_leading() {
 
 #[test]
 fn test_comment_indented_in_block() {
-    let result = fmt("fn foo() -> void {\n// comment\nlet x = 5;\n}");
+    let result = fmt("fn foo(): void {\n// comment\nlet x = 5;\n}");
     assert!(
         result.contains("// comment"),
         "Comment should appear in output, got: {}",
@@ -264,7 +264,7 @@ fn test_comment_indented_in_block() {
 #[case("// comment\nlet x = 5;")]
 #[case("let x = 5; // inline")]
 #[case("/* block */\nlet x = 5;")]
-#[case("/// doc\nfn foo() -> void {}")]
+#[case("/// doc\nfn foo(): void {}")]
 #[case("// a\n// b\nlet x = 5;")]
 fn test_comment_idempotency(#[case] source: &str) {
     let first = fmt(source);
@@ -334,7 +334,7 @@ fn test_block_comment_single_line() {
 #[test]
 fn test_formatted_with_comments_parses() {
     let source =
-        "// header\nfn foo(x: number) -> number {\n    // body\n    return x + 1; // result\n}";
+        "// header\nfn foo(x: number): number {\n    // body\n    return x + 1; // result\n}";
     let formatted = fmt(source);
     let mut lexer = atlas_runtime::lexer::Lexer::new(&formatted);
     let (tokens, _) = lexer.tokenize();
@@ -352,7 +352,7 @@ fn test_formatted_with_comments_parses() {
 
 #[test]
 fn test_comment_after_block() {
-    let result = fmt("fn foo() -> void {} // after");
+    let result = fmt("fn foo(): void {} // after");
     assert!(
         result.contains("// after"),
         "Comment after block preserved, got: {}",
@@ -381,7 +381,7 @@ fn test_comment_span_preserved() {
 
 #[test]
 fn test_doc_comment_multiline() {
-    let result = fmt("/// Line 1\n/// Line 2\nfn foo() -> void {}");
+    let result = fmt("/// Line 1\n/// Line 2\nfn foo(): void {}");
     assert!(result.contains("/// Line 1"));
     assert!(result.contains("/// Line 2"));
 }

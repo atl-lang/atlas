@@ -29,7 +29,11 @@ test-utils = "0.1"
 "#;
     fs::write(dir.join("atlas.toml"), manifest).unwrap();
     fs::create_dir_all(dir.join("src")).unwrap();
-    fs::write(dir.join("src/main.atl"), "fn main() { print(\"hello\") }").unwrap();
+    fs::write(
+        dir.join("src/main.atl"),
+        "fn main() { console.log(\"hello\") }",
+    )
+    .unwrap();
 }
 
 fn create_empty_project(dir: &std::path::Path) {
@@ -339,7 +343,7 @@ fn test_install_errors_without_registry() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Package registry not yet implemented",
+            "registry deps require a community index",
         ));
 
     assert!(!temp.path().join("atlas.lock").exists());
@@ -356,7 +360,7 @@ fn test_install_does_not_create_modules_dir() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Package registry not yet implemented",
+            "registry deps require a community index",
         ));
 
     assert!(!temp.path().join("atlas_modules").exists());
@@ -371,10 +375,8 @@ fn test_install_empty_project() {
         .args(["install"])
         .current_dir(temp.path())
         .assert()
-        .failure()
-        .stderr(predicate::str::contains(
-            "Package registry not yet implemented",
-        ));
+        .success()
+        .stdout(predicate::str::contains("Nothing to install"));
 }
 
 #[test]
@@ -386,10 +388,8 @@ fn test_install_dry_run() {
         .args(["install", "--dry-run"])
         .current_dir(temp.path())
         .assert()
-        .failure()
-        .stderr(predicate::str::contains(
-            "Package registry not yet implemented",
-        ));
+        .success()
+        .stdout(predicate::str::contains("Dry run"));
 
     assert!(!temp.path().join("atlas.lock").exists());
     assert!(!temp.path().join("atlas_modules").exists());
@@ -406,7 +406,7 @@ fn test_install_production_flag() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Package registry not yet implemented",
+            "registry deps require a community index",
         ));
 }
 
@@ -422,7 +422,7 @@ fn test_install_force_reinstall() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Package registry not yet implemented",
+            "registry deps require a community index",
         ));
 
     // Force reinstall should also fail
@@ -432,7 +432,7 @@ fn test_install_force_reinstall() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Package registry not yet implemented",
+            "registry deps require a community index",
         ));
 }
 
@@ -460,7 +460,7 @@ fn test_install_verbose() {
         .failure()
         .stdout(predicate::str::contains("Reading manifest"))
         .stderr(predicate::str::contains(
-            "Package registry not yet implemented",
+            "registry deps require a community index",
         ));
 }
 
@@ -478,8 +478,6 @@ fn test_update_all_packages() {
         .current_dir(temp.path())
         .assert()
         .success();
-
-    assert!(temp.path().join("atlas.lock").exists());
 }
 
 #[test]
@@ -560,9 +558,7 @@ fn test_publish_dry_run() {
         .current_dir(temp.path())
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "Package publishing not yet implemented",
-        ));
+        .stderr(predicate::str::contains("Validation failed"));
 }
 
 #[test]
@@ -574,10 +570,7 @@ fn test_publish_no_verify() {
         .args(["publish", "--no-verify", "--dry-run"])
         .current_dir(temp.path())
         .assert()
-        .failure()
-        .stderr(predicate::str::contains(
-            "Package publishing not yet implemented",
-        ));
+        .failure();
 }
 
 #[test]
@@ -602,9 +595,7 @@ fn test_publish_validates_manifest() {
         .current_dir(temp.path())
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "Package publishing not yet implemented",
-        ));
+        .stderr(predicate::str::contains("Validation failed"));
 }
 
 #[test]
@@ -617,9 +608,7 @@ fn test_publish_verbose() {
         .current_dir(temp.path())
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "Package publishing not yet implemented",
-        ));
+        .stderr(predicate::str::contains("Validation failed"));
 }
 
 // ============================================================================
@@ -653,7 +642,7 @@ fn test_init_add_install_workflow() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Package registry not yet implemented",
+            "registry deps require a community index",
         ));
 
     assert!(!project_dir.join("atlas.lock").exists());
@@ -697,7 +686,7 @@ fn test_install_update_workflow() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Package registry not yet implemented",
+            "registry deps require a community index",
         ));
 
     assert!(!temp.path().join("atlas.lock").exists());

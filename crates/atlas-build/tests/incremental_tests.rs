@@ -55,14 +55,14 @@ fn make_builder(path: &str) -> Builder {
 }
 
 fn simple_main() -> &'static str {
-    r#"fn main() -> void {
+    r#"fn main(): void {
     let x: number = 42;
-    print(x);
+    console.log(x);
 }"#
 }
 
 fn simple_lib() -> &'static str {
-    r#"export fn helper() -> number {
+    r#"export fn helper(): number {
     return 10;
 }"#
 }
@@ -103,7 +103,7 @@ fn test_initial_build_three_files() {
         ("src/lib.atlas", simple_lib()),
         (
             "src/utils.atlas",
-            r#"export fn mul(borrow a: number, borrow b: number) -> number { return a * b; }"#,
+            r#"export fn mul(borrow a: number, borrow b: number): number { return a * b; }"#,
         ),
     ]);
     let mut builder = make_builder(&path);
@@ -145,7 +145,7 @@ fn test_change_one_file_rebuilds() {
     thread::sleep(Duration::from_millis(10));
     fs::write(
         temp.path().join("src/main.atlas"),
-        r#"fn main() -> void { let x: number = 43; print(x); }"#,
+        r#"fn main(): void { let x: number = 43; console.log(x); }"#,
     )
     .unwrap();
 
@@ -165,7 +165,7 @@ fn test_change_lib_not_main() {
     thread::sleep(Duration::from_millis(10));
     fs::write(
         temp.path().join("src/lib.atlas"),
-        r#"export fn helper() -> number { return 20; }"#,
+        r#"export fn helper(): number { return 20; }"#,
     )
     .unwrap();
 
@@ -349,7 +349,7 @@ fn test_type_error_detected_incrementally() {
     thread::sleep(Duration::from_millis(10));
     fs::write(
         temp.path().join("src/main.atlas"),
-        r#"fn main() -> number { return "not a number"; }"#,
+        r#"fn main(): number { return "not a number"; }"#,
     )
     .unwrap();
 
@@ -788,7 +788,7 @@ fn test_incremental_build_with_errors() {
     thread::sleep(Duration::from_millis(10));
     fs::write(
         temp.path().join("src/main.atlas"),
-        r#"fn main() -> void { let x: number = // missing }"#,
+        r#"fn main(): void { let x: number = // missing }"#,
     )
     .unwrap();
 

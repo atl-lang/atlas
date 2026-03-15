@@ -140,11 +140,11 @@ async fn test_function_completions_from_document() {
     let uri = Url::parse("file:///test.atl").unwrap();
 
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(a: number, b: number): number {
     return a + b;
 }
 
-fn greet(name: string) -> string {
+fn greet(name: string): string {
     return name;
 }
 "#;
@@ -328,7 +328,7 @@ async fn test_completion_suggests_own_in_param_position() {
     let uri = Url::parse("file:///test.atl").unwrap();
 
     // Cursor is inside the parameter list after 'fn f('
-    let source = "fn f(own x: number) -> number { return x; }";
+    let source = "fn f(own x: number): number { return x; }";
     server
         .did_open(DidOpenTextDocumentParams {
             text_document: TextDocumentItem {
@@ -388,7 +388,7 @@ async fn test_completion_no_ownership_in_expression_position() {
     let uri = Url::parse("file:///test.atl").unwrap();
 
     // Cursor is in an expression, NOT in a parameter list
-    let source = "fn f() -> number { let x = 1; return x; }";
+    let source = "fn f(): number { let x = 1; return x; }";
     server
         .did_open(DidOpenTextDocumentParams {
             text_document: TextDocumentItem {
@@ -445,7 +445,7 @@ async fn test_function_completion_shows_ownership_in_params() {
 
     // Use two functions so there's valid top-level code — request completion from inside f
     let source =
-        "fn process(own data: number) -> number { return data; }\nfn f() -> number { return 1; }";
+        "fn process(own data: number): number { return data; }\nfn f(): number { return 1; }";
     server
         .did_open(DidOpenTextDocumentParams {
             text_document: TextDocumentItem {
@@ -520,7 +520,7 @@ async fn test_is_in_param_position_detection() {
 
     // Inside parameter list
     assert!(is_in_param_position(
-        "fn f(x: number) -> void { }",
+        "fn f(x: number): void { }",
         Position {
             line: 0,
             character: 6
@@ -529,7 +529,7 @@ async fn test_is_in_param_position_detection() {
 
     // After opening paren, multiple params
     assert!(is_in_param_position(
-        "fn process(own data: number, y: string) -> void { }",
+        "fn process(own data: number, y: string): void { }",
         Position {
             line: 0,
             character: 12
@@ -538,7 +538,7 @@ async fn test_is_in_param_position_detection() {
 
     // In function body — NOT param position
     assert!(!is_in_param_position(
-        "fn f() -> void { let x = 1; }",
+        "fn f(): void { let x = 1; }",
         Position {
             line: 0,
             character: 20
@@ -547,7 +547,7 @@ async fn test_is_in_param_position_detection() {
 
     // In a function call — NOT param position (no `fn` before `(`)
     assert!(!is_in_param_position(
-        "print(x);",
+        "console.log(x);",
         Position {
             line: 0,
             character: 7
@@ -768,7 +768,7 @@ async fn test_completion_method_stubs_in_impl_body() {
                 uri: uri.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "trait Display { fn display(self: Display) -> string; }\nimpl Display for number {\n    fn "
+                text: "trait Display { fn display(self: Display): string; }\nimpl Display for number {\n    fn "
                     .to_string(),
             },
         })
@@ -827,8 +827,9 @@ async fn test_completion_method_stubs_are_snippets() {
                 uri: uri.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "trait Math { fn double(self: Math) -> number; }\nimpl Math for number {\n    fn "
-                    .to_string(),
+                text:
+                    "trait Math { fn double(self: Math): number; }\nimpl Math for number {\n    fn "
+                        .to_string(),
             },
         })
         .await;

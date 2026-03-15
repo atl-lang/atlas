@@ -272,6 +272,7 @@ mod tests {
             source: LockedSource::Git {
                 url: "https://github.com/example/repo".to_string(),
                 rev: "abc123def456".to_string(),
+                tag: None,
             },
             checksum: None,
             dependencies: HashMap::new(),

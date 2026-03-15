@@ -1,6 +1,5 @@
 ---
 source: crates/atlas-cli/tests/ast_dump_tests.rs
-assertion_line: 48
 expression: json
 ---
 {
@@ -16,6 +15,7 @@ expression: json
             "file": "<test>"
           }
         },
+        "visibility": "Private",
         "attributes": [],
         "is_async": false,
         "type_params": [],
@@ -42,6 +42,8 @@ expression: json
             "ownership": "Borrow",
             "ownership_explicit": true,
             "mutable": false,
+            "default_value": null,
+            "is_rest": false,
             "span": {
               "start": 8,
               "end": 24,
@@ -70,6 +72,8 @@ expression: json
             "ownership": "Borrow",
             "ownership_explicit": true,
             "mutable": false,
+            "default_value": null,
+            "is_rest": false,
             "span": {
               "start": 26,
               "end": 42,
@@ -81,8 +85,8 @@ expression: json
           "Named": [
             "number",
             {
-              "start": 47,
-              "end": 53,
+              "start": 45,
+              "end": 51,
               "file": "<test>"
             }
           ]
@@ -100,8 +104,8 @@ expression: json
                       "Identifier": {
                         "name": "a",
                         "span": {
-                          "start": 67,
-                          "end": 68,
+                          "start": 65,
+                          "end": 66,
                           "file": "<test>"
                         }
                       }
@@ -110,22 +114,22 @@ expression: json
                       "Identifier": {
                         "name": "b",
                         "span": {
-                          "start": 71,
-                          "end": 72,
+                          "start": 69,
+                          "end": 70,
                           "file": "<test>"
                         }
                       }
                     },
                     "span": {
-                      "start": 67,
-                      "end": 72,
+                      "start": 65,
+                      "end": 70,
                       "file": "<test>"
                     }
                   }
                 },
                 "span": {
-                  "start": 60,
-                  "end": 73,
+                  "start": 58,
+                  "end": 71,
                   "file": "<test>"
                 }
               }
@@ -133,14 +137,14 @@ expression: json
           ],
           "tail_expr": null,
           "span": {
-            "start": 54,
-            "end": 75,
+            "start": 52,
+            "end": 73,
             "file": "<test>"
           }
         },
         "span": {
           "start": 1,
-          "end": 75,
+          "end": 73,
           "file": "<test>"
         }
       }

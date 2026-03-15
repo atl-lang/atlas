@@ -23,11 +23,11 @@ async fn test_workspace_symbol_exact_match() {
 
     let uri = test_uri("test");
     let source = r#"
-fn calculateSum(a: number, b: number) -> number {
+fn calculateSum(a: number, b: number): number {
     return a + b;
 }
 
-fn calculateProduct(a: number, b: number) -> number {
+fn calculateProduct(a: number, b: number): number {
     return a * b;
 }
 "#;
@@ -65,11 +65,11 @@ async fn test_workspace_symbol_fuzzy_match() {
 
     let uri = test_uri("test");
     let source = r#"
-fn myVariableName() -> string {
+fn myVariableName(): string {
     return "test";
 }
 
-fn myValueNotice() -> number {
+fn myValueNotice(): number {
     return 42;
 }
 "#;
@@ -107,15 +107,15 @@ async fn test_workspace_symbol_prefix_match() {
 
     let uri = test_uri("test");
     let source = r#"
-fn getUserData() -> string {
+fn getUserData(): string {
     return "data";
 }
 
-fn getUserInfo() -> string {
+fn getUserInfo(): string {
     return "info";
 }
 
-fn getProductList() -> number {
+fn getProductList(): number {
     return 0;
 }
 "#;
@@ -156,7 +156,7 @@ async fn test_workspace_symbol_across_multiple_files() {
     // File 1
     let uri1 = test_uri("file1");
     let source1 = r#"
-fn helperFunction() -> number {
+fn helperFunction(): number {
     return 1;
 }
 "#;
@@ -175,7 +175,7 @@ fn helperFunction() -> number {
     // File 2
     let uri2 = test_uri("file2");
     let source2 = r#"
-fn helperUtility() -> number {
+fn helperUtility(): number {
     return 2;
 }
 "#;
@@ -214,15 +214,15 @@ async fn test_workspace_symbol_relevance_ranking() {
 
     let uri = test_uri("test");
     let source = r#"
-fn testFunction() -> number {
+fn testFunction(): number {
     return 1;
 }
 
-fn myTestHelper() -> number {
+fn myTestHelper(): number {
     return 2;
 }
 
-fn anotherTest() -> number {
+fn anotherTest(): number {
     return 3;
 }
 "#;
@@ -263,11 +263,11 @@ async fn test_workspace_symbol_partial_query() {
 
     let uri = test_uri("test");
     let source = r#"
-fn processData() -> number {
+fn processData(): number {
     return 1;
 }
 
-fn processRequest() -> number {
+fn processRequest(): number {
     return 2;
 }
 "#;
@@ -304,7 +304,7 @@ async fn test_workspace_symbol_no_results() {
 
     let uri = test_uri("test");
     let source = r#"
-fn someFunction() -> number {
+fn someFunction(): number {
     return 1;
 }
 "#;
@@ -347,7 +347,7 @@ async fn test_workspace_symbol_large_workspace() {
         // Add 10 functions per file
         for j in 0..10 {
             source.push_str(&format!(
-                "fn function_{}_{} () -> number {{ return {}; }}\n",
+                "fn function_{}_{} (): number {{ return {}; }}\n",
                 i, j, j
             ));
         }
@@ -391,11 +391,11 @@ async fn test_combined_navigation_workflow() {
 
     let uri = test_uri("test");
     let source = r#"
-fn targetFunction() -> number {
+fn targetFunction(): number {
     return 42;
 }
 
-fn caller() -> number {
+fn caller(): number {
     return targetFunction();
 }
 "#;
@@ -465,7 +465,7 @@ async fn test_index_consistency_across_operations() {
 
     let uri = test_uri("test");
     let source = r#"
-fn myFunction() -> number {
+fn myFunction(): number {
     return 1;
 }
 "#;
@@ -503,11 +503,11 @@ fn myFunction() -> number {
                 range: None,
                 range_length: None,
                 text: r#"
-fn myFunction() -> number {
+fn myFunction(): number {
     return 1;
 }
 
-fn anotherFunction() -> number {
+fn anotherFunction(): number {
     return 2;
 }
 "#
@@ -537,11 +537,11 @@ async fn test_navigation_full_workflow() {
 
     let uri = test_uri("test");
     let source = r#"
-fn helper() -> number {
+fn helper(): number {
     return 1;
 }
 
-fn main() -> number {
+fn main(): number {
     return helper();
 }
 "#;

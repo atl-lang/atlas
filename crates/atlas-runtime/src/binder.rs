@@ -896,7 +896,11 @@ impl Binder {
             let root = module_path.ancestors().last().unwrap_or(Path::new("/"));
             root.join(stripped)
         } else {
-            PathBuf::from(source)
+            // Bare module name (e.g. "math") — resolve relative to the importing file's
+            // directory so that `import { x } from "math"` in `src/main.atlas` finds
+            // `src/math.atlas`, matching the registry key produced by the build system.
+            let base = module_path.parent().unwrap_or(Path::new("."));
+            base.join(source)
         };
 
         // If source already has an extension, use it directly

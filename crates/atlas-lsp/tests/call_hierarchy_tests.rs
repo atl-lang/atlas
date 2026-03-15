@@ -26,13 +26,13 @@ async fn test_incoming_calls_direct_caller() {
 
     let uri = test_uri("test");
     let source = r#"
-fn helper() -> number {
+fn helper(): number {
     return 42;
 }
 
-fn main() -> void {
+fn main(): void {
     let mut x: number = helper();
-    print(x);
+    console.log(x);
 }
 "#;
 
@@ -93,19 +93,19 @@ async fn test_incoming_calls_multiple_callers() {
 
     let uri = test_uri("test");
     let source = r#"
-fn utility() -> number {
+fn utility(): number {
     return 123;
 }
 
-fn caller1() -> number {
+fn caller1(): number {
     return utility() + 1;
 }
 
-fn caller2() -> number {
+fn caller2(): number {
     return utility() * 2;
 }
 
-fn caller3() -> number {
+fn caller3(): number {
     let mut x: number = utility();
     return x;
 }
@@ -166,12 +166,12 @@ async fn test_incoming_calls_no_callers() {
 
     let uri = test_uri("test");
     let source = r#"
-fn unused() -> number {
+fn unused(): number {
     return 999;
 }
 
-fn main() -> void {
-    print("hello");
+fn main(): void {
+    console.log("hello");
 }
 "#;
 
@@ -221,13 +221,13 @@ async fn test_incoming_calls_method_style() {
 
     let uri = test_uri("test");
     let source = r#"
-fn process(data: number) -> number {
+fn process(data: number): number {
     return data * 2;
 }
 
-fn main() -> void {
+fn main(): void {
     let mut result: number = process(42);
-    print(result);
+    console.log(result);
 }
 "#;
 
@@ -277,11 +277,11 @@ async fn test_incoming_calls_exported_function() {
 
     let uri = test_uri("test");
     let source = r#"
-fn publicHelper() -> string {
+fn publicHelper(): string {
     return "helper";
 }
 
-fn consumer() -> string {
+fn consumer(): string {
     return publicHelper();
 }
 "#;
@@ -332,13 +332,13 @@ async fn test_incoming_calls_nested_in_control_flow() {
 
     let uri = test_uri("test");
     let source = r#"
-fn check() -> boolean {
+fn check(): boolean {
     return true;
 }
 
-fn conditional() -> void {
+fn conditional(): void {
     if (check()) {
-        print("yes");
+        console.log("yes");
     }
 }
 "#;
@@ -393,15 +393,15 @@ async fn test_outgoing_calls_direct_callees() {
 
     let uri = test_uri("test");
     let source = r#"
-fn helper1() -> number {
+fn helper1(): number {
     return 1;
 }
 
-fn helper2() -> number {
+fn helper2(): number {
     return 2;
 }
 
-fn main() -> void {
+fn main(): void {
     let mut a: number = helper1();
     let mut b: number = helper2();
 }
@@ -460,12 +460,12 @@ async fn test_outgoing_calls_no_callees() {
 
     let uri = test_uri("test");
     let source = r#"
-fn leaf() -> number {
+fn leaf(): number {
     return 42;
 }
 
-fn main() -> void {
-    print("done");
+fn main(): void {
+    console.log("done");
 }
 "#;
 
@@ -515,11 +515,11 @@ async fn test_outgoing_calls_multiple_callees() {
 
     let uri = test_uri("test");
     let source = r#"
-fn fn1() -> number { return 1; }
-fn fn2() -> number { return 2; }
-fn fn3() -> number { return 3; }
+fn fn1(): number { return 1; }
+fn fn2(): number { return 2; }
+fn fn3(): number { return 3; }
 
-fn orchestrator() -> number {
+fn orchestrator(): number {
     return fn1() + fn2() + fn3();
 }
 "#;
@@ -577,10 +577,10 @@ async fn test_outgoing_calls_in_branches() {
 
     let uri = test_uri("test");
     let source = r#"
-fn trueBranch() -> void {}
-fn falseBranch() -> void {}
+fn trueBranch(): void {}
+fn falseBranch(): void {}
 
-fn conditional(flag: boolean) -> void {
+fn conditional(flag: boolean): void {
     if (flag) {
         trueBranch();
     } else {
@@ -641,13 +641,13 @@ async fn test_outgoing_calls_including_stdlib() {
 
     let uri = test_uri("test");
     let source = r#"
-fn customFunc() -> number {
+fn customFunc(): number {
     return 123;
 }
 
-fn mixed() -> void {
+fn mixed(): void {
     let mut x: number = customFunc();
-    print(x);
+    console.log(x);
 }
 "#;
 
@@ -705,7 +705,7 @@ async fn test_recursive_calls_direct_recursion() {
 
     let uri = test_uri("test");
     let source = r#"
-fn factorial(n: number) -> number {
+fn factorial(n: number): number {
     if (n <= 1) {
         return 1;
     }
@@ -775,12 +775,12 @@ async fn test_recursive_calls_mutual_recursion() {
 
     let uri = test_uri("test");
     let source = r#"
-fn isEven(n: number) -> boolean {
+fn isEven(n: number): boolean {
     if (n == 0) { return true; }
     return isOdd(n - 1);
 }
 
-fn isOdd(n: number) -> boolean {
+fn isOdd(n: number): boolean {
     if (n == 0) { return false; }
     return isEven(n - 1);
 }
@@ -836,13 +836,13 @@ async fn test_recursive_call_tree_navigation() {
 
     let uri = test_uri("test");
     let source = r#"
-fn countdown(n: number) -> void {
+fn countdown(n: number): void {
     if (n <= 0) { return; }
-    print(n);
+    console.log(n);
     countdown(n - 1);
 }
 
-fn main() -> void {
+fn main(): void {
     countdown(5);
 }
 "#;
@@ -895,7 +895,7 @@ async fn test_recursive_depth_handling() {
 
     let uri = test_uri("test");
     let source = r#"
-fn deepRecursion(n: number) -> number {
+fn deepRecursion(n: number): number {
     if (n <= 0) { return 0; }
     return deepRecursion(n - 1) + 1;
 }

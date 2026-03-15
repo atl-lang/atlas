@@ -21,7 +21,7 @@ async fn test_hover_with_semantic_tokens_consistency() {
     server.initialized(InitializedParams {}).await;
 
     let uri = Url::parse("file:///test.atl").unwrap();
-    let code = r#"fn calculate(x: number) -> number { return x + 1; }"#;
+    let code = r#"fn calculate(x: number): number { return x + 1; }"#;
 
     server
         .did_open(DidOpenTextDocumentParams {
@@ -75,7 +75,7 @@ async fn test_code_actions_with_diagnostics() {
 
     let uri = Url::parse("file:///test.atl").unwrap();
     // Code with a function definition that can be refactored
-    let code = r#"fn test() -> number {
+    let code = r#"fn test(): number {
     let x = 10 + 20;
     return x;
 }"#;
@@ -145,8 +145,8 @@ async fn test_symbols_with_folding_alignment() {
 
     let uri = Url::parse("file:///test.atl").unwrap();
     // Multi-line code to generate folding ranges
-    let code = r#"fn outer() -> number {
-    fn inner() -> number {
+    let code = r#"fn outer(): number {
+    fn inner(): number {
         return 42;
     }
     return inner();
@@ -198,7 +198,7 @@ async fn test_inlay_hints_with_hover_types() {
 
     let uri = Url::parse("file:///test.atl").unwrap();
     // Code with function call to generate parameter hints
-    let code = r#"fn add(a: number, b: number) -> number {
+    let code = r#"fn add(a: number, b: number): number {
     return a + b;
 }
 let sum = add(10, 20);"#;
@@ -261,7 +261,7 @@ async fn test_workspace_and_document_symbols() {
     server.initialized(InitializedParams {}).await;
 
     let uri = Url::parse("file:///test.atl").unwrap();
-    let code = r#"fn alpha() -> number { return 1; } fn beta() -> number { return 2; }"#;
+    let code = r#"fn alpha(): number { return 1; } fn beta(): number { return 2; }"#;
 
     server
         .did_open(DidOpenTextDocumentParams {
@@ -308,7 +308,7 @@ async fn test_all_features_simultaneously() {
     server.initialized(InitializedParams {}).await;
 
     let uri = Url::parse("file:///test.atl").unwrap();
-    let code = r#"fn process(data: string) -> number { return len(data); }"#;
+    let code = r#"fn process(data: string): number { return len(data); }"#;
 
     server
         .did_open(DidOpenTextDocumentParams {
@@ -382,7 +382,7 @@ async fn test_feature_interaction_no_panics() {
     server.initialized(InitializedParams {}).await;
 
     let uri = Url::parse("file:///test.atl").unwrap();
-    let code = r#"fn test() -> number { return 42; }"#;
+    let code = r#"fn test(): number { return 42; }"#;
 
     server
         .did_open(DidOpenTextDocumentParams {
@@ -451,9 +451,8 @@ async fn test_navigation_workflow() {
                 uri: uri.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text:
-                    "fn helper() -> number { return 1; } fn main() -> number { return helper(); }"
-                        .to_string(),
+                text: "fn helper(): number { return 1; } fn main(): number { return helper(); }"
+                    .to_string(),
             },
         })
         .await;
@@ -502,7 +501,7 @@ async fn test_editing_workflow_with_errors() {
                 uri: uri.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "fn test() -> number {".to_string(),
+                text: "fn test(): number {".to_string(),
             },
         })
         .await;

@@ -25,7 +25,7 @@ fn parse_source(source: &str) -> atlas_runtime::ast::Program {
 
 #[test]
 fn test_extract_function_symbol() {
-    let source = "fn greet() -> void {}";
+    let source = "fn greet(): void {}";
     let ast = parse_source(source);
     let symbols = extract_document_symbols(source, &ast);
 
@@ -36,7 +36,7 @@ fn test_extract_function_symbol() {
 
 #[test]
 fn test_extract_multiple_functions() {
-    let source = "fn foo() -> void {}\nfn bar() -> void {}\nfn baz() -> void {}";
+    let source = "fn foo(): void {}\nfn bar(): void {}\nfn baz(): void {}";
     let ast = parse_source(source);
     let symbols = extract_document_symbols(source, &ast);
 
@@ -82,7 +82,7 @@ fn test_extract_type_alias_symbol() {
 
 #[test]
 fn test_function_with_parameters() {
-    let source = "fn add(a: number, b: number) -> number { return a + b; }";
+    let source = "fn add(a: number, b: number): number { return a + b; }";
     let ast = parse_source(source);
     let symbols = extract_document_symbols(source, &ast);
 
@@ -102,7 +102,7 @@ fn test_function_with_parameters() {
 
 #[test]
 fn test_nested_function() {
-    let source = "fn outer() -> void { fn inner() -> void {} }";
+    let source = "fn outer(): void { fn inner(): void {} }";
     let ast = parse_source(source);
     let symbols = extract_document_symbols(source, &ast);
 
@@ -118,7 +118,7 @@ fn test_nested_function() {
 
 #[test]
 fn test_symbol_ranges_accurate() {
-    let source = "fn test() -> void {}";
+    let source = "fn test(): void {}";
     let ast = parse_source(source);
     let symbols = extract_document_symbols(source, &ast);
 
@@ -132,7 +132,7 @@ fn test_symbol_ranges_accurate() {
 
 #[test]
 fn test_symbol_selection_range() {
-    let source = "fn myFunction() -> void {}";
+    let source = "fn myFunction(): void {}";
     let ast = parse_source(source);
     let symbols = extract_document_symbols(source, &ast);
 
@@ -155,7 +155,7 @@ fn test_empty_document() {
 
 #[test]
 fn test_variables_inside_function() {
-    let source = "fn test() -> void { let x = 1; let y = 2; }";
+    let source = "fn test(): void { let x = 1; let y = 2; }";
     let ast = parse_source(source);
     let symbols = extract_document_symbols(source, &ast);
 
@@ -169,7 +169,7 @@ fn test_variables_inside_function() {
 
 #[test]
 fn test_function_signature_in_detail() {
-    let source = "fn add(a: number, b: number) -> number { return a + b; }";
+    let source = "fn add(a: number, b: number): number { return a + b; }";
     let ast = parse_source(source);
     let symbols = extract_document_symbols(source, &ast);
 
@@ -269,7 +269,7 @@ fn test_workspace_index_empty() {
 fn test_workspace_index_add_document() {
     let mut index = WorkspaceIndex::new();
     let uri = Url::parse("file:///test.atlas").unwrap();
-    let source = "fn foo() -> void {}";
+    let source = "fn foo(): void {}";
     let ast = parse_source(source);
 
     index.index_document(uri.clone(), source, &ast);
@@ -280,7 +280,7 @@ fn test_workspace_index_add_document() {
 fn test_workspace_search_exact() {
     let mut index = WorkspaceIndex::new();
     let uri = Url::parse("file:///test.atlas").unwrap();
-    let source = "fn myFunction() -> void {}";
+    let source = "fn myFunction(): void {}";
     let ast = parse_source(source);
 
     index.index_document(uri, source, &ast);
@@ -294,7 +294,7 @@ fn test_workspace_search_exact() {
 fn test_workspace_search_prefix() {
     let mut index = WorkspaceIndex::new();
     let uri = Url::parse("file:///test.atlas").unwrap();
-    let source = "fn myFunction() -> void {}";
+    let source = "fn myFunction(): void {}";
     let ast = parse_source(source);
 
     index.index_document(uri, source, &ast);
@@ -308,7 +308,7 @@ fn test_workspace_search_prefix() {
 fn test_workspace_search_substring() {
     let mut index = WorkspaceIndex::new();
     let uri = Url::parse("file:///test.atlas").unwrap();
-    let source = "fn myFunction() -> void {}";
+    let source = "fn myFunction(): void {}";
     let ast = parse_source(source);
 
     index.index_document(uri, source, &ast);
@@ -321,7 +321,7 @@ fn test_workspace_search_substring() {
 fn test_workspace_search_camel_case() {
     let mut index = WorkspaceIndex::new();
     let uri = Url::parse("file:///test.atlas").unwrap();
-    let source = "fn myFunctionName() -> void {}";
+    let source = "fn myFunctionName(): void {}";
     let ast = parse_source(source);
 
     index.index_document(uri, source, &ast);
@@ -334,7 +334,7 @@ fn test_workspace_search_camel_case() {
 fn test_workspace_search_case_insensitive() {
     let mut index = WorkspaceIndex::new();
     let uri = Url::parse("file:///test.atlas").unwrap();
-    let source = "fn MyFunction() -> void {}";
+    let source = "fn MyFunction(): void {}";
     let ast = parse_source(source);
 
     index.index_document(uri, source, &ast);
@@ -347,7 +347,7 @@ fn test_workspace_search_case_insensitive() {
 fn test_workspace_search_empty_query() {
     let mut index = WorkspaceIndex::new();
     let uri = Url::parse("file:///test.atlas").unwrap();
-    let source = "fn foo() -> void {}\nfn bar() -> void {}";
+    let source = "fn foo(): void {}\nfn bar(): void {}";
     let ast = parse_source(source);
 
     index.index_document(uri, source, &ast);
@@ -360,7 +360,7 @@ fn test_workspace_search_empty_query() {
 fn test_workspace_search_no_match() {
     let mut index = WorkspaceIndex::new();
     let uri = Url::parse("file:///test.atlas").unwrap();
-    let source = "fn foo() -> void {}";
+    let source = "fn foo(): void {}";
     let ast = parse_source(source);
 
     index.index_document(uri, source, &ast);
@@ -373,7 +373,7 @@ fn test_workspace_search_no_match() {
 fn test_workspace_search_limit() {
     let mut index = WorkspaceIndex::new();
     let uri = Url::parse("file:///test.atlas").unwrap();
-    let source = "fn a() -> void {}\nfn ab() -> void {}\nfn abc() -> void {}";
+    let source = "fn a(): void {}\nfn ab(): void {}\nfn abc(): void {}";
     let ast = parse_source(source);
 
     index.index_document(uri, source, &ast);
@@ -386,7 +386,7 @@ fn test_workspace_search_limit() {
 fn test_workspace_remove_document() {
     let mut index = WorkspaceIndex::new();
     let uri = Url::parse("file:///test.atlas").unwrap();
-    let source = "fn foo() -> void {}";
+    let source = "fn foo(): void {}";
     let ast = parse_source(source);
 
     index.index_document(uri.clone(), source, &ast);
@@ -401,12 +401,12 @@ fn test_workspace_multiple_files() {
     let mut index = WorkspaceIndex::new();
 
     let uri1 = Url::parse("file:///file1.atlas").unwrap();
-    let source1 = "fn foo() -> void {}";
+    let source1 = "fn foo(): void {}";
     let ast1 = parse_source(source1);
     index.index_document(uri1, source1, &ast1);
 
     let uri2 = Url::parse("file:///file2.atlas").unwrap();
-    let source2 = "fn bar() -> void {}";
+    let source2 = "fn bar(): void {}";
     let ast2 = parse_source(source2);
     index.index_document(uri2, source2, &ast2);
 
@@ -418,7 +418,7 @@ fn test_workspace_multiple_files() {
 fn test_workspace_search_ranking() {
     let mut index = WorkspaceIndex::new();
     let uri = Url::parse("file:///test.atlas").unwrap();
-    let source = "fn fooBar() -> void {}\nfn barFoo() -> void {}";
+    let source = "fn fooBar(): void {}\nfn barFoo(): void {}";
     let ast = parse_source(source);
 
     index.index_document(uri, source, &ast);

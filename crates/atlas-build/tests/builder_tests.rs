@@ -46,9 +46,9 @@ fn make_builder(path: &str) -> Builder {
 fn test_build_simple_single_file_project() {
     let (_temp, project_path) = create_test_project(&[(
         "src/main.atlas",
-        r#"fn main() -> void {
+        r#"fn main(): void {
     let x: number = 42;
-    print(x);
+    console.log(x);
 }"#,
     )]);
 
@@ -68,14 +68,14 @@ fn test_build_multi_file_project_with_imports() {
             "src/main.atlas",
             r#"import { add } from "math";
 
-fn main() -> void {
+fn main(): void {
     let result: number = add(1, 2);
-    print(result);
+    console.log(result);
 }"#,
         ),
         (
             "src/math.atlas",
-            r#"export fn add(borrow x: number, borrow y: number) -> number {
+            r#"export fn add(borrow x: number, borrow y: number): number {
     return x + y;
 }"#,
         ),
@@ -94,7 +94,7 @@ fn main() -> void {
 fn test_build_library_target() {
     let (_temp, project_path) = create_test_project(&[(
         "src/lib.atlas",
-        r#"export fn greet(borrow name: string) -> string {
+        r#"export fn greet(borrow name: string): string {
     return "Hello, " + name;
 }"#,
     )]);
@@ -116,9 +116,9 @@ fn test_build_binary_target() {
     let (_temp, project_path) = create_test_project(&[(
         "src/main.atlas",
         r#"
-fn main() -> void {
+fn main(): void {
     let x: number = 42;
-    print(x);
+    console.log(x);
 }
 "#,
     )]);
@@ -139,9 +139,9 @@ fn main() -> void {
 fn test_build_with_optimization() {
     let (_temp, project_path) = create_test_project(&[(
         "src/main.atlas",
-        r#"fn main() -> void {
+        r#"fn main(): void {
     let x: number = 1 + 1;
-    print(x);
+    console.log(x);
 }"#,
     )]);
 
@@ -195,11 +195,11 @@ fn test_build_stats_tracking() {
     let (_temp, project_path) = create_test_project(&[
         (
             "src/main.atlas",
-            "fn main() -> void { let x: number = 42; print(x); }",
+            "fn main(): void { let x: number = 42; console.log(x); }",
         ),
         (
             "src/utils.atlas",
-            "export fn helper() -> number { return 1; }",
+            "export fn helper(): number { return 1; }",
         ),
     ]);
 
@@ -216,7 +216,7 @@ fn test_build_stats_tracking() {
 #[test]
 fn test_build_output_directory_structure() {
     let (_temp, project_path) =
-        create_test_project(&[("src/main.atlas", "fn main() -> number { return 42; }")]);
+        create_test_project(&[("src/main.atlas", "fn main(): number { return 42; }")]);
 
     let mut builder = make_builder(&project_path);
     let result = builder.build().unwrap();
@@ -235,7 +235,7 @@ fn test_multiple_targets_library_and_binary() {
     let (_temp, project_path) = create_test_project(&[
         (
             "src/lib.atlas",
-            r#"export fn double(borrow x: number) -> number {
+            r#"export fn double(borrow x: number): number {
     return x * 2;
 }"#,
         ),
@@ -243,9 +243,9 @@ fn test_multiple_targets_library_and_binary() {
             "src/main.atlas",
             r#"import { double } from "lib";
 
-fn main() -> void {
+fn main(): void {
     let result: number = double(21);
-    print(result);
+    console.log(result);
 }"#,
         ),
     ]);
@@ -265,7 +265,7 @@ fn main() -> void {
 fn test_build_with_compile_error() {
     let (_temp, project_path) = create_test_project(&[(
         "src/main.atlas",
-        r#"fn main() -> void {
+        r#"fn main(): void {
     let x: string = 42;
 }"#,
     )]);
@@ -283,9 +283,9 @@ fn test_build_order_respects_dependencies() {
             "src/main.atlas",
             r#"import { VALUE } from "constants";
 
-fn main() -> void {
+fn main(): void {
     let x: number = VALUE;
-    print(x);
+    console.log(x);
 }"#,
         ),
         ("src/constants.atlas", r#"export let VALUE: number = 42;"#),
@@ -308,14 +308,14 @@ fn test_single_import_resolves_symbol() {
             "src/main.atlas",
             r#"import { greet } from "utils";
 
-fn main() -> void {
+fn main(): void {
     greet("world");
 }"#,
         ),
         (
             "src/utils.atlas",
-            r#"export fn greet(borrow name: string) -> void {
-    print(name);
+            r#"export fn greet(borrow name: string): void {
+    console.log(name);
 }"#,
         ),
     ]);
@@ -332,20 +332,20 @@ fn test_multiple_imports_from_one_module() {
             "src/main.atlas",
             r#"import { add, subtract } from "math";
 
-fn main() -> void {
+fn main(): void {
     let a: number = add(10, 5);
     let b: number = subtract(10, 5);
-    print(a);
-    print(b);
+    console.log(a);
+    console.log(b);
 }"#,
         ),
         (
             "src/math.atlas",
-            r#"export fn add(borrow x: number, borrow y: number) -> number {
+            r#"export fn add(borrow x: number, borrow y: number): number {
     return x + y;
 }
 
-export fn subtract(borrow x: number, borrow y: number) -> number {
+export fn subtract(borrow x: number, borrow y: number): number {
     return x - y;
 }"#,
         ),
@@ -366,7 +366,7 @@ fn test_import_from_missing_module() {
         "src/main.atlas",
         r#"import { foo } from "nonexistent";
 
-fn main() -> void {
+fn main(): void {
     foo();
 }"#,
     )]);
@@ -383,14 +383,14 @@ fn test_import_missing_symbol_from_valid_module() {
             "src/main.atlas",
             r#"import { nonexistent } from "utils";
 
-fn main() -> void {
+fn main(): void {
     nonexistent();
 }"#,
         ),
         (
             "src/utils.atlas",
-            r#"export fn helper() -> void {
-    print("hi");
+            r#"export fn helper(): void {
+    console.log("hi");
 }"#,
         ),
     ]);
@@ -413,24 +413,24 @@ fn test_diamond_dependency() {
             r#"import { from_b } from "b";
 import { from_c } from "c";
 
-fn main() -> void {
+fn main(): void {
     let x: number = from_b();
     let y: number = from_c();
-    print(x);
-    print(y);
+    console.log(x);
+    console.log(y);
 }"#,
         ),
         (
             "src/b.atlas",
             r#"import { from_c } from "c";
 
-export fn from_b() -> number {
+export fn from_b(): number {
     return from_c() + 1;
 }"#,
         ),
         (
             "src/c.atlas",
-            r#"export fn from_c() -> number {
+            r#"export fn from_c(): number {
     return 42;
 }"#,
         ),
@@ -453,22 +453,22 @@ fn test_chain_dependency() {
             "src/main.atlas",
             r#"import { middle } from "b";
 
-fn main() -> void {
+fn main(): void {
     let x: number = middle();
-    print(x);
+    console.log(x);
 }"#,
         ),
         (
             "src/b.atlas",
             r#"import { base } from "c";
 
-export fn middle() -> number {
+export fn middle(): number {
     return base() + 10;
 }"#,
         ),
         (
             "src/c.atlas",
-            r#"export fn base() -> number {
+            r#"export fn base(): number {
     return 1;
 }"#,
         ),
@@ -490,8 +490,8 @@ fn test_export_variable() {
             "src/main.atlas",
             r#"import { MAGIC } from "constants";
 
-fn main() -> void {
-    print(MAGIC);
+fn main(): void {
+    console.log(MAGIC);
 }"#,
         ),
         ("src/constants.atlas", r#"export let MAGIC: number = 42;"#),
@@ -514,18 +514,18 @@ fn test_selective_import() {
             "src/main.atlas",
             r#"import { add } from "math";
 
-fn main() -> void {
+fn main(): void {
     let x: number = add(1, 2);
-    print(x);
+    console.log(x);
 }"#,
         ),
         (
             "src/math.atlas",
-            r#"export fn add(borrow x: number, borrow y: number) -> number {
+            r#"export fn add(borrow x: number, borrow y: number): number {
     return x + y;
 }
 
-export fn multiply(borrow x: number, borrow y: number) -> number {
+export fn multiply(borrow x: number, borrow y: number): number {
     return x * y;
 }"#,
         ),
@@ -542,13 +542,13 @@ fn test_no_imports_still_works() {
     let (_temp, project_path) = create_test_project(&[
         (
             "src/main.atlas",
-            r#"fn main() -> void {
-    print(42);
+            r#"fn main(): void {
+    console.log(42);
 }"#,
         ),
         (
             "src/helper.atlas",
-            r#"export fn unused() -> number {
+            r#"export fn unused(): number {
     return 0;
 }"#,
         ),
@@ -571,14 +571,14 @@ fn test_import_function_type_propagates() {
             "src/main.atlas",
             r#"import { get_name } from "data";
 
-fn main() -> void {
+fn main(): void {
     let name: string = get_name();
-    print(name);
+    console.log(name);
 }"#,
         ),
         (
             "src/data.atlas",
-            r#"export fn get_name() -> string {
+            r#"export fn get_name(): string {
     return "Atlas";
 }"#,
         ),
@@ -601,22 +601,22 @@ fn test_multiple_modules_import_same_dependency() {
             "src/main.atlas",
             r#"import { helper } from "shared";
 
-fn main() -> void {
+fn main(): void {
     let x: number = helper();
-    print(x);
+    console.log(x);
 }"#,
         ),
         (
             "src/lib.atlas",
             r#"import { helper } from "shared";
 
-export fn lib_fn() -> number {
+export fn lib_fn(): number {
     return helper() + 1;
 }"#,
         ),
         (
             "src/shared.atlas",
-            r#"export fn helper() -> number {
+            r#"export fn helper(): number {
     return 99;
 }"#,
         ),
@@ -638,13 +638,13 @@ fn test_incremental_build_with_imports() {
             "src/main.atlas",
             r#"import { value } from "config";
 
-fn main() -> void {
-    print(value());
+fn main(): void {
+    console.log(value());
 }"#,
         ),
         (
             "src/config.atlas",
-            r#"export fn value() -> number {
+            r#"export fn value(): number {
     return 42;
 }"#,
         ),
@@ -673,17 +673,17 @@ fn test_non_exported_symbol_not_importable() {
             "src/main.atlas",
             r#"import { internal } from "mod";
 
-fn main() -> void {
+fn main(): void {
     internal();
 }"#,
         ),
         (
             "src/mod.atlas",
-            r#"fn internal() -> void {
-    print("private");
+            r#"fn internal(): void {
+    console.log("private");
 }
 
-export fn public_fn() -> void {
+export fn public_fn(): void {
     internal();
 }"#,
         ),
@@ -704,14 +704,14 @@ fn test_import_used_in_expression() {
             "src/main.atlas",
             r#"import { base } from "values";
 
-fn main() -> void {
+fn main(): void {
     let result: number = base() * 2 + 1;
-    print(result);
+    console.log(result);
 }"#,
         ),
         (
             "src/values.atlas",
-            r#"export fn base() -> number {
+            r#"export fn base(): number {
     return 10;
 }"#,
         ),
@@ -734,16 +734,16 @@ fn test_three_level_dependency_chain() {
             "src/main.atlas",
             r#"import { level_a } from "a";
 
-fn main() -> void {
+fn main(): void {
     let x: number = level_a();
-    print(x);
+    console.log(x);
 }"#,
         ),
         (
             "src/a.atlas",
             r#"import { level_b } from "b";
 
-export fn level_a() -> number {
+export fn level_a(): number {
     return level_b() + 1;
 }"#,
         ),
@@ -751,13 +751,13 @@ export fn level_a() -> number {
             "src/b.atlas",
             r#"import { level_c } from "c";
 
-export fn level_b() -> number {
+export fn level_b(): number {
     return level_c() + 10;
 }"#,
         ),
         (
             "src/c.atlas",
-            r#"export fn level_c() -> number {
+            r#"export fn level_c(): number {
     return 100;
 }"#,
         ),

@@ -44,7 +44,7 @@ let z: bool = true;
 #[test]
 fn test_typecheck_dump_function() {
     let source = r#"
-fn add(borrow a: number, borrow b: number) -> number {
+fn add(borrow a: number, borrow b: number): number {
     return a + b;
 }
 "#;
@@ -55,7 +55,7 @@ fn add(borrow a: number, borrow b: number) -> number {
 #[test]
 fn test_typecheck_dump_function_with_local_vars() {
     let source = r#"
-fn calculate(borrow x: number) -> number {
+fn calculate(borrow x: number): number {
     let temp: number = x * 2;
     return temp;
 }
@@ -81,7 +81,7 @@ fn test_typecheck_dump_mutable_variable() {
 #[test]
 fn test_typecheck_dump_function_with_loop() {
     let source = r#"
-fn sum(borrow n: number) -> number {
+fn sum(borrow n: number): number {
     let mut total: number = 0;
     let mut i: number = 0;
     while i < n {

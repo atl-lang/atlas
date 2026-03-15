@@ -91,7 +91,7 @@ async fn test_method_conformance_hover() {
                 uri: uri.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "fn test() -> number { return 42; }".to_string(),
+                text: "fn test(): number { return 42; }".to_string(),
             },
         })
         .await;
@@ -131,7 +131,7 @@ async fn test_notification_handling_did_open() {
                 uri: Url::parse("file:///test.atl").unwrap(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "fn test() -> void {}".to_string(),
+                text: "fn test(): void {}".to_string(),
             },
         })
         .await;
@@ -177,7 +177,7 @@ async fn test_lifecycle_complete() {
                 uri,
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "fn test() -> void {}".to_string(),
+                text: "fn test(): void {}".to_string(),
             },
         })
         .await;
@@ -229,7 +229,7 @@ async fn test_did_change_notification() {
                 uri: uri.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "fn test() -> void {}".to_string(),
+                text: "fn test(): void {}".to_string(),
             },
         })
         .await;
@@ -241,7 +241,7 @@ async fn test_did_change_notification() {
             content_changes: vec![TextDocumentContentChangeEvent {
                 range: None,
                 range_length: None,
-                text: "fn test() -> number { return 42; }".to_string(),
+                text: "fn test(): number { return 42; }".to_string(),
             }],
         })
         .await;
@@ -267,7 +267,7 @@ async fn test_did_close_notification() {
                 uri: uri.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "fn test() -> void {}".to_string(),
+                text: "fn test(): void {}".to_string(),
             },
         })
         .await;
@@ -299,7 +299,7 @@ async fn test_did_save_notification() {
                 uri: uri.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "fn test() -> void {}".to_string(),
+                text: "fn test(): void {}".to_string(),
             },
         })
         .await;

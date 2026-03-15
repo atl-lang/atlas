@@ -65,7 +65,7 @@ async fn test_full_workflow_with_diagnostics_and_completion() {
             range: None,
             range_length: None,
             text: r#"
-fn add(a: number, b: number) -> number {
+fn add(a: number, b: number): number {
     return a + b;
 }
 "#
@@ -171,7 +171,7 @@ async fn test_large_document_performance() {
     let mut source = String::new();
     for i in 0..100 {
         source.push_str(&format!(
-            "fn func{}(x: number) -> number {{ return x + {}; }}\n",
+            "fn func{}(x: number): number {{ return x + {}; }}\n",
             i, i
         ));
     }

@@ -458,6 +458,7 @@ mod lockfile_tests {
             source: LockedSource::Git {
                 url: "https://github.com/example/repo".to_string(),
                 rev: "abc123".to_string(),
+                tag: None,
             },
             checksum: Some("checksum123".to_string()),
             dependencies: HashMap::new(),

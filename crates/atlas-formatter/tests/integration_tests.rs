@@ -41,8 +41,8 @@ fn try_fmt(source: &str) -> FormatResult {
 #[case("let s = \"hello\";")]
 #[case("let b = true;")]
 #[case("let n = null;")]
-#[case("fn foo() -> void { let x = 1; }")]
-#[case("fn add(a: number, b: number) -> number { return a + b; }")]
+#[case("fn foo(): void { let x = 1; }")]
+#[case("fn add(a: number, b: number): number { return a + b; }")]
 #[case("if true { let a = 1; } else { let b = 2; }")]
 #[case("while true { break; }")]
 #[case("let arr = [1, 2, 3];")]
@@ -89,7 +89,7 @@ fn test_block_comment_preserved() {
 
 #[test]
 fn test_doc_comment_preserved() {
-    let source = "/// Documentation\nfn foo() -> number { return 1; }\n";
+    let source = "/// Documentation\nfn foo(): number { return 1; }\n";
     let formatted = fmt(source);
     assert!(formatted.contains("/// Documentation"));
 }
@@ -119,7 +119,7 @@ fn test_comment_between_statements() {
 #[test]
 fn test_config_indent_2_spaces() {
     let config = FormatConfig::default().with_indent_size(2);
-    let source = "fn foo() -> void { let x = 1; }";
+    let source = "fn foo(): void { let x = 1; }";
     let formatted = fmt_with(source, &config);
     assert!(
         formatted.contains("  let x = 1;"),
@@ -131,7 +131,7 @@ fn test_config_indent_2_spaces() {
 #[test]
 fn test_config_indent_4_spaces() {
     let config = FormatConfig::default().with_indent_size(4);
-    let source = "fn foo() -> void { let x = 1; }";
+    let source = "fn foo(): void { let x = 1; }";
     let formatted = fmt_with(source, &config);
     assert!(
         formatted.contains("    let x = 1;"),
@@ -143,7 +143,7 @@ fn test_config_indent_4_spaces() {
 #[test]
 fn test_config_indent_8_spaces() {
     let config = FormatConfig::default().with_indent_size(8);
-    let source = "fn foo() -> void { let x = 1; }";
+    let source = "fn foo(): void { let x = 1; }";
     let formatted = fmt_with(source, &config);
     assert!(
         formatted.contains("        let x = 1;"),
@@ -243,13 +243,13 @@ fn test_parse_error_messages_are_descriptive() {
 
 #[rstest]
 #[case("let x = 42;")]
-#[case("fn foo() -> number { return 1; }")]
+#[case("fn foo(): number { return 1; }")]
 #[case("if true { let a = 1; } else { let b = 2; }")]
 #[case("while true { break; }")]
 #[case("let arr = [1, 2, 3];")]
 #[case("// comment\nlet x = 1;")]
 #[case("let a = 1;\nlet b = 2;\nlet c = a + b;")]
-#[case("fn f(x: number, y: number) -> number { return x + y; }")]
+#[case("fn f(x: number, y: number): number { return x + y; }")]
 fn test_idempotent_formatting(#[case] source: &str) {
     let first = fmt(source);
     let second = fmt(&first);
@@ -273,7 +273,7 @@ fn test_idempotent_formatting(#[case] source: &str) {
 
 #[test]
 fn test_nested_blocks() {
-    let source = "fn foo() -> void { if true { while false { let x = 1; } } }";
+    let source = "fn foo(): void { if true { while false { let x = 1; } } }";
     let formatted = fmt(source);
 
     // Should have proper nesting
@@ -289,7 +289,7 @@ fn test_nested_blocks() {
 
 #[test]
 fn test_multiple_functions() {
-    let source = "fn foo() -> number { return 1; }\nfn bar() -> number { return 2; }";
+    let source = "fn foo(): number { return 1; }\nfn bar(): number { return 2; }";
     let formatted = fmt(source);
     assert!(formatted.contains("fn foo()"));
     assert!(formatted.contains("fn bar()"));
@@ -297,7 +297,7 @@ fn test_multiple_functions() {
 
 #[test]
 fn test_function_with_multiple_params() {
-    let source = "fn calc(a: number, b: number, c: number) -> number { return a + b + c; }";
+    let source = "fn calc(a: number, b: number, c: number): number { return a + b + c; }";
     let formatted = fmt(source);
     assert!(formatted.contains("a: number"));
     assert!(formatted.contains("b: number"));

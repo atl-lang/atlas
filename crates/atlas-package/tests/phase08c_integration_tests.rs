@@ -32,6 +32,7 @@ fn create_test_manifest(name: &str, version: &str, deps: Vec<(&str, &str)>) -> P
             keywords: vec![],
             categories: vec![],
         },
+        entry: None,
         dependencies,
         dev_dependencies: HashMap::new(),
         build: None,

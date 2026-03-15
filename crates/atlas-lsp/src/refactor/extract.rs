@@ -109,7 +109,7 @@ pub fn extract_function(
     let return_type_text = infer_return_type_text(&extracted_block);
 
     let signature = if let Some(return_type) = return_type_text {
-        format!("fn {}({}) -> {}", func_name, params_text, return_type)
+        format!("fn {}({}): {}", func_name, params_text, return_type)
     } else {
         format!("fn {}({})", func_name, params_text)
     };
@@ -151,7 +151,7 @@ pub fn extract_function(
 }
 
 fn parse_block_from_snippet(snippet: &str) -> Result<Block, RefactorError> {
-    let wrapped = format!("fn __extract_temp() {{\n{}\n}}", snippet);
+    let wrapped = format!("fn __extract_temp(): void {{\n{}\n}}", snippet);
     let mut lexer = Lexer::new(&wrapped);
     let (tokens, _) = lexer.tokenize();
     let mut parser = Parser::new(tokens);
