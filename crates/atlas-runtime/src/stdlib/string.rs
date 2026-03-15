@@ -125,28 +125,43 @@ pub fn substring(s: &str, start: f64, end: f64, span: Span) -> Result<String, Ru
         });
     }
 
-    let start_idx = start as usize;
-    let end_idx = end as usize;
-    let byte_len = s.len();
+    let start_char = start as usize;
+    let end_char = end as usize;
+    let char_len = s.chars().count();
 
-    // Validate bounds
-    if start_idx > end_idx {
+    // Validate bounds (char-based, consistent with indexOf/length)
+    if start_char > end_char {
         return Err(RuntimeError::OutOfBounds { span });
     }
 
-    if start_idx > byte_len || end_idx > byte_len {
+    if start_char > char_len || end_char > char_len {
         return Err(RuntimeError::OutOfBounds { span });
     }
 
-    // Validate UTF-8 boundaries
-    if !s.is_char_boundary(start_idx) || !s.is_char_boundary(end_idx) {
-        return Err(RuntimeError::TypeError {
-            msg: "substring() indices must be on UTF-8 character boundaries".to_string(),
-            span,
-        });
-    }
+    // Convert char indices to byte indices
+    let mut char_indices = s.char_indices();
+    let start_byte = if start_char == 0 {
+        0
+    } else {
+        char_indices
+            .nth(start_char - 1)
+            .map(|(byte_pos, ch)| byte_pos + ch.len_utf8())
+            .unwrap_or(s.len())
+    };
+    // Re-advance from start_char to end_char
+    let remaining = end_char - start_char;
+    let end_byte = if remaining == 0 {
+        start_byte
+    } else {
+        // Restart iteration from start_byte
+        s[start_byte..]
+            .char_indices()
+            .nth(remaining - 1)
+            .map(|(off, ch)| start_byte + off + ch.len_utf8())
+            .unwrap_or(s.len())
+    };
 
-    Ok(s[start_idx..end_idx].to_string())
+    Ok(s[start_byte..end_byte].to_string())
 }
 
 /// Get character at index (returns grapheme cluster, not byte)
