@@ -25,9 +25,10 @@ Auto-loaded when touching test files. Full patterns in `/Users/proxikal/.claude/
 ```atlas
 import { describe, it, beforeEach, each, run } from 'argus';
 import { expect } from 'argus';
-import { spy, spy1, stub, verify } from 'argus';
+import { mock } from 'argus';        // mock.spy()  mock.stub()  mock.verify()
+import { snapshot } from 'argus';   // snapshot.match()  snapshot.update()
+import { report } from 'argus';     // report.pretty()  report.dot()  report.tap()
 import { fixture } from 'argus';
-import { pretty } from 'argus';
 
 describe("Suite name", fn(): void {
     beforeEach(fn(): void { /* setup */ });
@@ -35,6 +36,7 @@ describe("Suite name", fn(): void {
     it("test name", fn(): void {
         expect(actual).toEqual(expected);
         expect(value).not().toBeEmpty();
+        mock.verify(mock.spy(fn(): void {})).neverCalled();
     });
 
     // Parametric
