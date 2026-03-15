@@ -90,7 +90,7 @@ impl Installer {
             match dep_kind(dep) {
                 DepKind::Git { url, tag } => {
                     let source = format!("git: {}@{}", url, tag);
-                    if fetcher.is_cached(name, &tag) {
+                    if fetcher.is_cached(&url, name, &tag) {
                         already_cached.push(name.clone());
                     } else {
                         to_fetch.push(PlannedFetch {
@@ -179,16 +179,13 @@ impl Installer {
     fn populate_cache_from_lockfile(&self, lockfile: &Lockfile) -> Result<()> {
         let fetcher = GitFetcher::new(self.cache_dir.clone());
         for pkg in &lockfile.packages {
-            if let LockedSource::Git {
-                url,
-                rev: _,
-                tag: _,
-            } = &pkg.source
-            {
-                // We only have the rev here, not the original tag.  If the
-                // cache entry is missing we can't re-fetch without the tag, so
-                // we skip silently — the caller (install --force) can fix it.
-                let _ = (fetcher.is_cached(&pkg.name, &pkg.version.to_string()), url);
+            if let LockedSource::Git { url, rev: _, tag } = &pkg.source {
+                // If the cache entry is missing and we have the tag, we could
+                // re-fetch, but for now we skip silently — atlas install --force
+                // will re-fetch from scratch.
+                let version_str = pkg.version.to_string();
+                let cache_tag = tag.as_deref().unwrap_or(&version_str);
+                let _ = fetcher.is_cached(url, &pkg.name, cache_tag);
             }
         }
         Ok(())
@@ -204,6 +201,7 @@ impl Installer {
         match dep_kind(dep) {
             DepKind::Git { url, tag } => {
                 let result = fetcher.fetch(name, &url, &tag)?;
+                // result.path is now ~/atlas/pkg/<host>/<org>/<name>@<tag>/
                 let version = dep_version_or_zero(dep);
                 Ok(LockedPackage {
                     name: name.to_string(),

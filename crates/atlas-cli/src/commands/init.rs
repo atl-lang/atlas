@@ -245,7 +245,7 @@ fn generate_gitignore() -> String {
     r#"# Atlas build artifacts
 /target/
 /dist/
-/.atlas/
+/atlas/
 
 # Lock file (uncomment to track)
 # atlas.lock

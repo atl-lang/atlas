@@ -18,7 +18,7 @@ pub mod validator;
 pub use build_order::{BuildOrderComputer, BuildOrderError, BuildOrderResult};
 pub use cache::PackageCache;
 pub use downloader::Downloader;
-pub use fetcher::{FetchError, FetchResult, GitFetcher};
+pub use fetcher::{url_to_cache_subpath, FetchError, FetchResult, GitFetcher};
 pub use installer::{InstallPlan, Installer, PlannedFetch};
 pub use lockfile::{LockedPackage, LockedSource, Lockfile, LockfileMetadata};
 pub use manifest::{

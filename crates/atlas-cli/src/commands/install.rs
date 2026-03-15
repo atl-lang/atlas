@@ -94,14 +94,19 @@ pub fn run(args: InstallArgs) -> Result<()> {
 }
 
 fn get_cache_dir() -> PathBuf {
-    std::env::var("ATLAS_CACHE_DIR")
+    // ATLAS_HOME overrides the entire ~/atlas/ root.
+    // ATLAS_CACHE_DIR kept for backwards compatibility (takes precedence if set).
+    if let Ok(dir) = std::env::var("ATLAS_CACHE_DIR") {
+        return PathBuf::from(dir);
+    }
+    let root = std::env::var("ATLAS_HOME")
         .map(PathBuf::from)
         .unwrap_or_else(|_| {
             dirs::home_dir()
                 .unwrap_or_else(|| PathBuf::from("."))
-                .join(".atlas")
-                .join("cache")
-        })
+                .join("atlas")
+        });
+    root.join("pkg")
 }
 
 /// Find atlas.toml manifest file

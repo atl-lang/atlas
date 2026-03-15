@@ -52,13 +52,17 @@ impl Config {
     ///
     /// Returns:
     /// 1. ATLAS_HISTORY_FILE if set
-    /// 2. ~/.atlas/history if home directory exists
-    /// 3. None otherwise
+    /// 2. $ATLAS_HOME/history if ATLAS_HOME is set
+    /// 3. ~/atlas/history if home directory exists
+    /// 4. None otherwise
     pub fn get_history_path(&self) -> Option<PathBuf> {
         if let Some(ref path) = self.history_file {
             return Some(path.clone());
         }
-        dirs::home_dir().map(|home| home.join(".atlas").join("history"))
+        if let Ok(home) = std::env::var("ATLAS_HOME") {
+            return Some(PathBuf::from(home).join("history"));
+        }
+        dirs::home_dir().map(|home| home.join("atlas").join("history"))
     }
 }
 
@@ -203,9 +207,9 @@ mod tests {
         env::remove_var("ATLAS_HISTORY_FILE");
         let config = Config::from_env();
         let path = config.get_history_path();
-        // Should be Some(~/.atlas/history) if home directory exists
+        // Should be Some(~/atlas/history) if home directory exists
         if let Some(home) = dirs::home_dir() {
-            assert_eq!(path, Some(home.join(".atlas").join("history")));
+            assert_eq!(path, Some(home.join("atlas").join("history")));
         }
     }
 }
