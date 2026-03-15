@@ -2299,6 +2299,15 @@ impl<'a> TypeChecker<'a> {
                 }
                 Type::any_placeholder()
             }
+            // any-typed value is callable — skip signature checking, return any.
+            // This covers: `let f: any = ...`, type aliases of `any` (e.g. `type Handler = any`),
+            // and array elements of type `any[]`.
+            t if Type::is_any_placeholder(t) => {
+                for arg in &call.args {
+                    self.check_expr(arg);
+                }
+                Type::any_placeholder()
+            }
             _ => {
                 self.diagnostics.push(
                     error_codes::NOT_CALLABLE
@@ -2869,11 +2878,13 @@ impl<'a> TypeChecker<'a> {
         };
         member.type_tag.set(type_tag);
 
-        // Skip error recovery cases — Unknown and any_placeholder() are both "give up" states
-        if target_type.normalized() == Type::Unknown
-            || target_type.normalized() == Type::any_placeholder()
-        {
+        // Unknown is error-recovery: propagate Unknown.
+        if target_type.normalized() == Type::Unknown {
             return Type::Unknown;
+        }
+        // any-typed target: field/method access on `any` returns `any`.
+        if Type::is_any_placeholder(&target_type.normalized()) {
+            return Type::any_placeholder();
         }
 
         // Look up the method in the method table and clone the signature to avoid borrow issues

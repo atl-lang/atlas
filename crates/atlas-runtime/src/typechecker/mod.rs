@@ -2601,7 +2601,7 @@ impl<'a> TypeChecker<'a> {
             Stmt::If(if_stmt) => {
                 let cond_type = self.check_expr(&if_stmt.cond);
                 let cond_norm = cond_type.normalized();
-                if cond_norm != Type::Bool {
+                if cond_norm != Type::Bool && !Type::is_any_placeholder(&cond_norm) {
                     self.diagnostics.push(
                         error_codes::TYPE_ERROR
                             .emit(if_stmt.cond.span())
@@ -2635,7 +2635,7 @@ impl<'a> TypeChecker<'a> {
             Stmt::While(while_stmt) => {
                 let cond_type = self.check_expr(&while_stmt.cond);
                 let cond_norm = cond_type.normalized();
-                if cond_norm != Type::Bool {
+                if cond_norm != Type::Bool && !Type::is_any_placeholder(&cond_norm) {
                     self.diagnostics.push(
                         error_codes::TYPE_ERROR
                             .emit(while_stmt.cond.span())
