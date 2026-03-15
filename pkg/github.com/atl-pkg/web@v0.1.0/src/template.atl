@@ -225,7 +225,7 @@ fn eval_for(tokens: TplToken[], start: number, spec: string, ctx: Map<string, an
         Some(items) => {
             for item in items {
                 let mut item_ctx = ctx;
-                item_ctx.set(var_name, item);
+                item_ctx = item_ctx.set(var_name, item);
                 output = output + eval_nodes(body, item_ctx, partials);
             }
         },
@@ -269,10 +269,18 @@ fn eval_if(tokens: TplToken[], start: number, cond: string, ctx: Map<string, any
 }
 
 fn eval_condition(cond: string, ctx: Map<string, any>): bool {
-    // Simple: check if a context variable is truthy
+    // Check if a context variable is truthy: false/0/""/null → false
     let value = ctx.get(cond);
     match value {
         None => { return false; },
-        Some(_) => { return true; },
+        Some(v) => {
+            match v {
+                false => { return false; },
+                0 => { return false; },
+                "" => { return false; },
+                null => { return false; },
+                _ => { return true; },
+            }
+        },
     }
 }
