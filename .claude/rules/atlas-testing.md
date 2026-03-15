@@ -9,6 +9,45 @@ paths:
 
 Auto-loaded when touching test files. Full patterns in `/Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/testing-patterns.md`.
 
+## Argus — Official Atlas Test Framework (atl-pkg)
+
+**Two-tier rule — no exceptions:**
+
+| Context | Use |
+|---------|-----|
+| Compiler corpus tests (`pass/*.atlas`, `fail/*.atlas`) | Built-in `test.*` only. No package deps — compiler must work before packages resolve. |
+| Integration / scenario `.atl` tests in user projects | **Use Argus** (`import { describe, it } from 'argus'`). |
+| Writing Argus-style tests for Atlas stdlib examples | Use Argus. |
+
+**Argus lives at:** `~/dev/projects/atl-pkg/argus` | `github.com/atl-pkg/argus`
+
+**Argus API quick ref (AI generation guide):**
+```atlas
+import { describe, it, beforeEach, each, run } from 'argus';
+import { expect } from 'argus';
+import { spy, spy1, stub, verify } from 'argus';
+import { fixture } from 'argus';
+import { pretty } from 'argus';
+
+describe("Suite name", fn(): void {
+    beforeEach(fn(): void { /* setup */ });
+
+    it("test name", fn(): void {
+        expect(actual).toEqual(expected);
+        expect(value).not().toBeEmpty();
+    });
+
+    // Parametric
+    each([[1, 2], [3, 4]], fn(row: any[]): void {
+        it("row " + row[0].string(), fn(): void {
+            expect(row[0] + row[1]).toBeGreaterThan(0);
+        });
+    });
+});
+
+pretty(run());
+```
+
 ## Cardinal Rule: No New Test Files in atlas-runtime
 
 Every new test file = a new binary = more link time + slower CI. **Add to existing domain files.**
