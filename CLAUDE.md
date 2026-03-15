@@ -15,11 +15,32 @@ NEVER: `cargo install`, debug builds, copy/symlink. PATH: `$HOME/dev/projects/at
 
 ## Session Start (every agent, every session)
 ```bash
-pt go                  # sitrep: session ID, handoff, P0s, CI, block
+pt go                  # sitrep: session ID, handoff, P0s, CI, block, gotchas, todos
 pt decisions CORE      # 17 critical decisions — read before any work
 pt in-progress         # what's claimed — no duplicates
 ```
 `pt decision D-XXX` for full detail. NOT `pt issue D-XXX`. See `.claude/lazy/pt-workflow.md`.
+
+## Gotchas (read before touching anything)
+`pt go` surfaces critical gotchas automatically. Full list: `pt gotchas all`
+File a new trap: `pt gotcha add "title" component "detail" --severity critical|warning`
+Confirm still relevant: `pt gotcha confirm G-XXX`
+
+## Attempts (log dead ends immediately)
+`pt tried H-XXX "approach" "what happened"` — prevents future agents repeating failures
+`pt attempts H-XXX` — see what's already been tried before starting
+
+## TODO Queue (persistent across sessions)
+`pt todos` — cross-session action items (survives session close, unlike next_steps)
+`pt todo add "title" ["detail"] [P1]`
+`pt todo done T-XXX`
+
+## Orientation (cold agent ramp-up)
+```bash
+pt narrative 5         # last 5 sessions — what was done, decisions made
+pt hotspots            # most-changed files in last 30 days
+pt active              # files linked to open/in-progress issues
+```
 
 ## Branch Rule (hook-enforced)
 `.rs` or `Cargo.toml` dep changes → branch required. Never commit to main.
