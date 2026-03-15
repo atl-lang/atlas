@@ -60,3 +60,4 @@ CODEX_VERIFY.md
 tracking/ci-status.json
 tracking/ci-runner.log
 *.zip
+pkg/
