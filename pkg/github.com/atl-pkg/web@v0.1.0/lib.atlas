@@ -1,0 +1,16 @@
+// web — Official Atlas web framework
+//
+// Provides router, middleware, server-side templates, static file serving,
+// HTMX helpers, and response builders on top of Atlas's built-in http.serve()
+// primitive.
+//
+// https://github.com/atl-pkg/web
+//
+// Handler signature: fn(req: any): any  (returns a response map)
+
+export { Router, RouteMatch } from "./src/router";
+export { chain, logger, cors, json_body, rate_limit, basic_auth } from "./src/middleware";
+export { render, render_file, Template } from "./src/template";
+export { static_files } from "./src/static";
+export { htmx, HtmxHelpers } from "./src/htmx";
+export { response, ok, html, json_resp, text, status_text, redirect, not_found, bad_request, unauthorized, too_many_requests, internal_error, with_header, with_headers } from "./src/response";

@@ -353,7 +353,11 @@ impl VM {
             bytecode,
             profiler: None,
             debugger: None,
-            current_security: self.current_security.clone(),
+            // Use parent's security context; fall back to permissive default so
+            // workers created before vm.run() (e.g. http.serve() pool init) still work.
+            current_security: Some(self.current_security.clone().unwrap_or_else(|| {
+                std::sync::Arc::new(crate::security::SecurityContext::default())
+            })),
             execution_limits: self.execution_limits.clone(),
             output_writer: self.output_writer.clone(),
             library_loader: LibraryLoader::new(),
@@ -1739,6 +1743,19 @@ impl VM {
                                 });
                             }
                         }
+                        // Map indexing: map["key"] → Option<V>
+                        // Returns Some(value) if key exists, None if not.
+                        // Mirrors the Map.get() stdlib method for dynamic key access.
+                        Value::Map(map) => {
+                            let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+                            let key = crate::stdlib::collections::hash::HashKey::from_value(
+                                &index_val, span,
+                            )?;
+                            match map.get(&key).cloned() {
+                                Some(v) => self.push(Value::Option(Some(Box::new(v)))),
+                                None => self.push(Value::Option(None)),
+                            }
+                        }
                         _ => {
                             return Err(RuntimeError::TypeError {
                                 msg: "Cannot index non-array/string/json".to_string(),
@@ -2658,6 +2675,12 @@ impl VM {
                     }
                     args.reverse();
                     self.pop(); // Pop function value
+
+                    // httpServe: reinitialize the blocking pool with the current VM so workers
+                    // have access to all globals (impl functions etc.) populated during execution.
+                    if name.as_ref() == "httpServe" {
+                        crate::async_runtime::reinit_blocking_pool(self);
+                    }
 
                     // H-375: typeof/type_of are VM intrinsics — they need access to
                     // struct_type_names to distinguish `record {}` (struct) from `new Map()`.

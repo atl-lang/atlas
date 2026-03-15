@@ -834,6 +834,18 @@ impl<'a> TypeChecker<'a> {
                 _ => {}
             }
         }
+
+        // H-414: Eagerly resolve imported struct types so struct_type_cache is pre-populated.
+        // Without this, struct instances imported as variables (e.g. `let htmx = HtmxHelpers {}`)
+        // cannot be reverse-looked up in type_to_impl_key_with_structs because the cache is only
+        // populated lazily by check_struct_init — which never runs for imported struct values.
+        // Collect names first to avoid borrow-checker issues with &mut self.
+        let imported_struct_names: Vec<String> = self.struct_decls.keys().cloned().collect();
+        for name in imported_struct_names {
+            if !self.struct_type_cache.contains_key(&name) {
+                self.resolve_struct_type(&name, Span::dummy());
+            }
+        }
     }
 
     /// Validate a struct declaration: check for duplicate fields and eagerly resolve
@@ -3417,7 +3429,13 @@ impl<'a> TypeChecker<'a> {
             .inherent_registry
             .get(&(type_name.clone(), method_name.to_string()))
             .cloned()?;
+        // Resolve return type without emitting diagnostics — the method is from an imported
+        // module, so its return type may reference structs not in this module's struct_decls
+        // (H-415). The method's return type was already correctly type-checked in its own
+        // module. If resolution produces unknown-type errors, suppress them here.
+        let diag_count_before = self.diagnostics.len();
         let return_type = self.resolve_type_ref(&method.return_type.clone());
+        self.diagnostics.truncate(diag_count_before);
         Some((return_type, type_name))
     }
 

@@ -21,9 +21,52 @@ pub struct HttpServerRequest {
     pub query: HashMap<String, String>,
 }
 
-/// Build a `Value::HttpServerRequest` from an `HttpServerRequest`.
+/// Build a request map from an `HttpServerRequest`.
+///
+/// Returns a `Value::Map` with string keys so handlers can access fields via
+/// `req.method`, `req.path`, `req.headers`, `req.body`, `req.query` directly.
+/// This is Atlas-idiomatic: req is a plain data map, not an opaque object.
 pub fn build_request_value(req: HttpServerRequest) -> Value {
-    Value::HttpServerRequest(Arc::new(req))
+    use crate::stdlib::collections::hashmap::AtlasHashMap;
+    use crate::value::ValueHashMap;
+
+    let mut headers_map = AtlasHashMap::new();
+    for (k, v) in &req.headers {
+        headers_map.insert(
+            HashKey::String(Arc::new(k.clone())),
+            Value::string(v.clone()),
+        );
+    }
+    let headers_val = Value::Map(ValueHashMap::from_atlas(headers_map));
+
+    let mut query_map = AtlasHashMap::new();
+    for (k, v) in &req.query {
+        query_map.insert(
+            HashKey::String(Arc::new(k.clone())),
+            Value::string(v.clone()),
+        );
+    }
+    let query_val = Value::Map(ValueHashMap::from_atlas(query_map));
+
+    let mut req_map = AtlasHashMap::new();
+    req_map.insert(
+        HashKey::String(Arc::new("method".to_string())),
+        Value::string(req.method.clone()),
+    );
+    req_map.insert(
+        HashKey::String(Arc::new("path".to_string())),
+        Value::string(req.path.clone()),
+    );
+    req_map.insert(
+        HashKey::String(Arc::new("body".to_string())),
+        Value::string(req.body.clone()),
+    );
+    req_map.insert(
+        HashKey::String(Arc::new("headers".to_string())),
+        headers_val,
+    );
+    req_map.insert(HashKey::String(Arc::new("query".to_string())), query_val);
+    Value::Map(ValueHashMap::from_atlas(req_map))
 }
 
 // ── Instance method helpers ─────────────────────────────────────────────────

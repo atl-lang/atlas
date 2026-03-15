@@ -54,6 +54,9 @@ struct MinLockedSource {
     tag: Option<String>,
     #[serde(default)]
     url: Option<String>,
+    /// Local path for path dependencies (type = "path")
+    #[serde(default)]
+    path: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -76,6 +79,15 @@ impl MinLockedPackage {
     /// The git URL for this package, if it is a git dep.
     fn git_url(&self) -> Option<String> {
         self.source.as_ref()?.url.clone()
+    }
+
+    /// The local path for a path dependency, if present.
+    fn local_path(&self) -> Option<std::path::PathBuf> {
+        self.source
+            .as_ref()?
+            .path
+            .as_deref()
+            .map(std::path::PathBuf::from)
     }
 }
 
@@ -352,11 +364,23 @@ impl ModuleResolver {
         };
 
         // 5. Build namespaced path: <pkg_root>/<host>/<org>/<name>@<tag>
-        //    Falls back to <name>@<tag> for path deps or entries without a git URL.
-        let cache_key = locked_pkg.cache_key();
-        let pkg_dir = match locked_pkg.git_url() {
-            Some(url) => pkg_root.join(resolver_url_to_cache_subpath(&url, name, &cache_key)),
-            None => pkg_root.join(name).join(&cache_key),
+        //    Path deps resolve directly to their declared path.
+        let pkg_dir = if let Some(local) = locked_pkg.local_path() {
+            // Path dep: resolve relative to lockfile location
+            if local.is_absolute() {
+                local
+            } else {
+                lockfile_path
+                    .parent()
+                    .unwrap_or(std::path::Path::new("."))
+                    .join(local)
+            }
+        } else {
+            let cache_key = locked_pkg.cache_key();
+            match locked_pkg.git_url() {
+                Some(url) => pkg_root.join(resolver_url_to_cache_subpath(&url, name, &cache_key)),
+                None => pkg_root.join(name).join(&cache_key),
+            }
         };
 
         // 6. Try entry point candidates: lib.atlas, index.atlas, mod.atlas

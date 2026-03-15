@@ -1,0 +1,6 @@
+import { Router } from "./src/router";
+import { render } from "./src/template";
+
+let ctx = new Map<string, any>();
+ctx.set("x", "y");
+render("{{ x }}", ctx);

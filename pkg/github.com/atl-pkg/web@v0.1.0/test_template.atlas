@@ -1,0 +1,13 @@
+import { render } from "./src/template";
+
+let ctx = new Map<string, any>();
+ctx.set("name", "Atlas");
+
+// Test 1: simple interpolation
+let r1 = render("Hello {{ name }}!", ctx);
+r1.length();  // "Hello Atlas!" = 12
+
+// Test 2: conditional
+ctx.set("show", "yes");
+let r2 = render("{% if show %}visible{% end %}", ctx);
+r2;  // "visible"

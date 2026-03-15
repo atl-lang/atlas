@@ -1,0 +1,33 @@
+enum TplToken {
+    Text(string),
+    Expr(string),
+}
+
+fn eval_nodes(tokens: TplToken[], ctx: Map<string, any>): string {
+    let mut output = "";
+    let mut i = 0;
+
+    while i < tokens.length() {
+        let token = tokens[i];
+        match token {
+            Text(s) => output = output + s,
+            Expr(expr) => {
+                let val = ctx.get(expr);
+                match val {
+                    Some(v) => output = output + `${v}`,
+                    None => {},
+                }
+            },
+        }
+        i = i + 1;
+    }
+
+    return output;
+}
+
+let ctx = new Map<string, any>();
+ctx.set("name", "Atlas");
+
+let tokens: TplToken[] = [Text("Hello "), Expr("name"), Text("!")];
+let result = eval_nodes(tokens, ctx);
+result;

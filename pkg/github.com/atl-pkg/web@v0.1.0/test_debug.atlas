@@ -1,0 +1,12 @@
+// Test TplToken enum pattern matching directly
+enum TplToken {
+    Text(string),
+    Expr(string),
+}
+
+let t: TplToken = Text("hello");
+let result = match t {
+    Text(s) => s,
+    Expr(e) => e,
+};
+result.length();

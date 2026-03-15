@@ -46,6 +46,25 @@ pub use targets::{ArtifactMetadata, BuildArtifact, BuildTarget, TargetKind};
 // Re-export atlas-package types for convenience
 pub use atlas_package::manifest::PackageManifest;
 
+/// Convert a git URL + tag into the H-411 namespaced cache subpath.
+/// Mirrors `resolver_url_to_cache_subpath` in atlas-runtime — kept in sync manually.
+/// `https://github.com/atl-pkg/web` + `v0.1.0` → `github.com/atl-pkg/web@v0.1.0`
+fn git_url_to_subpath(url: &str, name: &str, tag: &str) -> std::path::PathBuf {
+    let stripped = url
+        .trim_start_matches("https://")
+        .trim_start_matches("http://")
+        .trim_start_matches("git://")
+        .trim_start_matches("ssh://")
+        .replace(':', "/")
+        .trim_start_matches("git@")
+        .to_string();
+    let stripped = stripped.trim_end_matches(".git");
+    if stripped.is_empty() || !stripped.contains('/') {
+        return std::path::PathBuf::from(format!("{}@{}", name, tag));
+    }
+    std::path::PathBuf::from(format!("{}@{}", stripped, tag))
+}
+
 /// Validate package state before compilation.
 ///
 /// Returns `Ok(())` if safe to proceed.
@@ -88,27 +107,51 @@ pub fn validate_packages(project_dir: &std::path::Path) -> Result<(), String> {
         ));
     }
 
-    // Determine cache root: ATLAS_CACHE_DIR env var or ~/.atlas/cache/
-    let cache_root = if let Ok(val) = std::env::var("ATLAS_CACHE_DIR") {
+    // Determine pkg store root: ATLAS_CACHE_DIR (compat) → ATLAS_HOME/pkg → ~/atlas/pkg
+    // Mirrors the H-411 layout used by atlas-runtime's module resolver.
+    let pkg_root = if let Ok(val) = std::env::var("ATLAS_CACHE_DIR") {
         std::path::PathBuf::from(val)
     } else {
-        dirs::home_dir()
-            .ok_or_else(|| "Could not determine home directory for package cache".to_string())?
-            .join(".atlas")
-            .join("cache")
+        let atlas_home = std::env::var("ATLAS_HOME")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|_| {
+                dirs::home_dir()
+                    .unwrap_or_else(|| std::path::PathBuf::from("."))
+                    .join("atlas")
+            });
+        atlas_home.join("pkg")
     };
 
-    // Check each locked package's cache dir exists.
-    // Git deps are cached under their tag string; others under their semver version.
+    // Check each locked package is present on disk.
     let mut missing_pkgs: Vec<String> = Vec::new();
     for pkg in &lockfile.packages {
-        let cache_key = match &pkg.source {
-            atlas_package::LockedSource::Git { tag: Some(t), .. } => t.clone(),
-            _ => pkg.version.to_string(),
+        let pkg_present = match &pkg.source {
+            // Path deps: verify the path itself exists — no caching needed.
+            atlas_package::LockedSource::Path { path } => path.exists(),
+            // Git deps: H-411 namespaced layout — <pkg_root>/<host>/<org>/<name>@<tag>
+            atlas_package::LockedSource::Git { url, tag, .. } => {
+                let version_str = pkg.version.to_string();
+                let cache_key = tag.as_deref().unwrap_or(&version_str).to_string();
+                let pkg_dir = pkg_root.join(git_url_to_subpath(url, &pkg.name, &cache_key));
+                pkg_dir.exists()
+            }
+            // Registry deps: <pkg_root>/<name>/<version>
+            _ => {
+                let cache_key = pkg.version.to_string();
+                pkg_root.join(&pkg.name).join(&cache_key).exists()
+            }
         };
-        let pkg_cache = cache_root.join(&pkg.name).join(&cache_key);
-        if !pkg_cache.exists() {
-            missing_pkgs.push(format!("{}@{}", pkg.name, cache_key));
+        if !pkg_present {
+            let label = match &pkg.source {
+                atlas_package::LockedSource::Git { tag: Some(t), .. } => {
+                    format!("{}@{}", pkg.name, t)
+                }
+                atlas_package::LockedSource::Path { path } => {
+                    format!("{} (path: {})", pkg.name, path.display())
+                }
+                _ => format!("{}@{}", pkg.name, pkg.version),
+            };
+            missing_pkgs.push(label);
         }
     }
 
@@ -212,13 +255,54 @@ mod package_validation_tests {
         let tmp = TempDir::new().expect("tempdir");
         make_manifest(tmp.path(), true);
         make_lockfile(tmp.path(), "foo");
-        // Create the cache dir for foo@1.0.0
-        let cache_dir = TempDir::new().expect("cache tempdir");
-        let pkg_cache = cache_dir.path().join("foo").join("1.0.0");
-        fs::create_dir_all(&pkg_cache).expect("create cache dir");
-        std::env::set_var("ATLAS_CACHE_DIR", cache_dir.path());
+        // Create the pkg store dir for foo@1.0.0 (registry dep: <pkg_root>/<name>/<version>)
+        let pkg_root = TempDir::new().expect("pkg root tempdir");
+        let pkg_dir = pkg_root.path().join("foo").join("1.0.0");
+        fs::create_dir_all(&pkg_dir).expect("create pkg dir");
+        std::env::set_var("ATLAS_CACHE_DIR", pkg_root.path());
         let result = validate_packages(tmp.path());
         std::env::remove_var("ATLAS_CACHE_DIR");
         assert!(result.is_ok(), "should pass when state is valid");
+    }
+
+    #[test]
+    fn test_path_dep_existing_path_passes() {
+        let tmp = TempDir::new().expect("tempdir");
+        // atlas.toml depends on "mypkg"
+        let content = "[package]\nname = \"test-pkg\"\nversion = \"0.1.0\"\n\n[dependencies]\nmypkg = { path = \"../mypkg\" }\n";
+        fs::write(tmp.path().join("atlas.toml"), content).expect("write atlas.toml");
+
+        // Create a sibling directory as the path dep
+        let sibling = TempDir::new().expect("sibling tempdir");
+        let abs_path = sibling
+            .path()
+            .to_str()
+            .expect("tempdir path is valid UTF-8")
+            .to_string();
+
+        // Write lockfile with path source
+        let lock = format!(
+            "version = 1\n\n[[packages]]\nname = \"mypkg\"\nversion = \"0.1.0\"\n\n[packages.source]\ntype = \"path\"\npath = \"{abs_path}\"\n"
+        );
+        fs::write(tmp.path().join("atlas.lock"), lock).expect("write atlas.lock");
+
+        let result = validate_packages(tmp.path());
+        assert!(result.is_ok(), "should pass for path dep that exists");
+    }
+
+    #[test]
+    fn test_path_dep_missing_path_errors() {
+        let tmp = TempDir::new().expect("tempdir");
+        let content = "[package]\nname = \"test-pkg\"\nversion = \"0.1.0\"\n\n[dependencies]\nmypkg = { path = \"../mypkg\" }\n";
+        fs::write(tmp.path().join("atlas.toml"), content).expect("write atlas.toml");
+
+        let lock = "version = 1\n\n[[packages]]\nname = \"mypkg\"\nversion = \"0.1.0\"\n\n[packages.source]\ntype = \"path\"\npath = \"/nonexistent/path/mypkg\"\n";
+        fs::write(tmp.path().join("atlas.lock"), lock).expect("write atlas.lock");
+
+        let result = validate_packages(tmp.path());
+        assert!(
+            result.is_err(),
+            "should error for path dep that doesn't exist"
+        );
     }
 }

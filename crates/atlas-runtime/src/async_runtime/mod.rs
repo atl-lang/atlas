@@ -48,26 +48,43 @@ static TOKIO_RUNTIME: OnceLock<Runtime> = OnceLock::new();
 /// Wrapped in `Mutex` because `VM` is `Send` but not `Sync` (the JIT trait
 /// object is `!Sync`).  Access is guarded; callers only lock briefly to call
 /// `new_for_worker()` which produces an independent `VM` clone.
-static BLOCKING_BASE_VM: OnceLock<std::sync::Mutex<crate::vm::VM>> = OnceLock::new();
+/// Uses `Mutex<Option<VM>>` (not OnceLock) so it can be updated at runtime
+/// (e.g. by `http.serve` to snapshot the fully-initialised VM with all globals).
+static BLOCKING_BASE_VM: std::sync::OnceLock<std::sync::Mutex<Option<crate::vm::VM>>> =
+    std::sync::OnceLock::new();
 
-/// Initialise the blocking task pool's base VM snapshot.
+fn blocking_base_vm_lock() -> &'static std::sync::Mutex<Option<crate::vm::VM>> {
+    BLOCKING_BASE_VM.get_or_init(|| std::sync::Mutex::new(None))
+}
+
+/// Initialise (or reinitialize) the blocking task pool's base VM snapshot.
 ///
-/// Must be called once (typically alongside [`worker::init_worker_pool`])
-/// so `spawn_blocking_task` has a VM to clone for each blocking invocation.
+/// Safe to call multiple times — subsequent calls update the stored snapshot.
+/// Call before `blocking_vm()` to guarantee a valid VM is available.
 pub fn init_blocking_pool(base_vm: &crate::vm::VM) {
-    // Ignore double-init (idempotent: first call wins).
-    let _ = BLOCKING_BASE_VM.set(std::sync::Mutex::new(base_vm.new_for_worker()));
+    let mut guard = blocking_base_vm_lock()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    *guard = Some(base_vm.new_for_worker());
+}
+
+/// Reinitialise the blocking pool snapshot from the current (live) VM.
+///
+/// Called by the VM immediately before `http.serve` so that request-handler
+/// workers see all globals (impl functions etc.) populated during program init.
+pub fn reinit_blocking_pool(current_vm: &crate::vm::VM) {
+    init_blocking_pool(current_vm);
 }
 
 /// Clone a fresh isolated VM for a blocking task.
 ///
 /// Returns `None` if [`init_blocking_pool`] has not been called.
 pub(crate) fn blocking_vm() -> Option<crate::vm::VM> {
-    BLOCKING_BASE_VM.get().map(|mu| {
-        mu.lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .new_for_worker()
-    })
+    blocking_base_vm_lock()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .as_ref()
+        .map(|vm| vm.new_for_worker())
 }
 
 // Thread-local LocalSet for spawning !Send futures

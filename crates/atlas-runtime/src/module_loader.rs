@@ -27,6 +27,9 @@ pub struct LoadedModule {
     pub exports: Vec<String>,
     /// List of import declarations (for dependency tracking)
     pub imports: Vec<ImportDecl>,
+    /// Map from import source string to the resolved absolute path.
+    /// Used by the binder to look up the correct registry key for bare package names.
+    pub resolved_imports: std::collections::HashMap<String, PathBuf>,
 }
 
 /// Registry of bound modules with their symbol tables
@@ -174,7 +177,7 @@ impl ModuleLoader {
 
         // Load and parse the module file — returns (partial_module, parse_errors).
         // Even on parse errors we get the partial AST so we can follow its imports.
-        let (loaded, parse_errors) = self.load_and_parse_partial(&abs_path);
+        let (mut loaded, parse_errors) = self.load_and_parse_partial(&abs_path);
 
         // Accumulate any parse errors from this module
         all_errors.extend(parse_errors);
@@ -184,6 +187,7 @@ impl ModuleLoader {
         let mut deps = Vec::new();
         let mut seen_deps = HashSet::new();
 
+        let mut resolved_import_map = std::collections::HashMap::new();
         for import in &loaded.imports {
             let dep_path = match self
                 .resolver
@@ -195,6 +199,10 @@ impl ModuleLoader {
                     continue;
                 }
             };
+
+            // Track the source → resolved path so the binder can use the correct
+            // registry key for bare package names (e.g. "web" → /path/to/web/lib.atlas).
+            resolved_import_map.insert(import.source.clone(), dep_path.clone());
 
             if !seen_deps.insert(dep_path.clone()) {
                 continue;
@@ -209,6 +217,7 @@ impl ModuleLoader {
         }
 
         self.dependencies.insert(abs_path.clone(), deps);
+        loaded.resolved_imports = resolved_import_map;
         self.cache.insert(abs_path.clone(), loaded);
         self.loading.remove(&abs_path);
     }
@@ -238,6 +247,7 @@ impl ModuleLoader {
                         ast: crate::ast::Program { items: vec![] },
                         exports: vec![],
                         imports: vec![],
+                        resolved_imports: std::collections::HashMap::new(),
                     },
                     vec![err],
                 );
@@ -318,6 +328,7 @@ impl ModuleLoader {
                 ast,
                 exports,
                 imports,
+                resolved_imports: std::collections::HashMap::new(), // populated in load_recursive
             },
             errors,
         )

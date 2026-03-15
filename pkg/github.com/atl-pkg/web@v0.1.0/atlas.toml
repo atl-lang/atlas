@@ -1,0 +1,11 @@
+[package]
+name = "web"
+version = "0.1.0"
+description = "Official web framework for Atlas — router, middleware, templates, HTMX"
+authors = ["Atlas Team"]
+license = "MIT"
+repository = "https://github.com/atl-pkg/web"
+keywords = ["web", "http", "router", "htmx", "templates"]
+categories = ["web"]
+
+[dependencies]

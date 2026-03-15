@@ -329,6 +329,7 @@ impl Atlas {
 
             // Bind symbols with cross-module import support
             let mut binder = Binder::new();
+            binder.set_resolved_imports(module.resolved_imports.clone());
             let (mut symbol_table, bind_diags) =
                 binder.bind_with_modules(&expanded, &module.path, &module_registry);
             let bind_errors: Vec<_> = bind_diags

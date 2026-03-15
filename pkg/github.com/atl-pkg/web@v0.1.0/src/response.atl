@@ -1,0 +1,121 @@
+// Response — functional HTTP response builders
+//
+// Atlas's http.serve() uses a request→response model:
+// the handler receives only `req` and returns a response map.
+//
+// Response maps have the shape: { status: number, body: string, headers: Map<string,string> }
+//
+// Usage:
+//   import { ok, html, json_resp, not_found, redirect } from "web";
+//
+//   router.get("/", fn(req: any): any {
+//       return html("<h1>Hello</h1>");
+//   });
+//
+//   router.get("/api/data", fn(req: any): any {
+//       let mut m = new Map<string, any>();
+//       m = m.set("items", [1, 2, 3]);
+//       return json_resp(m);
+//   });
+
+// Build an empty headers map.
+fn empty_headers(): any {
+    return new Map<string, string>();
+}
+
+// Build a base response map with given status, body, and headers.
+export fn response(status: number, body: string, headers: any): any {
+    let mut m = new Map<string, any>();
+    m = m.set("status", status);
+    m = m.set("body", body);
+    m = m.set("headers", headers);
+    return m;
+}
+
+// 200 OK — plain text.
+export fn ok(body: string): any {
+    return response(200, body, empty_headers());
+}
+
+// 200 OK — HTML content.
+export fn html(body: string): any {
+    let mut h = new Map<string, string>();
+    h = h.set("Content-Type", "text/html; charset=utf-8");
+    return response(200, body, h);
+}
+
+// 200 OK — JSON content.  data must be JSON-serialisable.
+export fn json_resp(data: any): any {
+    let mut h = new Map<string, string>();
+    h = h.set("Content-Type", "application/json");
+    return response(200, json.stringify(data), h);
+}
+
+// 200 OK — plain text with Content-Type: text/plain.
+export fn text(body: string): any {
+    let mut h = new Map<string, string>();
+    h = h.set("Content-Type", "text/plain; charset=utf-8");
+    return response(200, body, h);
+}
+
+// Custom status code with a text body.
+export fn status_text(code: number, body: string): any {
+    return response(code, body, empty_headers());
+}
+
+// 301/302 redirect.
+export fn redirect(url: string, code: number): any {
+    let mut h = new Map<string, string>();
+    h = h.set("Location", url);
+    return response(code, "", h);
+}
+
+// 404 Not Found.
+export fn not_found(): any {
+    return response(404, "Not Found", empty_headers());
+}
+
+// 400 Bad Request.
+export fn bad_request(msg: string): any {
+    return response(400, msg, empty_headers());
+}
+
+// 401 Unauthorized.
+export fn unauthorized(realm: string): any {
+    let mut h = new Map<string, string>();
+    h = h.set("WWW-Authenticate", `Basic realm="${realm}"`);
+    return response(401, "Unauthorized", h);
+}
+
+// 429 Too Many Requests.
+export fn too_many_requests(retry_after: number): any {
+    let mut h = new Map<string, string>();
+    h = h.set("Retry-After", retry_after.toString());
+    return response(429, "Too Many Requests", h);
+}
+
+// 500 Internal Server Error.
+export fn internal_error(msg: string): any {
+    return response(500, msg, empty_headers());
+}
+
+// Add or overwrite a single header on an existing response map.
+// Returns a new response map (CoW style).
+export fn with_header(resp: any, name: string, value: string): any {
+    let mut h = resp.get("headers");
+    h = h.set(name, value);
+    let mut m = new Map<string, any>();
+    m = m.set("status", resp.get("status"));
+    m = m.set("body", resp.get("body"));
+    m = m.set("headers", h);
+    return m;
+}
+
+// Convenience: replace the headers map on an existing response.
+export fn with_headers(resp: any, extra: any): any {
+    let mut m = new Map<string, any>();
+    m = m.set("status", resp.get("status"));
+    m = m.set("body", resp.get("body"));
+    m = m.set("headers", extra);
+    return m;
+}

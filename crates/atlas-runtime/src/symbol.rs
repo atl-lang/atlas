@@ -198,6 +198,11 @@ impl SymbolTable {
         &self.impl_method_exports
     }
 
+    /// Get a mutable reference to impl method exports (for or_insert semantics).
+    pub fn impl_method_exports_mut(&mut self) -> &mut HashMap<(String, String), ImplMethod> {
+        &mut self.impl_method_exports
+    }
+
     /// Get exported type aliases
     pub fn get_type_alias_exports(&self) -> HashMap<String, TypeAliasDecl> {
         self.type_alias_exports

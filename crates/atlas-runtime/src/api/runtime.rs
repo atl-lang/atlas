@@ -498,6 +498,7 @@ impl Runtime {
                     .expand_namespace_imports(module, &exports_by_path, &mut resolver)
                     .map_err(|diag| EvalError::ParseError(vec![*diag]))?;
                 let mut binder = Binder::new();
+                binder.set_resolved_imports(module.resolved_imports.clone());
                 let (mut symbol_table, _) =
                     binder.bind_with_modules(&expanded, &module.path, &module_registry);
                 let mut type_checker = TypeChecker::new(&mut symbol_table);
@@ -623,6 +624,7 @@ impl Runtime {
 
             // Bind symbols with cross-module import support
             let mut binder = Binder::new();
+            binder.set_resolved_imports(module.resolved_imports.clone());
             let (mut symbol_table, bind_diags) =
                 binder.bind_with_modules(&expanded, &module.path, &module_registry);
             let bind_errors: Vec<_> = bind_diags

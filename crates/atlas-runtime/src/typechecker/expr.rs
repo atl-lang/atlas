@@ -104,6 +104,8 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         // Use None (skip arity) so optional body/options args are not rejected.
         ("http", "get" | "post" | "put" | "delete" | "patch") => None,
         ("http", "checkPermission") => Some(vec![Type::String]),
+        // http.serve(port: number, handler: fn) — skip detailed arity check (handler is fn type)
+        ("http", "serve") => None,
         // Net namespace — variadic / complex → skip arity check
         (
             "net",
@@ -346,6 +348,8 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
                 Type::String,
             ],
         },
+        // Http server namespace — http.serve() blocks until server stops, returns void (H-413)
+        ("http", "serve") => Type::Null,
         // Net namespace — connection/bind methods return Result<Unknown, String>
         ("net", "tcpConnect" | "tcpListen" | "udpBind" | "tlsConnect" | "wsConnect") => {
             Type::Generic {
@@ -2487,6 +2491,15 @@ impl<'a> TypeChecker<'a> {
         member: &MemberExpr,
     ) -> Option<Type> {
         let required = members.iter().find(|m| m.name == method_name)?;
+        // H-409 extension: if the field is typed as `any`, it is callable — return `any`.
+        if required.ty.normalized() == Type::any_placeholder() {
+            if let Some(args) = &member.args {
+                for arg in args {
+                    self.check_expr(arg);
+                }
+            }
+            return Some(Type::any_placeholder());
+        }
         let Type::Function {
             params,
             return_type,

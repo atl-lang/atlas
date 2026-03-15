@@ -33,6 +33,10 @@ pub struct Binder {
     /// Enum variant names collected in pre-pass (variant_name → enum_name), so that
     /// bare enum variants can be used without EnumName:: qualification (H-295).
     enum_variants: HashMap<String, String>,
+    /// Map from import source string to resolved absolute path for the current module.
+    /// Populated before binding so that bare package names (e.g. "web") resolve to
+    /// the correct registry key (e.g. /path/to/web/lib.atlas) rather than a naive local path.
+    resolved_imports: HashMap<String, PathBuf>,
 }
 
 impl Binder {
@@ -46,6 +50,7 @@ impl Binder {
             struct_decls: HashMap::new(),
             enum_names: HashSet::new(),
             enum_variants: HashMap::new(),
+            resolved_imports: HashMap::new(),
         }
     }
 
@@ -59,7 +64,14 @@ impl Binder {
             struct_decls: HashMap::new(),
             enum_names: HashSet::new(),
             enum_variants: HashMap::new(),
+            resolved_imports: HashMap::new(),
         }
+    }
+
+    /// Provide the import source → resolved path map for this module.
+    /// Must be called before `bind_with_modules` for bare package imports to resolve.
+    pub fn set_resolved_imports(&mut self, map: HashMap<String, PathBuf>) {
+        self.resolved_imports = map;
     }
 
     /// Bind a program (two-pass: hoist functions, then bind everything)
@@ -688,9 +700,14 @@ impl Binder {
         } else {
             source_path.with_extension("atlas")
         };
+        // For bare package names (e.g. "web"), the naive source_path won't be in the
+        // registry. Fall back to the resolved import map which carries the actual path
+        // that the module loader stored (e.g. /path/to/web/lib.atlas).
+        let resolved_pkg_path = self.resolved_imports.get(&import_decl.source);
         let source_symbols = match registry
             .get(&source_path)
             .or_else(|| registry.get(&alt_path))
+            .or_else(|| resolved_pkg_path.and_then(|p| registry.get(p)))
         {
             Some(symbol_table) => symbol_table,
             None => {
@@ -877,6 +894,36 @@ impl Binder {
                                 ),
                         );
                     }
+                }
+            }
+        }
+
+        // H-414: After processing all named specifiers, pull in ALL struct_exports from the
+        // source module (not just the ones explicitly named in the import list).
+        // This ensures the typechecker can build struct_type_cache for ANY struct from the
+        // source module — including those that are only referenced as variable types (e.g.
+        // `export let htmx = HtmxHelpers {}` where the variable is imported but not the type).
+        // Unannotated variables are stored as Type::Unknown by the binder, so we cannot match
+        // variable type → struct by inspection here — importing all structs is the safe choice.
+        // Struct types do not pollute the value namespace; they are type-level only.
+        let already_have: std::collections::HashSet<String> = self
+            .symbol_table
+            .get_struct_exports()
+            .keys()
+            .cloned()
+            .collect();
+        for (struct_name, struct_decl) in &struct_exports {
+            // Only import if not already present (avoid overwriting local definitions).
+            if !already_have.contains(struct_name) {
+                self.symbol_table.add_struct_export(struct_decl.clone());
+            }
+            // Import impl methods with or_insert semantics (H-406).
+            for ((sn, mn), method) in &impl_method_exports {
+                if sn == struct_name {
+                    self.symbol_table
+                        .impl_method_exports_mut()
+                        .entry((sn.clone(), mn.clone()))
+                        .or_insert_with(|| method.clone());
                 }
             }
         }
